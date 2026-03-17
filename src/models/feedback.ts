@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { organization } from "./organization";
 import { user } from "./user";
 
@@ -14,4 +14,7 @@ export const feedback = pgTable("feedback", {
   message: text("message").notNull(),
   status: text("status").notNull().default("new"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (t) => [
+  index("feedback_org_id_idx").on(t.organizationId),
+  index("feedback_status_idx").on(t.status),
+]);

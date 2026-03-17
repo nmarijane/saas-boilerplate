@@ -1,4 +1,5 @@
 import {
+  index,
   integer,
   pgTable,
   text,
@@ -20,4 +21,6 @@ export const upload = pgTable("upload", {
   size: integer("size").notNull(),
   storageKey: text("storage_key").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (t) => [
+  index("upload_org_id_idx").on(t.organizationId),
+]);

@@ -1,6 +1,6 @@
 "use server";
 
-import { randomUUID } from "node:crypto";
+import { generateId } from "@/shared/utils/helpers";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { notification } from "@/models/notification";
@@ -17,7 +17,7 @@ export async function createNotification(
   userId: string,
   input: CreateNotificationInput,
 ) {
-  const id = randomUUID();
+  const id = generateId();
 
   await db.insert(notification).values({
     id,

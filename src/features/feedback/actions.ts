@@ -1,6 +1,6 @@
 "use server";
 
-import { randomUUID } from "node:crypto";
+import { generateId } from "@/shared/utils/helpers";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { feedback } from "@/models/feedback";
@@ -15,7 +15,7 @@ interface SubmitFeedbackInput {
 }
 
 export async function submitFeedback(input: SubmitFeedbackInput) {
-  const id = randomUUID();
+  const id = generateId();
 
   await db.insert(feedback).values({
     id,

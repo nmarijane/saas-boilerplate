@@ -2,11 +2,8 @@ import type Stripe from "stripe";
 import { eq } from "drizzle-orm";
 import { notification, subscription } from "@/models";
 import { db } from "@/shared/lib/DB";
+import { generateId } from "@/shared/utils/helpers";
 import { getStripe } from "./stripe";
-
-function generateId() {
-  return crypto.randomUUID();
-}
 
 async function getOrgIdFromSubscription(
   stripeSubscription: Stripe.Subscription

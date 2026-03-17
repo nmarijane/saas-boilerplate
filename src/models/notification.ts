@@ -1,5 +1,6 @@
 import {
   boolean,
+  index,
   pgTable,
   text,
   timestamp,
@@ -17,4 +18,7 @@ export const notification = pgTable("notification", {
   type: text("type").notNull().default("info"),
   link: text("link"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (t) => [
+  index("notification_user_id_idx").on(t.userId),
+  index("notification_user_read_idx").on(t.userId, t.read),
+]);

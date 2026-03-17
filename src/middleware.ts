@@ -17,11 +17,25 @@ function rateLimit(ip: string): boolean {
 
   if (!entry || now > entry.resetTime) {
     rateLimitMap.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    pruneExpiredEntries(now);
     return true;
   }
 
   entry.count++;
   return entry.count <= RATE_LIMIT_MAX;
+}
+
+let lastPrune = 0;
+const PRUNE_INTERVAL = 60_000;
+
+function pruneExpiredEntries(now: number) {
+  if (now - lastPrune < PRUNE_INTERVAL) return;
+  lastPrune = now;
+  for (const [key, entry] of rateLimitMap) {
+    if (now > entry.resetTime) {
+      rateLimitMap.delete(key);
+    }
+  }
 }
 
 export default async function middleware(request: NextRequest) {

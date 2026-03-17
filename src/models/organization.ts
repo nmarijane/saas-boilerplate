@@ -1,4 +1,4 @@
-import { pgEnum, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { index, pgEnum, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 import { user } from "./user";
 
 export const organization = pgTable("organization", {
@@ -22,4 +22,7 @@ export const organizationMember = pgTable("organization_member", {
     .references(() => organization.id, { onDelete: "cascade" }),
   role: orgRoleEnum("role").notNull().default("member"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (t) => [
+  uniqueIndex("org_member_user_org_idx").on(t.userId, t.organizationId),
+  index("org_member_org_id_idx").on(t.organizationId),
+]);

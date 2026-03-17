@@ -1,15 +1,13 @@
-
+import { requireAdmin } from "@/features/auth/guards";
 import { Header } from "@/shared/components/layout/header";
 import { Sidebar } from "@/shared/components/layout/sidebar";
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // TODO: Check isAdmin via session — redirect to dashboard if not admin
-  // const session = await getSession();
-  // if (!session?.user?.isAdmin) redirect("/dashboard");
+  await requireAdmin();
 
   return (
     <div className="flex h-screen">

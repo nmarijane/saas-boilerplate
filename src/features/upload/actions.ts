@@ -1,6 +1,6 @@
 "use server";
 
-import { randomUUID } from "node:crypto";
+import { generateId } from "@/shared/utils/helpers";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { upload } from "@/models/upload";
@@ -22,7 +22,7 @@ export async function uploadFile(formData: FormData) {
     return { error: validation.error };
   }
 
-  const id = randomUUID();
+  const id = generateId();
   const storageKey = `${orgId}/${id}-${file.name}`;
   const buffer = Buffer.from(await file.arrayBuffer());
   const storage = getStorageAdapter();
