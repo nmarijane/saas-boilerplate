@@ -81,14 +81,16 @@ boilerplate/
 │   │   │   │   │   ├── organizations/
 │   │   │   │   │   └── metrics/
 │   │   │   │   └── layout.tsx
-│   │   │   ├── layout.tsx
-│   │   │   └── api/
-│   │   │       ├── auth/[...all]/
-│   │   │       ├── stripe/webhook/
-│   │   │       ├── upload/
-│   │   │       ├── notifications/
-│   │   │       └── feedback/
+│   │   │   └── layout.tsx
+│   │   ├── api/                             # Routes API hors [locale]
+│   │   │   ├── auth/[...all]/
+│   │   │   ├── stripe/webhook/
+│   │   │   ├── upload/
+│   │   │   │   └── [id]/
+│   │   │   ├── notifications/
+│   │   │   └── feedback/
 │   │   ├── global-error.tsx
+│   │   ├── not-found.tsx
 │   │   ├── robots.ts
 │   │   └── sitemap.ts
 │   ├── features/
@@ -160,7 +162,7 @@ boilerplate/
 
 ### Tables DB (gérées par Better Auth)
 
-- `user` — profil utilisateur
+- `user` — profil utilisateur. Champs custom ajoutés via l'extension du schema Better Auth : `isAdmin` (boolean, défaut false — flag superadmin global, distinct du RBAC par orga, défini manuellement en DB ou via CLI seed), `onboardingCompleted` (boolean, défaut false)
 - `session` — sessions actives
 - `account` — providers liés
 - `verification` — tokens de vérification
@@ -207,7 +209,7 @@ features/auth/
 3 responsabilités dans cet ordre :
 1. **i18n** — détection/redirection de locale via next-intl
 2. **Auth** — protection des routes `(app)` et `(admin)`
-3. **Rate limiting** — compteur en mémoire par IP sur les routes API
+3. **Rate limiting** — compteur en mémoire par IP sur les routes API. Note : en déploiement serverless (Vercel), le rate limiting en mémoire est inefficace car chaque invocation a son propre contexte. Pour la production serverless, utiliser un store externe (Upstash Redis, gratuit jusqu'à 10k requêtes/jour) ou s'appuyer sur les protections natives de Vercel. Le rate limiting en mémoire reste fonctionnel pour le déploiement Docker (single instance).
 
 ---
 
@@ -215,8 +217,8 @@ features/auth/
 
 ### Setup
 
-- Drizzle ORM avec driver `pg`
-- PGlite en local (fichier `local.db`, zéro config)
+- Drizzle ORM avec driver `pg` en production, driver `pglite` en local
+- PGlite en local (répertoire `local.db/`, zéro config) — le singleton DB dans `shared/lib/DB.ts` importe dynamiquement le bon driver selon la présence de `DATABASE_URL`
 - Migrations via Drizzle Kit
 - Drizzle Studio pour exploration en dev
 
@@ -224,7 +226,7 @@ features/auth/
 
 ```
 models/
-  ├── Schema.ts
+  ├── index.ts              # Ré-export de tous les schemas
   ├── user.ts
   ├── organization.ts
   ├── subscription.ts
@@ -384,7 +386,7 @@ Cards de stats, composants réutilisables : `StatCard`, `DataTable`, `EmptyState
 
 ### Admin panel
 
-Users, organizations, métriques (MRR). Accès via flag `isAdmin` sur `user`.
+Users, organizations, changelog (CRUD des entrées), métriques (MRR). Accès via flag `user.isAdmin` (superadmin global, distinct du RBAC par orga). Ce flag est défini manuellement en DB ou via le script `db:seed`.
 
 ### Structure `shared/components/`
 
@@ -471,7 +473,7 @@ features/notifications/
 ### Feedback widget
 
 - Bouton dans le header de l'app
-- Modal : type (bug/feature/autre) + message + screenshot optionnel
+- Modal : type (bug/feature/autre) + message + screenshot optionnel (utilise le système `features/upload/` existant)
 - Stocké en DB, gérable dans l'admin panel (statuts : new/reviewed/done)
 
 ### Structure `features/feedback/`
@@ -569,6 +571,36 @@ public/
 
 ---
 
+## Error Handling & Logging
+
+### Error handling
+
+- `global-error.tsx` — page d'erreur globale (erreurs non capturées)
+- `not-found.tsx` — page 404 personnalisée
+- Routes API : réponses d'erreur structurées `{ error: string, code: string, status: number }`
+- Composants client : toast notifications via shadcn/ui `sonner` pour les erreurs utilisateur
+- Chaque route group peut avoir son propre `error.tsx` pour des pages d'erreur contextuelles
+
+### Logging
+
+- LogTape initialisé dans `shared/lib/logger.ts`
+- Logger configuré avec niveaux : debug, info, warning, error
+- En dev : output console formaté
+- En production : output JSON (stdout), compatible avec n'importe quel agrégateur de logs
+- Chaque feature crée son propre logger enfant : `getLogger("billing")`, `getLogger("auth")`, etc.
+
+### Data fetching
+
+- **Server Components** par défaut — données fetchées côté serveur dans les composants async
+- **Server Actions** pour les mutations (formulaires, actions utilisateur)
+- **`queries.ts`** dans chaque feature — fonctions serveur-only (`"use server"`) qui requêtent la DB via Drizzle
+- **`actions.ts`** dans chaque feature — Server Actions pour les mutations avec validation Zod
+- **Revalidation** via `revalidatePath()` après les mutations
+- **Côté client** : les hooks dans `hooks/` utilisent `use()` ou du polling simple pour les données temps-réel (ex: notifications count)
+- Pas de React Query/SWR — on s'appuie sur le modèle RSC natif de Next.js pour la simplicité
+
+---
+
 ## Testing & DX
 
 ### Testing
@@ -639,4 +671,45 @@ Services docker-compose :
 | `db:studio` | Drizzle Studio |
 | `email:dev` | Preview React Email |
 | `storybook` | Storybook dev |
+| `db:seed` | Seeder (plans par défaut, admin user) |
 | `docker:up` | docker-compose up |
+
+---
+
+## Variables d'environnement
+
+Validées au build via T3 Env (`shared/lib/env.ts`).
+
+### Requises en production
+
+| Variable | Description |
+|---|---|
+| `DATABASE_URL` | URL PostgreSQL (omise en dev → PGlite) |
+| `BETTER_AUTH_SECRET` | Secret pour signer les sessions |
+| `BETTER_AUTH_URL` | URL de base de l'app (ex: `https://monapp.com`) |
+| `STRIPE_SECRET_KEY` | Clé secrète Stripe |
+| `STRIPE_WEBHOOK_SECRET` | Secret du webhook Stripe |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Clé publique Stripe |
+| `SMTP_HOST` | Hôte SMTP |
+| `SMTP_PORT` | Port SMTP |
+| `SMTP_USER` | Utilisateur SMTP |
+| `SMTP_PASS` | Mot de passe SMTP |
+| `EMAIL_FROM` | Adresse d'expédition (ex: `noreply@monapp.com`) |
+
+### Optionnelles
+
+| Variable | Description | Défaut |
+|---|---|---|
+| `STORAGE_ADAPTER` | Adaptateur de stockage | `local` |
+| `UPLOAD_MAX_SIZE` | Taille max upload en bytes | `10485760` (10MB) |
+| `S3_BUCKET` | Bucket S3 (si adapter S3) | — |
+| `S3_REGION` | Région S3 | — |
+| `S3_ACCESS_KEY` | Clé d'accès S3 | — |
+| `S3_SECRET_KEY` | Secret S3 | — |
+| `NEXT_PUBLIC_APP_URL` | URL publique de l'app | `http://localhost:3000` |
+
+### Seeding
+
+Script `db:seed` pour initialiser :
+- Les 3 plans par défaut (Free, Pro, Enterprise)
+- Un utilisateur admin (email/mot de passe configurables via env ou prompt interactif)
