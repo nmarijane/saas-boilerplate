@@ -1,0 +1,32 @@
+# SaaS Boilerplate
+
+> Production-ready Next.js boilerplate for building SaaS applications.
+
+## What is this?
+
+SaaS Boilerplate is a full-stack starter template for building Software-as-a-Service applications. It includes authentication, billing, multi-tenancy, and all the essential features you need to launch a SaaS product quickly.
+
+## Key Features
+
+- Authentication with email/password, social login, and MFA
+- Stripe billing with subscription management
+- Multi-tenant organizations with role-based access control
+- Internationalization (English and French)
+- Email notifications with React Email templates
+- File upload system
+- Admin panel
+- Dark/light theme support
+
+## Tech Stack
+
+- Next.js (App Router)
+- TypeScript
+- Tailwind CSS + shadcn/ui
+- Better Auth (self-hosted authentication)
+- Drizzle ORM + PostgreSQL
+- Stripe
+- React Email + Nodemailer
+
+## Getting Started
+
+Visit the documentation for setup instructions and guides.

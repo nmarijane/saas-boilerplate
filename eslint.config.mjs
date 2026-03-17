@@ -1,0 +1,27 @@
+import antfu from "@antfu/eslint-config";
+
+export default antfu(
+  {
+    typescript: true,
+    formatters: false,
+    stylistic: false,
+    ignores: [
+      "node_modules",
+      ".next",
+      "dist",
+      "migrations",
+      "local.db",
+    ],
+  },
+  {
+    files: ["*.config.ts", "*.config.mjs", "scripts/**"],
+    rules: {
+      "node/prefer-global/process": "off",
+    },
+  },
+  {
+    rules: {
+      "node/prefer-global/process": "off",
+    },
+  },
+);

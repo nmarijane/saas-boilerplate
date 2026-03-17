@@ -1,0 +1,49 @@
+# dependencies
+node_modules/
+
+# next.js
+.next/
+out/
+
+# production
+build/
+dist/
+
+# env files
+.env
+.env.local
+.env.*.local
+
+# debug
+npm-debug.log*
+
+# IDEs
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# PGlite local database
+local.db/
+
+# uploads
+uploads/
+
+# coverage
+coverage/
+
+# playwright
+test-results/
+playwright-report/
+
+# storybook
+storybook-static/
+
+# turbo
+.turbo/
+
+# vercel
+.vercel/

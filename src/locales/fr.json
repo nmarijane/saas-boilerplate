@@ -1,0 +1,154 @@
+{
+  "common": {
+    "appName": "SaaS Boilerplate",
+    "loading": "Chargement...",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "create": "Créer",
+    "back": "Retour",
+    "next": "Suivant",
+    "submit": "Envoyer",
+    "confirm": "Confirmer",
+    "search": "Rechercher",
+    "noResults": "Aucun résultat trouvé",
+    "error": "Une erreur est survenue",
+    "success": "Succès",
+    "or": "ou",
+    "and": "et"
+  },
+  "auth": {
+    "signIn": "Se connecter",
+    "signUp": "S'inscrire",
+    "signOut": "Se déconnecter",
+    "email": "Email",
+    "password": "Mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "forgotPassword": "Mot de passe oublié ?",
+    "resetPassword": "Réinitialiser le mot de passe",
+    "verifyEmail": "Vérifier l'email",
+    "noAccount": "Pas encore de compte ?",
+    "hasAccount": "Déjà un compte ?",
+    "orContinueWith": "Ou continuer avec",
+    "emailSent": "Email envoyé ! Vérifiez votre boîte de réception.",
+    "invalidCredentials": "Email ou mot de passe invalide",
+    "passwordMismatch": "Les mots de passe ne correspondent pas"
+  },
+  "dashboard": {
+    "title": "Tableau de bord",
+    "welcome": "Bienvenue, {name} !",
+    "overview": "Vue d'ensemble",
+    "recentActivity": "Activité récente",
+    "noActivity": "Aucune activité récente"
+  },
+  "billing": {
+    "title": "Facturation",
+    "currentPlan": "Plan actuel",
+    "upgrade": "Passer au plan supérieur",
+    "downgrade": "Passer au plan inférieur",
+    "manageBilling": "Gérer la facturation",
+    "free": "Gratuit",
+    "pro": "Pro",
+    "enterprise": "Enterprise",
+    "monthly": "Mensuel",
+    "yearly": "Annuel",
+    "perMonth": "/mois",
+    "features": "Fonctionnalités",
+    "getStarted": "Commencer",
+    "currentPlanBadge": "Actuel"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "profile": "Profil",
+    "name": "Nom",
+    "avatar": "Avatar",
+    "updateProfile": "Mettre à jour le profil",
+    "changePassword": "Changer le mot de passe",
+    "currentPassword": "Mot de passe actuel",
+    "newPassword": "Nouveau mot de passe",
+    "notifications": "Notifications",
+    "team": "Équipe",
+    "dangerZone": "Zone de danger",
+    "deleteAccount": "Supprimer le compte",
+    "deleteAccountWarning": "Cette action est irréversible."
+  },
+  "marketing": {
+    "hero": {
+      "title": "Construisez votre SaaS plus vite",
+      "subtitle": "Boilerplate prêt pour la production avec auth, facturation, et tout ce dont vous avez besoin.",
+      "cta": "Commencer"
+    },
+    "features": {
+      "title": "Tout ce dont vous avez besoin",
+      "subtitle": "Construit avec les meilleurs outils de l'écosystème."
+    },
+    "faq": {
+      "title": "Questions fréquentes"
+    },
+    "pricing": {
+      "title": "Tarifs simples et transparents",
+      "subtitle": "Choisissez le plan qui vous convient."
+    },
+    "about": {
+      "title": "À propos"
+    },
+    "changelog": {
+      "title": "Journal des modifications"
+    }
+  },
+  "admin": {
+    "title": "Administration",
+    "users": "Utilisateurs",
+    "organizations": "Organisations",
+    "metrics": "Métriques",
+    "changelog": "Changelog",
+    "totalUsers": "Utilisateurs totaux",
+    "totalOrgs": "Organisations totales",
+    "mrr": "MRR"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Tout marquer comme lu",
+    "noNotifications": "Aucune notification",
+    "info": "Info",
+    "warning": "Avertissement",
+    "error": "Erreur"
+  },
+  "feedback": {
+    "title": "Feedback",
+    "send": "Envoyer un feedback",
+    "type": "Type",
+    "bug": "Signaler un bug",
+    "feature": "Demande de fonctionnalité",
+    "other": "Autre",
+    "message": "Message",
+    "placeholder": "Dites-nous ce que vous en pensez...",
+    "success": "Merci pour votre feedback !"
+  },
+  "onboarding": {
+    "title": "Bienvenue ! Configurons votre compte.",
+    "step1": "Votre profil",
+    "step2": "Votre organisation",
+    "step3": "Inviter l'équipe",
+    "skipInvite": "Passer pour l'instant",
+    "complete": "Terminer la configuration"
+  },
+  "organization": {
+    "name": "Nom de l'organisation",
+    "slug": "Identifiant URL",
+    "members": "Membres",
+    "invite": "Inviter un membre",
+    "role": "Rôle",
+    "owner": "Propriétaire",
+    "admin": "Administrateur",
+    "member": "Membre",
+    "switchOrg": "Changer d'organisation",
+    "createOrg": "Créer une organisation"
+  },
+  "legal": {
+    "terms": "Conditions d'utilisation",
+    "privacy": "Politique de confidentialité",
+    "mentions": "Mentions légales"
+  }
+}

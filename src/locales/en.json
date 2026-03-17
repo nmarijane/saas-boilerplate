@@ -1,0 +1,154 @@
+{
+  "common": {
+    "appName": "SaaS Boilerplate",
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "confirm": "Confirm",
+    "search": "Search",
+    "noResults": "No results found",
+    "error": "An error occurred",
+    "success": "Success",
+    "or": "or",
+    "and": "and"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "signOut": "Sign Out",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "forgotPassword": "Forgot Password?",
+    "resetPassword": "Reset Password",
+    "verifyEmail": "Verify Email",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "orContinueWith": "Or continue with",
+    "emailSent": "Email sent! Check your inbox.",
+    "invalidCredentials": "Invalid email or password",
+    "passwordMismatch": "Passwords do not match"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome back, {name}!",
+    "overview": "Overview",
+    "recentActivity": "Recent Activity",
+    "noActivity": "No recent activity"
+  },
+  "billing": {
+    "title": "Billing",
+    "currentPlan": "Current Plan",
+    "upgrade": "Upgrade",
+    "downgrade": "Downgrade",
+    "manageBilling": "Manage Billing",
+    "free": "Free",
+    "pro": "Pro",
+    "enterprise": "Enterprise",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "perMonth": "/month",
+    "features": "Features",
+    "getStarted": "Get Started",
+    "currentPlanBadge": "Current"
+  },
+  "settings": {
+    "title": "Settings",
+    "profile": "Profile",
+    "name": "Name",
+    "avatar": "Avatar",
+    "updateProfile": "Update Profile",
+    "changePassword": "Change Password",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "notifications": "Notifications",
+    "team": "Team",
+    "dangerZone": "Danger Zone",
+    "deleteAccount": "Delete Account",
+    "deleteAccountWarning": "This action cannot be undone."
+  },
+  "marketing": {
+    "hero": {
+      "title": "Build your SaaS faster",
+      "subtitle": "Production-ready boilerplate with auth, billing, and everything you need.",
+      "cta": "Get Started"
+    },
+    "features": {
+      "title": "Everything you need",
+      "subtitle": "Built with the best tools in the ecosystem."
+    },
+    "faq": {
+      "title": "Frequently Asked Questions"
+    },
+    "pricing": {
+      "title": "Simple, transparent pricing",
+      "subtitle": "Choose the plan that fits your needs."
+    },
+    "about": {
+      "title": "About Us"
+    },
+    "changelog": {
+      "title": "Changelog"
+    }
+  },
+  "admin": {
+    "title": "Admin",
+    "users": "Users",
+    "organizations": "Organizations",
+    "metrics": "Metrics",
+    "changelog": "Changelog",
+    "totalUsers": "Total Users",
+    "totalOrgs": "Total Organizations",
+    "mrr": "MRR"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark all as read",
+    "noNotifications": "No notifications",
+    "info": "Info",
+    "warning": "Warning",
+    "error": "Error"
+  },
+  "feedback": {
+    "title": "Feedback",
+    "send": "Send Feedback",
+    "type": "Type",
+    "bug": "Bug Report",
+    "feature": "Feature Request",
+    "other": "Other",
+    "message": "Message",
+    "placeholder": "Tell us what you think...",
+    "success": "Thank you for your feedback!"
+  },
+  "onboarding": {
+    "title": "Welcome! Let's get you set up.",
+    "step1": "Your Profile",
+    "step2": "Your Organization",
+    "step3": "Invite Team",
+    "skipInvite": "Skip for now",
+    "complete": "Complete Setup"
+  },
+  "organization": {
+    "name": "Organization Name",
+    "slug": "URL Slug",
+    "members": "Members",
+    "invite": "Invite Member",
+    "role": "Role",
+    "owner": "Owner",
+    "admin": "Admin",
+    "member": "Member",
+    "switchOrg": "Switch Organization",
+    "createOrg": "Create Organization"
+  },
+  "legal": {
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "mentions": "Legal Notice"
+  }
+}

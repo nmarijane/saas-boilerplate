@@ -1,0 +1,12 @@
+node_modules
+.next
+local.db
+.git
+.gitignore
+*.md
+.env*
+.vscode
+.storybook
+tests
+docker
+uploads
