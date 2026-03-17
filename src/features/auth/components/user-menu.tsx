@@ -1,6 +1,7 @@
 "use client";
 
 import { LogOut, Settings, User } from "lucide-react";
+import { getInitials } from "@/shared/utils/helpers";
 import { useTranslations } from "next-intl";
 import { authClient } from "@/features/auth/auth-client";
 import { useSession } from "@/features/auth/hooks/use-session";
@@ -22,12 +23,7 @@ export function UserMenu() {
 
   if (!session?.user) return null;
 
-  const initials = session.user.name
-    ?.split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2) ?? "?";
+  const initials = session.user.name ? getInitials(session.user.name) : "?";
 
   const handleSignOut = async () => {
     await authClient.signOut();

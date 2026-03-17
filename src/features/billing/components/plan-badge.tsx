@@ -1,5 +1,6 @@
 import { Badge } from "@/shared/components/ui/badge";
 import { cn } from "@/shared/utils/cn";
+import { capitalize } from "@/shared/utils/helpers";
 
 const planColors: Record<string, string> = {
   free: "bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300",
@@ -9,7 +10,7 @@ const planColors: Record<string, string> = {
 };
 
 export function PlanBadge({ planId }: { planId: string }) {
-  const label = planId.charAt(0).toUpperCase() + planId.slice(1);
+  const label = capitalize(planId);
 
   return (
     <Badge variant="outline" className={cn(planColors[planId])}>

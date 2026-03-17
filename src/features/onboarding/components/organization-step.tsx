@@ -10,6 +10,7 @@ import { createOrganization } from "@/features/auth/organization/actions";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
+import { slugify } from "@/shared/utils/helpers";
 
 const orgSchema = z.object({
   name: z.string().min(1).max(100),
@@ -17,13 +18,6 @@ const orgSchema = z.object({
 });
 
 type OrgValues = z.infer<typeof orgSchema>;
-
-function slugify(str: string): string {
-  return str
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-}
 
 interface OrganizationStepProps {
   onComplete: () => void;

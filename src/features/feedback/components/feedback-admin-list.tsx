@@ -1,6 +1,7 @@
 "use client";
 
 import { Badge } from "@/shared/components/ui/badge";
+import { capitalize } from "@/shared/utils/helpers";
 import { Button } from "@/shared/components/ui/button";
 import {
   Select,
@@ -51,7 +52,7 @@ export function FeedbackAdminList({
                 onStatusFilter?.(status === "all" ? undefined : status)
               }
             >
-              {status.charAt(0).toUpperCase() + status.slice(1)}
+              {capitalize(status)}
             </Button>
           ))}
         </div>

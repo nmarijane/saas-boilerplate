@@ -1,6 +1,7 @@
 "use client";
 
 import { MoreHorizontal, UserMinus } from "lucide-react";
+import { getInitials } from "@/shared/utils/helpers";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -84,12 +85,7 @@ export function MembersList({
   return (
     <div className="space-y-3">
       {members.map((member) => {
-        const initials = member.userName
-          ?.split(" ")
-          .map((n) => n[0])
-          .join("")
-          .toUpperCase()
-          .slice(0, 2) ?? "?";
+        const initials = member.userName ? getInitials(member.userName) : "?";
 
         const isOwner = member.role === "owner";
         const isSelf = member.userId === currentUserId;

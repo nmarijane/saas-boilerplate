@@ -3,6 +3,7 @@
 import type {PlanConfig} from "../plans";
 import { useState } from "react";
 import { Badge } from "@/shared/components/ui/badge";
+import { capitalize } from "@/shared/utils/helpers";
 import { Button } from "@/shared/components/ui/button";
 import {
   Card,
@@ -153,7 +154,7 @@ export function PricingTable({
                       <span>
                         {value === -1 ? "Unlimited" : value}{" "}
                         {key === "storage" && value !== -1 ? "MB " : ""}
-                        {key.charAt(0).toUpperCase() + key.slice(1)}
+                        {capitalize(key)}
                       </span>
                     </li>
                   ))}

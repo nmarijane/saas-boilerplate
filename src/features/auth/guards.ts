@@ -3,6 +3,8 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { organizationMember } from "@/models/organization";
 import { db } from "@/shared/lib/DB";
+import type { OrgRole } from "@/shared/types";
+import { ROLE_HIERARCHY } from "@/shared/types";
 import { auth } from "./auth";
 
 export async function getServerSession() {
@@ -31,7 +33,7 @@ export async function requireAdmin() {
 export async function requireRole(
   orgId: string,
   userId: string,
-  minRole: "member" | "admin" | "owner",
+  minRole: OrgRole,
 ) {
   const session = await requireAuth();
 
@@ -52,9 +54,8 @@ export async function requireRole(
     redirect("/dashboard");
   }
 
-  const roleHierarchy = { member: 0, admin: 1, owner: 2 };
-  const userRoleLevel = roleHierarchy[member.role as keyof typeof roleHierarchy] ?? 0;
-  const requiredLevel = roleHierarchy[minRole];
+  const userRoleLevel = ROLE_HIERARCHY[member.role as OrgRole] ?? 0;
+  const requiredLevel = ROLE_HIERARCHY[minRole];
 
   if (userRoleLevel < requiredLevel) {
     redirect("/dashboard");
