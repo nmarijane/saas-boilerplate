@@ -59,6 +59,36 @@ src/
 - **Commits:** conventional commits (commitlint)
 - **Ne pas utiliser Clerk** — toujours Better Auth
 
+## Règles strictes de qualité
+
+### Zéro deprecated
+- **JAMAIS** utiliser d'API, de méthode, de package ou de pattern deprecated
+- Si une dépendance est deprecated, la remplacer immédiatement par son successeur officiel
+- Toujours utiliser la version stable la plus récente des API et des packages
+- Vérifier les changelogs et les guides de migration avant de choisir une approche
+
+### Zéro warning ignoré
+- **JAMAIS** ignorer les warnings (TypeScript, ESLint, React, Next.js, build)
+- **JAMAIS** utiliser `@ts-ignore`, `@ts-expect-error`, `eslint-disable` ou `// @ts-nocheck` — corriger le problème à la source
+- **JAMAIS** utiliser `any` — toujours typer correctement, utiliser `unknown` si le type est inconnu puis narrower
+- Les warnings sont des bugs en attente — les traiter comme des erreurs
+- Si un warning semble impossible à résoudre, documenter pourquoi et proposer une solution
+
+### Sécurité
+- Valider toutes les entrées utilisateur (Zod côté serveur, jamais faire confiance au client)
+- Utiliser des requêtes paramétrées (Drizzle ORM gère ça nativement, ne jamais construire du SQL à la main)
+- Protéger contre XSS, CSRF, injection SQL et les autres vulnérabilités OWASP Top 10
+- Toujours vérifier les permissions côté serveur (ne jamais se fier à des vérifications côté client uniquement)
+- Ne jamais exposer de secrets, clés API ou données sensibles côté client
+- Utiliser des headers de sécurité appropriés (CSP, HSTS, etc.)
+
+### Future-proof
+- Privilégier les API stables et les patterns recommandés par la documentation officielle
+- Utiliser les dernières versions LTS de Node.js et les versions stables des frameworks
+- Éviter les `experimental` features sauf si elles sont en voie de stabilisation
+- Écrire du code qui n'aura pas besoin d'être réécrit à la prochaine version majeure
+- Préférer les standards web natifs (Fetch API, Web Crypto, Web Streams) aux abstractions tierces quand c'est possible
+
 ## Design doc
 
 Le design complet est dans `docs/superpowers/specs/2026-03-17-saas-boilerplate-design.md`
