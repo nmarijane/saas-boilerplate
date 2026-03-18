@@ -1,7 +1,6 @@
 "use client";
 
 import { LogOut, Settings, User } from "lucide-react";
-import { getInitials } from "@/shared/utils/helpers";
 import { useTranslations } from "next-intl";
 import { authClient } from "@/features/auth/auth-client";
 import { useSession } from "@/features/auth/hooks/use-session";
@@ -14,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
 import { useRouter } from "@/shared/lib/i18n-navigation";
+import { getInitials } from "@/shared/utils/helpers";
 
 export function UserMenu() {
   const t = useTranslations("auth");

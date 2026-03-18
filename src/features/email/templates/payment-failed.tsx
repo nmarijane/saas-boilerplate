@@ -11,32 +11,6 @@ interface PaymentFailedEmailProps {
   buttonText?: string;
 }
 
-export function PaymentFailedEmail({
-  name,
-  planName,
-  billingUrl,
-  previewText = "Payment failed",
-  heading = "Payment failed",
-  bodyText,
-  buttonText = "Update Payment Method",
-}: PaymentFailedEmailProps) {
-  return (
-    <BaseLayout preview={previewText}>
-      <Heading style={h1}>{heading}</Heading>
-      <Text style={text}>Hi {name},</Text>
-      <Text style={text}>
-        {bodyText ??
-          `We were unable to process the payment for your ${planName} plan. Please update your payment method to avoid service interruption.`}
-      </Text>
-      <Button style={button} href={billingUrl}>
-        {buttonText}
-      </Button>
-    </BaseLayout>
-  );
-}
-
-export default PaymentFailedEmail;
-
 const h1 = {
   color: "#1d1c1d",
   fontSize: "24px",
@@ -63,3 +37,29 @@ const button = {
   padding: "12px 24px",
   margin: "24px 0",
 };
+
+export function PaymentFailedEmail({
+  name,
+  planName,
+  billingUrl,
+  previewText = "Payment failed",
+  heading = "Payment failed",
+  bodyText,
+  buttonText = "Update Payment Method",
+}: PaymentFailedEmailProps) {
+  return (
+    <BaseLayout preview={previewText}>
+      <Heading style={h1}>{heading}</Heading>
+      <Text style={text}>Hi {name},</Text>
+      <Text style={text}>
+        {bodyText ??
+          `We were unable to process the payment for your ${planName} plan. Please update your payment method to avoid service interruption.`}
+      </Text>
+      <Button style={button} href={billingUrl}>
+        {buttonText}
+      </Button>
+    </BaseLayout>
+  );
+}
+
+export default PaymentFailedEmail;

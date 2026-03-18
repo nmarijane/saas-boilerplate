@@ -1,9 +1,9 @@
+import type { OrgRole } from "@/shared/types";
 import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { organizationMember } from "@/models/organization";
 import { db } from "@/shared/lib/DB";
-import type { OrgRole } from "@/shared/types";
 import { ROLE_HIERARCHY } from "@/shared/types";
 import { auth } from "./auth";
 

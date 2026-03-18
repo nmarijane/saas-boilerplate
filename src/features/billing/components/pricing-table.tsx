@@ -3,7 +3,6 @@
 import type {PlanConfig} from "../plans";
 import { useState } from "react";
 import { Badge } from "@/shared/components/ui/badge";
-import { capitalize } from "@/shared/utils/helpers";
 import { Button } from "@/shared/components/ui/button";
 import {
   Card,
@@ -14,6 +13,7 @@ import {
   CardTitle,
 } from "@/shared/components/ui/card";
 import { cn } from "@/shared/utils/cn";
+import { capitalize } from "@/shared/utils/helpers";
 import { FEATURE_LABELS,  PLANS } from "../plans";
 
 type BillingInterval = "monthly" | "yearly";
@@ -62,7 +62,6 @@ function XIcon() {
 
 export function PricingTable({
   currentPlanId,
-  orgId,
   onSelectPlan,
 }: PricingTableProps) {
   const [interval, setInterval] = useState<BillingInterval>("monthly");

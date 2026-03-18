@@ -1,3 +1,4 @@
+import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { drizzle as drizzlePglite } from "drizzle-orm/pglite";
 import * as schema from "@/models";
@@ -10,8 +11,6 @@ function createDb() {
   }
 
   // PGlite for local development (no DATABASE_URL)
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { PGlite } = require("@electric-sql/pglite") as typeof import("@electric-sql/pglite");
   const client = new PGlite("./local.db");
   return drizzlePglite(client, { schema });
 }

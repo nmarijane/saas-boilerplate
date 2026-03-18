@@ -1,10 +1,11 @@
 "use server";
 
-import { generateId } from "@/shared/utils/helpers";
+import { Buffer } from "node:buffer";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { upload } from "@/models/upload";
 import { db } from "@/shared/lib/DB";
+import { generateId } from "@/shared/utils/helpers";
 import { getStorageAdapter } from "./storage/adapter";
 import { validateFile } from "./validation";
 
@@ -25,7 +26,7 @@ export async function uploadFile(formData: FormData) {
   const id = generateId();
   const storageKey = `${orgId}/${id}-${file.name}`;
   const buffer = Buffer.from(await file.arrayBuffer());
-  const storage = getStorageAdapter();
+  const storage = await getStorageAdapter();
 
   await storage.put(storageKey, buffer, file.type);
 
@@ -54,7 +55,7 @@ export async function deleteFile(uploadId: string) {
     return { error: "File not found" };
   }
 
-  const storage = getStorageAdapter();
+  const storage = await getStorageAdapter();
   await storage.delete(record.storageKey);
 
   await db.delete(upload).where(eq(upload.id, uploadId));

@@ -12,32 +12,6 @@ interface ResetPasswordProps {
   ignoreText?: string;
 }
 
-export function ResetPassword({
-  name,
-  resetUrl,
-  previewText = "Reset your password",
-  heading = "Reset your password",
-  bodyText = "We received a request to reset your password. Click the button below to choose a new one.",
-  buttonText = "Reset Password",
-  expiryText = "This link will expire in 1 hour.",
-  ignoreText = "If you didn't request this, you can safely ignore this email.",
-}: ResetPasswordProps) {
-  return (
-    <BaseLayout preview={previewText}>
-      <Heading style={h1}>{heading}</Heading>
-      <Text style={text}>Hi {name},</Text>
-      <Text style={text}>{bodyText}</Text>
-      <Button style={button} href={resetUrl}>
-        {buttonText}
-      </Button>
-      <Text style={muted}>{expiryText}</Text>
-      <Text style={muted}>{ignoreText}</Text>
-    </BaseLayout>
-  );
-}
-
-export default ResetPassword;
-
 const h1 = {
   color: "#1d1c1d",
   fontSize: "24px",
@@ -70,3 +44,29 @@ const muted = {
   fontSize: "14px",
   lineHeight: "20px",
 };
+
+export function ResetPassword({
+  name,
+  resetUrl,
+  previewText = "Reset your password",
+  heading = "Reset your password",
+  bodyText = "We received a request to reset your password. Click the button below to choose a new one.",
+  buttonText = "Reset Password",
+  expiryText = "This link will expire in 1 hour.",
+  ignoreText = "If you didn't request this, you can safely ignore this email.",
+}: ResetPasswordProps) {
+  return (
+    <BaseLayout preview={previewText}>
+      <Heading style={h1}>{heading}</Heading>
+      <Text style={text}>Hi {name},</Text>
+      <Text style={text}>{bodyText}</Text>
+      <Button style={button} href={resetUrl}>
+        {buttonText}
+      </Button>
+      <Text style={muted}>{expiryText}</Text>
+      <Text style={muted}>{ignoreText}</Text>
+    </BaseLayout>
+  );
+}
+
+export default ResetPassword;

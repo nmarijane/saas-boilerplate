@@ -1,12 +1,10 @@
 "use client";
 
-import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { authClient } from "@/features/auth/auth-client";
 import { Button } from "@/shared/components/ui/button";
 
 export function SocialButtons() {
-  const t = useTranslations("auth");
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleSocialSignIn = async (provider: "google" | "github") => {

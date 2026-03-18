@@ -1,7 +1,6 @@
 "use client";
 
 import { Badge } from "@/shared/components/ui/badge";
-import { capitalize } from "@/shared/utils/helpers";
 import { Button } from "@/shared/components/ui/button";
 import {
   Select,
@@ -10,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
+import { capitalize } from "@/shared/utils/helpers";
 import { updateFeedbackStatus } from "../actions";
 
 interface FeedbackItem {

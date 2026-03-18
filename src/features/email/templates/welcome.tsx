@@ -10,28 +10,6 @@ interface WelcomeEmailProps {
   buttonText?: string;
 }
 
-export function WelcomeEmail({
-  name,
-  dashboardUrl,
-  previewText = "Welcome to our platform!",
-  heading = "Welcome aboard!",
-  bodyText = "We're excited to have you. Your account has been created and you're ready to get started.",
-  buttonText = "Go to Dashboard",
-}: WelcomeEmailProps) {
-  return (
-    <BaseLayout preview={previewText}>
-      <Heading style={h1}>{heading}</Heading>
-      <Text style={text}>Hi {name},</Text>
-      <Text style={text}>{bodyText}</Text>
-      <Button style={button} href={dashboardUrl}>
-        {buttonText}
-      </Button>
-    </BaseLayout>
-  );
-}
-
-export default WelcomeEmail;
-
 const h1 = {
   color: "#1d1c1d",
   fontSize: "24px",
@@ -58,3 +36,25 @@ const button = {
   padding: "12px 24px",
   margin: "24px 0",
 };
+
+export function WelcomeEmail({
+  name,
+  dashboardUrl,
+  previewText = "Welcome to our platform!",
+  heading = "Welcome aboard!",
+  bodyText = "We're excited to have you. Your account has been created and you're ready to get started.",
+  buttonText = "Go to Dashboard",
+}: WelcomeEmailProps) {
+  return (
+    <BaseLayout preview={previewText}>
+      <Heading style={h1}>{heading}</Heading>
+      <Text style={text}>Hi {name},</Text>
+      <Text style={text}>{bodyText}</Text>
+      <Button style={button} href={dashboardUrl}>
+        {buttonText}
+      </Button>
+    </BaseLayout>
+  );
+}
+
+export default WelcomeEmail;

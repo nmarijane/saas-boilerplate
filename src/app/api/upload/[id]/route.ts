@@ -18,7 +18,7 @@ export async function GET(
       );
     }
 
-    const storage = getStorageAdapter();
+    const storage = await getStorageAdapter();
     const buffer = await storage.get(file.storageKey);
 
     return new NextResponse(new Uint8Array(buffer), {

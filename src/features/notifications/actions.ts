@@ -1,10 +1,10 @@
 "use server";
 
-import { generateId } from "@/shared/utils/helpers";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { notification } from "@/models/notification";
 import { db } from "@/shared/lib/DB";
+import { generateId } from "@/shared/utils/helpers";
 
 interface CreateNotificationInput {
   title: string;

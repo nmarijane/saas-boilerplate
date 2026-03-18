@@ -1,4 +1,5 @@
 import type { StorageAdapter } from "./adapter";
+import { Buffer } from "node:buffer";
 import {
   DeleteObjectCommand,
   GetObjectCommand,

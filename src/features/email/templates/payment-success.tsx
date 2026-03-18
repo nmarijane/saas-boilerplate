@@ -13,6 +13,28 @@ interface PaymentSuccessEmailProps {
   amountLabel?: string;
 }
 
+const h1 = {
+  color: "#1d1c1d",
+  fontSize: "24px",
+  fontWeight: "700" as const,
+  margin: "30px 0",
+  padding: "0",
+};
+
+const text = {
+  color: "#484848",
+  fontSize: "16px",
+  lineHeight: "24px",
+};
+
+const detail = {
+  color: "#484848",
+  fontSize: "14px",
+  lineHeight: "20px",
+  margin: "4px 0",
+  paddingLeft: "12px",
+};
+
 export function PaymentSuccessEmail({
   name,
   planName,
@@ -41,25 +63,3 @@ export function PaymentSuccessEmail({
 }
 
 export default PaymentSuccessEmail;
-
-const h1 = {
-  color: "#1d1c1d",
-  fontSize: "24px",
-  fontWeight: "700" as const,
-  margin: "30px 0",
-  padding: "0",
-};
-
-const text = {
-  color: "#484848",
-  fontSize: "16px",
-  lineHeight: "24px",
-};
-
-const detail = {
-  color: "#484848",
-  fontSize: "14px",
-  lineHeight: "20px",
-  margin: "4px 0",
-  paddingLeft: "12px",
-};

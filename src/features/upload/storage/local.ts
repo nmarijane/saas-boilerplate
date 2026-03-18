@@ -1,3 +1,4 @@
+import type { Buffer } from "node:buffer";
 import type { StorageAdapter } from "./adapter";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";

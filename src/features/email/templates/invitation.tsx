@@ -12,6 +12,39 @@ interface InvitationEmailProps {
   expiryText?: string;
 }
 
+const h1 = {
+  color: "#1d1c1d",
+  fontSize: "24px",
+  fontWeight: "700" as const,
+  margin: "30px 0",
+  padding: "0",
+};
+
+const text = {
+  color: "#484848",
+  fontSize: "16px",
+  lineHeight: "24px",
+};
+
+const button = {
+  backgroundColor: "#000000",
+  borderRadius: "6px",
+  color: "#ffffff",
+  fontSize: "16px",
+  fontWeight: "600" as const,
+  textDecoration: "none",
+  textAlign: "center" as const,
+  display: "block",
+  padding: "12px 24px",
+  margin: "24px 0",
+};
+
+const muted = {
+  color: "#8898aa",
+  fontSize: "14px",
+  lineHeight: "20px",
+};
+
 export function InvitationEmail({
   inviterName,
   organizationName,
@@ -45,36 +78,3 @@ export function InvitationEmail({
 }
 
 export default InvitationEmail;
-
-const h1 = {
-  color: "#1d1c1d",
-  fontSize: "24px",
-  fontWeight: "700" as const,
-  margin: "30px 0",
-  padding: "0",
-};
-
-const text = {
-  color: "#484848",
-  fontSize: "16px",
-  lineHeight: "24px",
-};
-
-const button = {
-  backgroundColor: "#000000",
-  borderRadius: "6px",
-  color: "#ffffff",
-  fontSize: "16px",
-  fontWeight: "600" as const,
-  textDecoration: "none",
-  textAlign: "center" as const,
-  display: "block",
-  padding: "12px 24px",
-  margin: "24px 0",
-};
-
-const muted = {
-  color: "#8898aa",
-  fontSize: "14px",
-  lineHeight: "20px",
-};

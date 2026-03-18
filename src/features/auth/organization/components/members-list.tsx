@@ -1,7 +1,6 @@
 "use client";
 
 import { MoreHorizontal, UserMinus } from "lucide-react";
-import { getInitials } from "@/shared/utils/helpers";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -24,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
+import { getInitials } from "@/shared/utils/helpers";
 import { RoleBadge } from "./role-badge";
 
 interface Member {
