@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
+import { redirect } from "next/navigation";
 
 import { ApiKeyList } from "@/features/api-keys/components/api-key-list";
 import { getApiKeysForOrg } from "@/features/api-keys/queries";
 import { requireAuth } from "@/features/auth/guards";
+import { getActiveOrgId } from "@/features/auth/organization/active-org";
 import { WebhookList } from "@/features/webhooks/components/webhook-list";
 import { getWebhookEndpointsForOrg } from "@/features/webhooks/queries";
 import { PageHeader } from "@/shared/components/data/page-header";
@@ -32,8 +34,10 @@ export default async function ApiSettingsPage({ params }: Props) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "settings" });
 
-  // TODO: Replace with actual active org ID from session/context
-  const orgId = "";
+  const orgId = await getActiveOrgId();
+  if (!orgId) {
+    redirect("/dashboard");
+  }
 
   let apiKeys: Awaited<ReturnType<typeof getApiKeysForOrg>> = [];
   let webhooks: Awaited<ReturnType<typeof getWebhookEndpointsForOrg>> = [];

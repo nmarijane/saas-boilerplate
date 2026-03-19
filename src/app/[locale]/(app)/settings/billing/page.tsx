@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+
+import { getActiveOrgId } from "@/features/auth/organization/active-org";
 import { BillingSettings } from "@/features/billing/components/billing-settings";
 import { getSubscriptionForOrg } from "@/features/billing/helpers";
 
@@ -7,13 +10,10 @@ export const metadata: Metadata = {
   description: "Manage your subscription and billing settings.",
 };
 
-// TODO: Replace with actual org ID from session/context when auth is wired
-async function getCurrentOrgId(): Promise<string> {
-  return "placeholder-org-id";
-}
-
 export default async function BillingPage() {
-  const orgId = await getCurrentOrgId();
+  const orgId = await getActiveOrgId();
+  if (!orgId) redirect("/dashboard");
+
   const { planId, status, subscription } = await getSubscriptionForOrg(orgId);
 
   return (
