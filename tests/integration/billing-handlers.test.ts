@@ -35,12 +35,19 @@ function makeStripeSubscription(
 ): Stripe.Subscription {
   return {
     id: STRIPE_SUB_ID,
-    items: { data: [{ price: { id: PRICE_PRO } }] } as unknown as Stripe.ApiList<Stripe.SubscriptionItem>,
-    current_period_end: PERIOD_END,
+    items: { data: [{ price: { id: PRICE_PRO }, current_period_end: PERIOD_END }] } as unknown as Stripe.ApiList<Stripe.SubscriptionItem>,
     status: "active",
     metadata: { orgId: BILL_ORG },
     ...overrides,
   } as unknown as Stripe.Subscription;
+}
+
+function makeStripeInvoice(subscriptionId: string | null): Stripe.Invoice {
+  return {
+    parent: subscriptionId
+      ? { subscription_details: { subscription: subscriptionId } }
+      : null,
+  } as unknown as Stripe.Invoice;
 }
 
 describe("billing webhook handlers", () => {
@@ -170,11 +177,7 @@ describe("billing webhook handlers", () => {
         "@/features/billing/webhook-handlers"
       );
 
-      const invoice = {
-        subscription: STRIPE_SUB_ID,
-      } as unknown as Stripe.Invoice;
-
-      await handleInvoicePaid(invoice);
+      await handleInvoicePaid(makeStripeInvoice(STRIPE_SUB_ID));
 
       const subs = await testDb
         .select()
@@ -196,11 +199,7 @@ describe("billing webhook handlers", () => {
         "@/features/billing/webhook-handlers"
       );
 
-      const invoice = {
-        subscription: null,
-      } as unknown as Stripe.Invoice;
-
-      await handleInvoicePaid(invoice);
+      await handleInvoicePaid(makeStripeInvoice(null));
       expect(emitEvent).not.toHaveBeenCalled();
     });
 
@@ -209,11 +208,7 @@ describe("billing webhook handlers", () => {
         "@/features/billing/webhook-handlers"
       );
 
-      const invoice = {
-        subscription: "sub_nonexistent",
-      } as unknown as Stripe.Invoice;
-
-      await handleInvoicePaid(invoice);
+      await handleInvoicePaid(makeStripeInvoice("sub_nonexistent"));
       expect(emitEvent).not.toHaveBeenCalled();
     });
   });
@@ -230,11 +225,7 @@ describe("billing webhook handlers", () => {
         "@/features/billing/webhook-handlers"
       );
 
-      const invoice = {
-        subscription: STRIPE_SUB_ID,
-      } as unknown as Stripe.Invoice;
-
-      await handleInvoicePaymentFailed(invoice);
+      await handleInvoicePaymentFailed(makeStripeInvoice(STRIPE_SUB_ID));
 
       const subs = await testDb
         .select()
@@ -256,11 +247,7 @@ describe("billing webhook handlers", () => {
         "@/features/billing/webhook-handlers"
       );
 
-      const invoice = {
-        subscription: null,
-      } as unknown as Stripe.Invoice;
-
-      await handleInvoicePaymentFailed(invoice);
+      await handleInvoicePaymentFailed(makeStripeInvoice(null));
       expect(emitEvent).not.toHaveBeenCalled();
     });
   });

@@ -14,11 +14,8 @@ export default defineConfig({
     setupFiles: ["./tests/setup.ts"],
     testTimeout: 15000,
     hookTimeout: 30000,
-    pool: "forks",
-    poolOptions: {
-      forks: {
-        singleFork: true,
-      },
+    sequence: {
+      concurrent: false,
     },
     coverage: {
       provider: "v8",

@@ -49,7 +49,7 @@ export async function handleCheckoutCompleted(
         status: "active",
         planId,
         currentPeriodEnd: new Date(
-          stripeSubscription.current_period_end * 1000
+          stripeSubscription.items.data[0].current_period_end * 1000
         ),
         updatedAt: new Date(),
       })
@@ -63,7 +63,7 @@ export async function handleCheckoutCompleted(
       status: "active",
       planId,
       currentPeriodEnd: new Date(
-        stripeSubscription.current_period_end * 1000
+        stripeSubscription.items.data[0].current_period_end * 1000
       ),
     });
   }
@@ -77,7 +77,7 @@ export async function handleCheckoutCompleted(
 }
 
 export async function handleInvoicePaid(invoice: Stripe.Invoice) {
-  const stripeSubscriptionId = invoice.subscription as string | null;
+  const stripeSubscriptionId = invoice.parent?.subscription_details?.subscription as string | null;
   if (!stripeSubscriptionId) return;
 
   const sub = await db.query.subscription.findFirst({
@@ -102,7 +102,7 @@ export async function handleInvoicePaid(invoice: Stripe.Invoice) {
 }
 
 export async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
-  const stripeSubscriptionId = invoice.subscription as string | null;
+  const stripeSubscriptionId = invoice.parent?.subscription_details?.subscription as string | null;
   if (!stripeSubscriptionId) return;
 
   const sub = await db.query.subscription.findFirst({
@@ -146,7 +146,7 @@ export async function handleSubscriptionUpdated(
       status: stripeSubscription.status === "active" ? "active" : "past_due",
       planId,
       currentPeriodEnd: new Date(
-        stripeSubscription.current_period_end * 1000
+        stripeSubscription.items.data[0].current_period_end * 1000
       ),
       updatedAt: new Date(),
     })
