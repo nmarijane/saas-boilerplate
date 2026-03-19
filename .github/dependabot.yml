@@ -18,24 +18,24 @@ updates:
           - patch
       react:
         patterns:
-          - "react"
-          - "react-dom"
+          - react
+          - react-dom
           - "@types/react*"
       next:
         patterns:
-          - "next"
+          - next
           - "next-*"
           - "@next/*"
       drizzle:
         patterns:
-          - "drizzle-orm"
-          - "drizzle-kit"
+          - drizzle-orm
+          - drizzle-kit
       testing:
         patterns:
-          - "vitest"
+          - vitest
           - "@playwright/*"
-          - "playwright"
-          - "storybook"
+          - playwright
+          - storybook
           - "@storybook/*"
         update-types:
           - minor
