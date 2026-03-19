@@ -11,6 +11,7 @@ export default antfu(
       "dist",
       "migrations",
       "local.db",
+      "docs",
     ],
   },
   {
