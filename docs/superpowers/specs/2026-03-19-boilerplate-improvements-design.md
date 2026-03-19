@@ -308,7 +308,7 @@ Toutes optionnelles — le boilerplate fonctionne sans elles (fallback memory ra
 
 ## Migrations DB
 
-4 nouvelles tables (`audit_log`, `api_key`, `webhook_endpoint`, `webhook_delivery`, `feature_flag`) + la table `webhook_delivery`. Ajout des modèles dans `src/models/` et export depuis `src/models/index.ts`. Migration générée via `npm run db:generate`.
+5 nouvelles tables : `audit_log`, `api_key`, `webhook_endpoint`, `webhook_delivery`, `feature_flag`. Ajout des modèles dans `src/models/` et export depuis `src/models/index.ts`. Migration générée via `npm run db:generate`.
 
 ## i18n
 
