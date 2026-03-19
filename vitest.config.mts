@@ -15,6 +15,19 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "lcov"],
+      include: [
+        "src/features/**/actions.ts",
+        "src/features/**/queries.ts",
+        "src/features/**/helpers.ts",
+        "src/features/**/helpers/*.ts",
+        "src/features/events/**/*.ts",
+        "src/features/webhooks/matching.ts",
+        "src/features/billing/webhook-handlers.ts",
+        "src/shared/utils/helpers.ts",
+        "src/shared/lib/rate-limit/memory.ts",
+        "src/features/feature-flags/helpers.ts",
+        "src/features/api-keys/helpers.ts",
+      ],
     },
   },
 });
