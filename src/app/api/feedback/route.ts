@@ -1,21 +1,25 @@
 import { NextResponse } from "next/server";
+import { requireApiAuth } from "@/features/auth/api-auth";
 import { submitFeedback, updateFeedbackStatus } from "@/features/feedback/actions";
 import { getFeedbacks } from "@/features/feedback/queries";
 
 export async function POST(request: Request) {
+  const auth = await requireApiAuth();
+  if (!auth.authenticated) return auth.response;
+
   try {
     const body = await request.json();
-    const { userId, orgId, type, message, screenshotId } = body;
+    const { type, message, orgId, screenshotId } = body;
 
-    if (!userId || !type || !message) {
+    if (!type || !message) {
       return NextResponse.json(
-        { error: "userId, type, and message are required", code: "MISSING_FIELDS", status: 400 },
+        { error: "type and message are required", code: "MISSING_FIELDS", status: 400 },
         { status: 400 },
       );
     }
 
     const result = await submitFeedback({
-      userId,
+      userId: auth.session.user.id,
       orgId,
       type,
       message,
@@ -32,6 +36,9 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: Request) {
+  const auth = await requireApiAuth();
+  if (!auth.authenticated) return auth.response;
+
   try {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") ?? undefined;
@@ -48,6 +55,16 @@ export async function GET(request: Request) {
 }
 
 export async function PATCH(request: Request) {
+  const auth = await requireApiAuth();
+  if (!auth.authenticated) return auth.response;
+
+  if (!auth.session.user.isAdmin) {
+    return NextResponse.json(
+      { error: "Forbidden", code: "FORBIDDEN", status: 403 },
+      { status: 403 },
+    );
+  }
+
   try {
     const body = await request.json();
     const { feedbackId, status } = body;

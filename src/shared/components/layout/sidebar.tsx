@@ -20,6 +20,8 @@ import {
 import { usePathname } from "@/shared/lib/i18n-navigation";
 import { cn } from "@/shared/utils/cn";
 
+const LOCALE_PREFIX_RE = /^\/(en|fr)/;
+
 interface NavItem {
   label: string;
   href: string;
@@ -55,7 +57,7 @@ export function Sidebar({
   const pathname = usePathname();
 
   const isActive = (href: string) => {
-    const cleanPath = pathname.replace(/^\/(en|fr)/, "");
+    const cleanPath = pathname.replace(LOCALE_PREFIX_RE, "");
     return cleanPath.startsWith(href);
   };
 

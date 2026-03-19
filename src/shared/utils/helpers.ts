@@ -2,6 +2,10 @@ import type {ClassValue} from "clsx";
 import {  clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+const DIACRITICS_RE = /[\u0300-\u036F]/g;
+const NON_ALPHANUMERIC_RE = /[^a-z0-9]+/g;
+const LEADING_TRAILING_HYPHEN_RE = /(^-|-$)/g;
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -14,9 +18,9 @@ export function slugify(text: string): string {
   return text
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036F]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
+    .replace(DIACRITICS_RE, "")
+    .replace(NON_ALPHANUMERIC_RE, "-")
+    .replace(LEADING_TRAILING_HYPHEN_RE, "");
 }
 
 export function formatCurrency(amount: number, currency = "USD"): string {

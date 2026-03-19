@@ -47,11 +47,11 @@ export function OrganizationStep({ onComplete, onBack }: OrganizationStepProps) 
   }, [name, setValue]);
 
   const onSubmit = async (data: OrgValues) => {
-    try {
-      await createOrganization(data);
+    const result = await createOrganization(data);
+    if (result.success) {
       onComplete();
-    } catch {
-      toast.error(tCommon("error"));
+    } else {
+      toast.error(result.error);
     }
   };
 

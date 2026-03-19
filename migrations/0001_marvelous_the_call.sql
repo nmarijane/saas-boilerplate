@@ -1,0 +1,1 @@
+CREATE INDEX "subscription_org_id_idx" ON "subscription" USING btree ("organization_id");

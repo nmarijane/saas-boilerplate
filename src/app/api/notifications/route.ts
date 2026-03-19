@@ -1,19 +1,15 @@
 import { NextResponse } from "next/server";
+import { requireApiAuth } from "@/features/auth/api-auth";
 import { markAllRead, markAsRead } from "@/features/notifications/actions";
 import { getNotifications, getUnreadCount } from "@/features/notifications/queries";
 
 export async function GET(request: Request) {
+  const auth = await requireApiAuth();
+  if (!auth.authenticated) return auth.response;
+
   try {
+    const userId = auth.session.user.id;
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: "userId is required", code: "MISSING_USER_ID", status: 400 },
-        { status: 400 },
-      );
-    }
-
     const countOnly = searchParams.get("countOnly") === "true";
 
     if (countOnly) {
@@ -35,17 +31,20 @@ export async function GET(request: Request) {
 }
 
 export async function PATCH(request: Request) {
+  const auth = await requireApiAuth();
+  if (!auth.authenticated) return auth.response;
+
   try {
     const body = await request.json();
-    const { action, notifId, userId } = body;
+    const { action, notifId } = body;
 
     if (action === "markRead" && notifId) {
       await markAsRead(notifId);
       return NextResponse.json({ success: true });
     }
 
-    if (action === "markAllRead" && userId) {
-      await markAllRead(userId);
+    if (action === "markAllRead") {
+      await markAllRead();
       return NextResponse.json({ success: true });
     }
 

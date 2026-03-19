@@ -1,0 +1,49 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 10
+    groups:
+      eslint:
+        patterns:
+          - "eslint*"
+          - "@eslint*"
+          - "@antfu/eslint-config"
+          - "@typescript-eslint*"
+        update-types:
+          - minor
+          - patch
+      react:
+        patterns:
+          - react
+          - react-dom
+          - "@types/react*"
+      next:
+        patterns:
+          - next
+          - "next-*"
+          - "@next/*"
+      drizzle:
+        patterns:
+          - drizzle-orm
+          - drizzle-kit
+      testing:
+        patterns:
+          - vitest
+          - "@playwright/*"
+          - playwright
+          - storybook
+          - "@storybook/*"
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5

@@ -89,6 +89,11 @@ src/
 - Écrire du code qui n'aura pas besoin d'être réécrit à la prochaine version majeure
 - Préférer les standards web natifs (Fetch API, Web Crypto, Web Streams) aux abstractions tierces quand c'est possible
 
+## Setup d'un nouveau projet
+
+Le guide complet pour initialiser un nouveau SaaS depuis ce boilerplate est dans `docs/SETUP.md`.
+Il couvre : clonage, configuration des env vars (avec où les obtenir), suppression des modules inutiles, personnalisation, déploiement.
+
 ## Design doc
 
 Le design complet est dans `docs/superpowers/specs/2026-03-17-saas-boilerplate-design.md`

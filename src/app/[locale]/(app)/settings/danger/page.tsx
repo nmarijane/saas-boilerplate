@@ -2,8 +2,11 @@
 
 import { AlertTriangleIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
 
+import { deleteAccount } from "@/features/settings/actions";
 import { PageHeader } from "@/shared/components/data/page-header";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -26,8 +29,22 @@ import { Input } from "@/shared/components/ui/input";
 
 export default function DangerPage() {
   const t = useTranslations("settings");
+  const tCommon = useTranslations("common");
+  const router = useRouter();
   const [confirmation, setConfirmation] = useState("");
   const [open, setOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+
+  function handleDelete() {
+    startTransition(async () => {
+      const result = await deleteAccount();
+      if (result.success) {
+        router.push("/sign-in");
+      } else {
+        toast.error(result.error);
+      }
+    });
+  }
 
   return (
     <div className="space-y-6">
@@ -50,7 +67,8 @@ export default function DangerPage() {
               <DialogHeader>
                 <DialogTitle>{t("deleteAccount")}</DialogTitle>
                 <DialogDescription>
-                  {t("deleteAccountWarning")} Type &quot;DELETE&quot; to confirm.
+                  {t("deleteAccountWarning")} Type &quot;DELETE&quot; to
+                  confirm.
                 </DialogDescription>
               </DialogHeader>
               <Input
@@ -65,14 +83,16 @@ export default function DangerPage() {
                     setOpen(false);
                     setConfirmation("");
                   }}
+                  disabled={isPending}
                 >
-                  Cancel
+                  {tCommon("cancel")}
                 </Button>
                 <Button
                   variant="destructive"
-                  disabled={confirmation !== "DELETE"}
+                  disabled={confirmation !== "DELETE" || isPending}
+                  onClick={handleDelete}
                 >
-                  {t("deleteAccount")}
+                  {isPending ? tCommon("loading") : t("deleteAccount")}
                 </Button>
               </DialogFooter>
             </DialogContent>

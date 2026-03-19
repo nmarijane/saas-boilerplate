@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 
+import { requireAuth } from "@/features/auth/guards";
+import { ProfileForm } from "@/features/settings/components/profile-form";
 import { PageHeader } from "@/shared/components/data/page-header";
-import { Button } from "@/shared/components/ui/button";
 import {
   Card,
   CardContent,
@@ -10,8 +11,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/shared/components/ui/card";
-import { Input } from "@/shared/components/ui/input";
-import { Label } from "@/shared/components/ui/label";
 import { Separator } from "@/shared/components/ui/separator";
 import { generatePageMetadata } from "@/shared/lib/seo";
 
@@ -29,14 +28,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: t("title"),
       noIndex: true,
     },
-    locale
+    locale,
   );
 }
 
 export default async function ProfilePage({ params }: Props) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "settings" });
-  const tCommon = await getTranslations({ locale, namespace: "common" });
+  const session = await requireAuth();
 
   return (
     <div className="space-y-6">
@@ -50,21 +49,13 @@ export default async function ProfilePage({ params }: Props) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">{t("name")}</Label>
-              <Input id="name" placeholder="John Doe" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="john@example.com" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="avatar">{t("avatar")}</Label>
-              <Input id="avatar" type="file" accept="image/*" />
-            </div>
-            <Button type="submit">{tCommon("save")}</Button>
-          </form>
+          <ProfileForm
+            defaultValues={{
+              name: session.user.name,
+              email: session.user.email,
+              image: session.user.image ?? null,
+            }}
+          />
         </CardContent>
       </Card>
 
@@ -78,17 +69,10 @@ export default async function ProfilePage({ params }: Props) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="current-password">{t("currentPassword")}</Label>
-              <Input id="current-password" type="password" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="new-password">{t("newPassword")}</Label>
-              <Input id="new-password" type="password" />
-            </div>
-            <Button type="submit">{tCommon("save")}</Button>
-          </form>
+          <p className="text-muted-foreground text-sm">
+            Password management is handled via Better Auth. Use the forgot
+            password flow to reset your password.
+          </p>
         </CardContent>
       </Card>
     </div>

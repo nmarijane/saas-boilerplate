@@ -34,7 +34,7 @@ export function NotificationDropdown() {
   }, [open]);
 
   const handleMarkAllRead = async () => {
-    await markAllRead("");
+    await markAllRead();
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 

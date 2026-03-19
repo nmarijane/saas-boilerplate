@@ -6,6 +6,9 @@ import { usePathname } from "@/shared/lib/i18n-navigation";
 
 import { cn } from "@/shared/utils/cn";
 
+const HYPHEN_RE = /-/g;
+const WORD_BOUNDARY_RE = /\b\w/g;
+
 interface BreadcrumbItem {
   label: string;
   href?: string;
@@ -19,8 +22,8 @@ function generateBreadcrumbs(pathname: string): BreadcrumbItem[] {
   return segments.map((segment, index) => {
     const href = `/${  segments.slice(0, index + 1).join("/")}`;
     const label = segment
-      .replace(/-/g, " ")
-      .replace(/\b\w/g, (c) => c.toUpperCase());
+      .replace(HYPHEN_RE, " ")
+      .replace(WORD_BOUNDARY_RE, (c) => c.toUpperCase());
     return { label, href };
   });
 }

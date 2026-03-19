@@ -11,6 +11,7 @@ export default antfu(
       "dist",
       "migrations",
       "local.db",
+      "docs",
     ],
   },
   {
@@ -22,6 +23,7 @@ export default antfu(
   {
     rules: {
       "node/prefer-global/process": "off",
+      "e18e/prefer-array-fill": "off",
     },
   },
 );
