@@ -53,17 +53,18 @@ jobs:
       - run: npm ci
       - name: Run tests with coverage
         run: npx vitest run --coverage
-      - name: Update coverage badge in README
+      - name: Update coverage badge
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
           COVERAGE=$(node -e "const c = require('./coverage/coverage-summary.json'); console.log(Math.round(c.total.statements.pct))")
           if [ "$COVERAGE" -ge 80 ]; then COLOR="brightgreen"
           elif [ "$COVERAGE" -ge 60 ]; then COLOR="yellow"
           else COLOR="red"; fi
-          sed -i "s|coverage-[0-9]*%25-[a-z]*|coverage-${COVERAGE}%25-${COLOR}|" README.md
+          mkdir -p .github/badges
+          echo "{\"schemaVersion\":1,\"label\":\"coverage\",\"message\":\"${COVERAGE}%\",\"color\":\"${COLOR}\"}" > .github/badges/coverage.json
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add README.md
+          git add .github/badges/coverage.json
           git diff --cached --quiet || git commit -m "ci: update coverage badge to ${COVERAGE}% [skip ci]" && git push
 
   build:
