@@ -24,6 +24,14 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
+vi.mock("next/headers", () => ({
+  headers: vi.fn().mockResolvedValue(new Headers()),
+  cookies: vi.fn().mockReturnValue({
+    get: vi.fn(),
+    set: vi.fn(),
+  }),
+}));
+
 vi.mock("@/features/auth/guards", () => ({
   requireAuth: vi.fn().mockResolvedValue({
     user: { id: "test-user-1", name: "Test User", email: "test@test.com" },
