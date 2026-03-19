@@ -69,6 +69,8 @@
     "newPassword": "New Password",
     "notifications": "Notifications",
     "team": "Team",
+    "api": "API & Webhooks",
+    "apiDescription": "Manage API keys and webhook endpoints",
     "dangerZone": "Danger Zone",
     "deleteAccount": "Delete Account",
     "deleteAccountWarning": "This action cannot be undone."
@@ -105,6 +107,8 @@
     "changelog": "Changelog",
     "auditLog": "Audit Log",
     "auditLogDescription": "View all system activity and changes",
+    "featureFlags": "Feature Flags",
+    "featureFlagsDescription": "Manage feature flags and rollout rules",
     "totalUsers": "Total Users",
     "totalOrgs": "Total Organizations",
     "mrr": "MRR"

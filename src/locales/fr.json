@@ -69,6 +69,8 @@
     "newPassword": "Nouveau mot de passe",
     "notifications": "Notifications",
     "team": "Équipe",
+    "api": "API & Webhooks",
+    "apiDescription": "Gérer les clés API et les endpoints de webhooks",
     "dangerZone": "Zone de danger",
     "deleteAccount": "Supprimer le compte",
     "deleteAccountWarning": "Cette action est irréversible."
@@ -105,6 +107,8 @@
     "changelog": "Changelog",
     "auditLog": "Journal d'audit",
     "auditLogDescription": "Voir toute l'activité et les modifications du système",
+    "featureFlags": "Feature Flags",
+    "featureFlagsDescription": "Gérer les feature flags et les règles de déploiement",
     "totalUsers": "Utilisateurs totaux",
     "totalOrgs": "Organisations totales",
     "mrr": "MRR"
