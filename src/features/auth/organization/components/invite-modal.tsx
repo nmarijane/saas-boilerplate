@@ -57,17 +57,16 @@ export function InviteModal({ orgId, onInvited }: InviteModalProps) {
 
   const onSubmit = async (data: InviteFormValues) => {
     setIsLoading(true);
-    try {
-      await inviteMember({ orgId, email: data.email, role: data.role });
+    const result = await inviteMember({ orgId, email: data.email, role: data.role });
+    if (result.success) {
       toast.success(tCommon("success"));
       reset();
       setOpen(false);
       onInvited?.();
-    } catch {
-      toast.error(tCommon("error"));
-    } finally {
-      setIsLoading(false);
+    } else {
+      toast.error(result.error);
     }
+    setIsLoading(false);
   };
 
   return (

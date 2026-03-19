@@ -44,11 +44,11 @@ export function ProfileForm({ defaultValues }: ProfileFormProps) {
   });
 
   async function onSubmit(data: ProfileFormValues) {
-    try {
-      await updateProfile(data);
+    const result = await updateProfile(data);
+    if (result.success) {
       toast.success(tCommon("success"));
-    } catch {
-      toast.error(tCommon("error"));
+    } else {
+      toast.error(result.error);
     }
   }
 

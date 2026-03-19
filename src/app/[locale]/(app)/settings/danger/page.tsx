@@ -37,11 +37,11 @@ export default function DangerPage() {
 
   function handleDelete() {
     startTransition(async () => {
-      try {
-        await deleteAccount();
+      const result = await deleteAccount();
+      if (result.success) {
         router.push("/sign-in");
-      } catch {
-        toast.error(tCommon("error"));
+      } else {
+        toast.error(result.error);
       }
     });
   }

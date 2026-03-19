@@ -58,28 +58,26 @@ export function MembersList({
 
   const handleRemove = async (memberId: string) => {
     setLoadingId(memberId);
-    try {
-      await removeMember({ orgId, memberIdToRemove: memberId });
+    const result = await removeMember({ orgId, memberIdToRemove: memberId });
+    if (result.success) {
       toast.success(tCommon("success"));
       onMemberUpdated?.();
-    } catch {
-      toast.error(tCommon("error"));
-    } finally {
-      setLoadingId(null);
+    } else {
+      toast.error(result.error);
     }
+    setLoadingId(null);
   };
 
   const handleRoleChange = async (memberId: string, newRole: "admin" | "member") => {
     setLoadingId(memberId);
-    try {
-      await changeRole({ orgId, memberId, newRole });
+    const result = await changeRole({ orgId, memberId, newRole });
+    if (result.success) {
       toast.success(tCommon("success"));
       onMemberUpdated?.();
-    } catch {
-      toast.error(tCommon("error"));
-    } finally {
-      setLoadingId(null);
+    } else {
+      toast.error(result.error);
     }
+    setLoadingId(null);
   };
 
   return (
