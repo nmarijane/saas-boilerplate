@@ -1,4 +1,5 @@
 import {
+  index,
   integer,
   json,
   pgTable,
@@ -31,4 +32,6 @@ export const subscription = pgTable("subscription", {
   currentPeriodEnd: timestamp("current_period_end"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}, (t) => [
+  index("subscription_org_id_idx").on(t.organizationId),
+]);

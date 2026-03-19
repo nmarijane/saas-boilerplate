@@ -46,11 +46,19 @@ describe("updateProfile", () => {
   });
 
   it("rejects empty name", async () => {
-    await expect(updateProfile({ name: "" })).rejects.toThrow();
+    const result = await updateProfile({ name: "" });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.validationErrors?.name).toBeDefined();
+    }
   });
 
   it("rejects name exceeding max length", async () => {
-    await expect(updateProfile({ name: "x".repeat(101) })).rejects.toThrow();
+    const result = await updateProfile({ name: "x".repeat(101) });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.validationErrors?.name).toBeDefined();
+    }
   });
 });
 
