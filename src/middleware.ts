@@ -1,42 +1,10 @@
-import type {NextRequest} from "next/server";
+import type { NextRequest } from "next/server";
 import createMiddleware from "next-intl/middleware";
-import {  NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { routing } from "@/shared/lib/i18n-routing";
+import { getEdgeRateLimiter } from "@/shared/lib/rate-limit";
 
 const intlMiddleware = createMiddleware(routing);
-
-// In-memory rate limiting (effective for Docker/single-instance, not for serverless)
-// For serverless (Vercel), use Upstash Redis or Vercel's native protections
-const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
-const RATE_LIMIT_WINDOW = 60_000; // 1 minute
-const RATE_LIMIT_MAX = 100; // requests per window
-
-function rateLimit(ip: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-
-  if (!entry || now > entry.resetTime) {
-    rateLimitMap.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
-    pruneExpiredEntries(now);
-    return true;
-  }
-
-  entry.count++;
-  return entry.count <= RATE_LIMIT_MAX;
-}
-
-let lastPrune = 0;
-const PRUNE_INTERVAL = 60_000;
-
-function pruneExpiredEntries(now: number) {
-  if (now - lastPrune < PRUNE_INTERVAL) return;
-  lastPrune = now;
-  for (const [key, entry] of rateLimitMap) {
-    if (now > entry.resetTime) {
-      rateLimitMap.delete(key);
-    }
-  }
-}
 
 export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -46,10 +14,19 @@ export default async function middleware(request: NextRequest) {
     const ip =
       request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
       "unknown";
-    if (!rateLimit(ip)) {
+    const limiter = await getEdgeRateLimiter();
+    const result = await limiter.check(`ip:${ip}`, 100, 60);
+
+    if (!result.allowed) {
       return NextResponse.json(
         { error: "Too many requests", code: "RATE_LIMIT", status: 429 },
-        { status: 429 },
+        {
+          status: 429,
+          headers: {
+            "X-RateLimit-Remaining": String(result.remaining),
+            "X-RateLimit-Reset": String(result.resetAt),
+          },
+        },
       );
     }
     return NextResponse.next();
@@ -59,7 +36,6 @@ export default async function middleware(request: NextRequest) {
   const response = intlMiddleware(request);
 
   // 3. Auth guards — protect (app) and (admin) routes
-  // Check for session token in cookies
   const sessionToken =
     request.cookies.get("better-auth.session_token")?.value;
   const localeMatch = pathname.match(/^\/(en|fr)/);
