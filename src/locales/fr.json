@@ -103,6 +103,8 @@
     "organizations": "Organisations",
     "metrics": "Métriques",
     "changelog": "Changelog",
+    "auditLog": "Journal d'audit",
+    "auditLogDescription": "Voir toute l'activité et les modifications du système",
     "totalUsers": "Utilisateurs totaux",
     "totalOrgs": "Organisations totales",
     "mrr": "MRR"
