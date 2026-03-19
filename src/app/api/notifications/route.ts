@@ -37,15 +37,15 @@ export async function GET(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const body = await request.json();
-    const { action, notifId, userId } = body;
+    const { action, notifId } = body;
 
     if (action === "markRead" && notifId) {
       await markAsRead(notifId);
       return NextResponse.json({ success: true });
     }
 
-    if (action === "markAllRead" && userId) {
-      await markAllRead(userId);
+    if (action === "markAllRead") {
+      await markAllRead();
       return NextResponse.json({ success: true });
     }
 

@@ -4,7 +4,7 @@ import { notification } from "@/models/notification";
 import { seedNotification, seedUser } from "../helpers/seed";
 import { testDb } from "../setup";
 
-const NOTIF_USER = "notif-user-1";
+const NOTIF_USER = "test-user-1";
 
 describe("notification actions", () => {
   beforeEach(async () => {
@@ -106,6 +106,21 @@ describe("notification actions", () => {
 
       expect(other[0].read).toBe(false);
     });
+
+    it("does not mark another user's notification as read", async () => {
+      const otherUser = "other-user-1";
+      await seedUser(otherUser);
+      const notif = await seedNotification(otherUser, { id: "notif-cross-read", read: false });
+
+      const { markAsRead } = await import("@/features/notifications/actions");
+      await markAsRead(notif.id);
+
+      const result = await testDb
+        .select()
+        .from(notification)
+        .where(eq(notification.id, notif.id));
+      expect(result[0].read).toBe(false);
+    });
   });
 
   describe("markAllRead", () => {
@@ -118,7 +133,7 @@ describe("notification actions", () => {
         "@/features/notifications/actions"
       );
 
-      await markAllRead(NOTIF_USER);
+      await markAllRead();
 
       const notifs = await testDb
         .select()
@@ -138,7 +153,7 @@ describe("notification actions", () => {
         "@/features/notifications/actions"
       );
 
-      await markAllRead(NOTIF_USER);
+      await markAllRead();
 
       const otherNotifs = await testDb
         .select()
@@ -186,6 +201,21 @@ describe("notification actions", () => {
 
       expect(remaining).toHaveLength(1);
       expect(remaining[0].id).toBe("notif-del-2b");
+    });
+
+    it("does not delete another user's notification", async () => {
+      const otherUser = "other-user-2";
+      await seedUser(otherUser);
+      await seedNotification(otherUser, { id: "notif-cross-del" });
+
+      const { deleteNotification } = await import("@/features/notifications/actions");
+      await deleteNotification("notif-cross-del");
+
+      const result = await testDb
+        .select()
+        .from(notification)
+        .where(eq(notification.id, "notif-cross-del"));
+      expect(result).toHaveLength(1);
     });
   });
 });

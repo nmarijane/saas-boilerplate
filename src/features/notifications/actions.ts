@@ -2,6 +2,7 @@
 
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { requireAuth } from "@/features/auth/guards";
 import { notification } from "@/models/notification";
 import { db } from "@/shared/lib/DB";
 import { generateId } from "@/shared/utils/helpers";
@@ -32,24 +33,33 @@ export async function createNotification(
 }
 
 export async function markAsRead(notifId: string) {
-  await db
-    .update(notification)
-    .set({ read: true })
-    .where(eq(notification.id, notifId));
-  revalidatePath("/");
-}
-
-export async function markAllRead(userId: string) {
+  const session = await requireAuth();
   await db
     .update(notification)
     .set({ read: true })
     .where(
-      and(eq(notification.userId, userId), eq(notification.read, false)),
+      and(eq(notification.id, notifId), eq(notification.userId, session.user.id)),
+    );
+  revalidatePath("/");
+}
+
+export async function markAllRead() {
+  const session = await requireAuth();
+  await db
+    .update(notification)
+    .set({ read: true })
+    .where(
+      and(eq(notification.userId, session.user.id), eq(notification.read, false)),
     );
   revalidatePath("/");
 }
 
 export async function deleteNotification(notifId: string) {
-  await db.delete(notification).where(eq(notification.id, notifId));
+  const session = await requireAuth();
+  await db
+    .delete(notification)
+    .where(
+      and(eq(notification.id, notifId), eq(notification.userId, session.user.id)),
+    );
   revalidatePath("/");
 }
