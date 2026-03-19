@@ -2,8 +2,8 @@
 
 [![CI](https://github.com/nmarijane/saas-boilerplate/actions/workflows/ci.yml/badge.svg)](https://github.com/nmarijane/saas-boilerplate/actions/workflows/ci.yml)
 ![Node.js](https://img.shields.io/badge/Node.js-22-339933?logo=nodedotjs&logoColor=white)
-![Next.js](https://img.shields.io/badge/Next.js-15-000000?logo=nextdotjs&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-blue)
 
 A production-ready, modular Next.js boilerplate for building SaaS applications fast.
@@ -33,7 +33,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 | Layer | Technology |
 |-------|-----------|
-| **Framework** | Next.js 15 (App Router) + React 19 |
+| **Framework** | Next.js 16 (App Router) + React 19 |
 | **Language** | TypeScript (strict mode) |
 | **Styling** | Tailwind CSS 4 + shadcn/ui |
 | **Auth** | Better Auth (self-hosted, not Clerk) |
