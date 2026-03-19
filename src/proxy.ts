@@ -2,12 +2,12 @@ import type { NextRequest } from "next/server";
 import createMiddleware from "next-intl/middleware";
 import { NextResponse } from "next/server";
 import { routing } from "@/shared/lib/i18n-routing";
-import { getEdgeRateLimiter } from "@/shared/lib/rate-limit";
+import { getRateLimiter } from "@/shared/lib/rate-limit";
 
 const intlMiddleware = createMiddleware(routing);
 const LOCALE_PREFIX_RE = /^\/(en|fr)/;
 
-export default async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // 1. Rate limiting on API routes
@@ -15,7 +15,7 @@ export default async function middleware(request: NextRequest) {
     const ip =
       request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
       "unknown";
-    const limiter = await getEdgeRateLimiter();
+    const limiter = await getRateLimiter();
     const result = await limiter.check(`ip:${ip}`, 100, 60);
 
     if (!result.allowed) {
@@ -33,7 +33,7 @@ export default async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 2. i18n middleware (handles locale detection and redirection)
+  // 2. i18n (handles locale detection and redirection)
   const response = intlMiddleware(request);
 
   // 3. Auth guards — protect (app) and (admin) routes
