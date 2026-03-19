@@ -1,20 +1,22 @@
 /**
- * Webhook event matching placeholder.
- * Properly implemented in Task 9 (Webhook event matching utility).
+ * Match an event name against a list of subscribed patterns.
+ * Patterns: exact ("member.invited"), wildcard segment ("subscription.*"),
+ * or wildcard all ("**").
  */
+export function matchEvent(eventName: string, patterns: string[]): boolean {
+  return patterns.some((pattern) => matchPattern(eventName, pattern));
+}
 
-/**
- * Check if an event name matches any of the subscribed event patterns.
- * Supports exact match and wildcard patterns (e.g., "member.*").
- */
-export function matchEvent(eventName: string, subscribedEvents: string[]): boolean {
-  return subscribedEvents.some((pattern) => {
-    if (pattern === "*") return true;
-    if (pattern === eventName) return true;
-    if (pattern.endsWith(".*")) {
-      const prefix = pattern.slice(0, -2);
-      return eventName.startsWith(`${prefix}.`);
-    }
-    return false;
-  });
+function matchPattern(eventName: string, pattern: string): boolean {
+  if (pattern === "**") return true;
+  if (pattern === eventName) return true;
+
+  const eventParts = eventName.split(".");
+  const patternParts = pattern.split(".");
+
+  if (eventParts.length !== patternParts.length) return false;
+
+  return patternParts.every(
+    (part, i) => part === "*" || part === eventParts[i],
+  );
 }
