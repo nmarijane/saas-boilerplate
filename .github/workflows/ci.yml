@@ -79,3 +79,16 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx storybook build --quiet
+
+  audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - name: Check for known vulnerabilities
+        run: npm audit --audit-level=high
