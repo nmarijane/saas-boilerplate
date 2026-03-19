@@ -23,6 +23,7 @@ export default antfu(
   {
     rules: {
       "node/prefer-global/process": "off",
+      "e18e/prefer-array-fill": "off",
     },
   },
 );

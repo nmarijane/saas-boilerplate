@@ -68,7 +68,7 @@ export function CreateKeyModal({
     if (!createdKey) return;
     await navigator.clipboard.writeText(createdKey);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setTimeout(setCopied, 2000, false);
   }
 
   function handleClose(isOpen: boolean) {

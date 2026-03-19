@@ -5,6 +5,7 @@ import { routing } from "@/shared/lib/i18n-routing";
 import { getEdgeRateLimiter } from "@/shared/lib/rate-limit";
 
 const intlMiddleware = createMiddleware(routing);
+const LOCALE_PREFIX_RE = /^\/(en|fr)/;
 
 export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -38,7 +39,7 @@ export default async function middleware(request: NextRequest) {
   // 3. Auth guards — protect (app) and (admin) routes
   const sessionToken =
     request.cookies.get("better-auth.session_token")?.value;
-  const localeMatch = pathname.match(/^\/(en|fr)/);
+  const localeMatch = pathname.match(LOCALE_PREFIX_RE);
   const pathWithoutLocale = localeMatch
     ? pathname.slice(localeMatch[0].length)
     : pathname;

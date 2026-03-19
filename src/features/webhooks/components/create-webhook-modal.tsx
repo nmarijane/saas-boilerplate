@@ -81,7 +81,7 @@ export function CreateWebhookModal({
     if (!createdSecret) return;
     await navigator.clipboard.writeText(createdSecret);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setTimeout(setCopied, 2000, false);
   }
 
   function handleClose(isOpen: boolean) {
