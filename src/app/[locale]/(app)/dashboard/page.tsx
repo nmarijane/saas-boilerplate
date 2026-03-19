@@ -1,12 +1,19 @@
 import type { Metadata } from "next";
 import {
   ActivityIcon,
+  BellIcon,
   CreditCardIcon,
   FolderIcon,
   UsersIcon,
 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
+import { requireAuth } from "@/features/auth/guards";
+import { getUserOrganizations } from "@/features/auth/organization/queries";
+import {
+  getDashboardStats,
+  getUnreadNotificationCount,
+} from "@/features/dashboard/queries";
 import { EmptyState } from "@/shared/components/data/empty-state";
 import { PageHeader } from "@/shared/components/data/page-header";
 import { StatCard } from "@/shared/components/data/stat-card";
@@ -33,6 +40,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function DashboardPage({ params }: Props) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "dashboard" });
+  const session = await requireAuth();
+
+  const orgs = await getUserOrganizations(session.user.id);
+  const orgId = orgs[0]?.id ?? "";
+
+  const [stats, unreadNotifications] = await Promise.all([
+    orgId ? getDashboardStats(orgId) : { members: 0, plan: "free", status: "active", uploads: 0 },
+    getUnreadNotificationCount(session.user.id),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -41,22 +57,22 @@ export default async function DashboardPage({ params }: Props) {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Members"
-          value="0"
+          value={stats.members}
           icon={UsersIcon}
         />
         <StatCard
-          title="Revenue"
-          value="$0"
+          title="Plan"
+          value={stats.plan}
           icon={CreditCardIcon}
         />
         <StatCard
-          title="Activity"
-          value="0"
-          icon={ActivityIcon}
+          title="Notifications"
+          value={unreadNotifications}
+          icon={BellIcon}
         />
         <StatCard
-          title="Projects"
-          value="0"
+          title="Uploads"
+          value={stats.uploads}
           icon={FolderIcon}
         />
       </div>
