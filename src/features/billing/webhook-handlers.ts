@@ -1,6 +1,7 @@
 import type Stripe from "stripe";
 import { eq } from "drizzle-orm";
-import { notification, subscription } from "@/models";
+import { emitEvent } from "@/features/events/emitter";
+import { subscription } from "@/models";
 import { db } from "@/shared/lib/DB";
 import { generateId } from "@/shared/utils/helpers";
 import { getStripe } from "./stripe";
@@ -11,24 +12,6 @@ async function getOrgIdFromSubscription(
   return (
     (stripeSubscription.metadata?.orgId as string | undefined) ?? null
   );
-}
-
-async function notifyOrgOwner(orgId: string, title: string, body: string) {
-  // Find owner of the org to send notification
-  const member = await db.query.organizationMember?.findFirst({
-    where: (m, { and, eq: eqOp }) =>
-      and(eqOp(m.organizationId, orgId), eqOp(m.role, "owner")),
-  });
-
-  if (member) {
-    await db.insert(notification).values({
-      id: generateId(),
-      userId: member.userId,
-      title,
-      body,
-      type: "billing",
-    });
-  }
 }
 
 export async function handleCheckoutCompleted(
@@ -55,6 +38,8 @@ export async function handleCheckoutCompleted(
     where: eq(subscription.organizationId, orgId),
   });
 
+  const newId = generateId();
+
   if (existing) {
     await db
       .update(subscription)
@@ -71,7 +56,7 @@ export async function handleCheckoutCompleted(
       .where(eq(subscription.organizationId, orgId));
   } else {
     await db.insert(subscription).values({
-      id: generateId(),
+      id: newId,
       organizationId: orgId,
       stripeCustomerId: session.customer as string,
       stripeSubscriptionId: stripeSubscription.id,
@@ -83,11 +68,12 @@ export async function handleCheckoutCompleted(
     });
   }
 
-  await notifyOrgOwner(
+  await emitEvent("subscription.created", {
     orgId,
-    "Subscription activated",
-    `Your organization has been upgraded to the ${planId} plan.`
-  );
+    resourceType: "subscription",
+    resourceId: existing?.id ?? newId,
+    metadata: { planId },
+  });
 }
 
 export async function handleInvoicePaid(invoice: Stripe.Invoice) {
@@ -107,11 +93,11 @@ export async function handleInvoicePaid(invoice: Stripe.Invoice) {
       })
       .where(eq(subscription.stripeSubscriptionId, stripeSubscriptionId));
 
-    await notifyOrgOwner(
-      sub.organizationId,
-      "Payment successful",
-      "Your subscription payment has been processed successfully."
-    );
+    await emitEvent("payment.succeeded", {
+      orgId: sub.organizationId,
+      resourceType: "subscription",
+      resourceId: sub.id,
+    });
   }
 }
 
@@ -132,11 +118,11 @@ export async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
       })
       .where(eq(subscription.stripeSubscriptionId, stripeSubscriptionId));
 
-    await notifyOrgOwner(
-      sub.organizationId,
-      "Payment failed",
-      "Your subscription payment has failed. Please update your payment method."
-    );
+    await emitEvent("payment.failed", {
+      orgId: sub.organizationId,
+      resourceType: "subscription",
+      resourceId: sub.id,
+    });
   }
 }
 
@@ -166,11 +152,12 @@ export async function handleSubscriptionUpdated(
     })
     .where(eq(subscription.organizationId, orgId));
 
-  await notifyOrgOwner(
+  await emitEvent("subscription.updated", {
     orgId,
-    "Subscription updated",
-    `Your plan has been changed to ${planId}.`
-  );
+    resourceType: "subscription",
+    resourceId: orgId,
+    metadata: { planId },
+  });
 }
 
 export async function handleSubscriptionDeleted(
@@ -188,9 +175,9 @@ export async function handleSubscriptionDeleted(
     })
     .where(eq(subscription.organizationId, orgId));
 
-  await notifyOrgOwner(
+  await emitEvent("subscription.cancelled", {
     orgId,
-    "Subscription cancelled",
-    "Your subscription has been cancelled. You are now on the Free plan."
-  );
+    resourceType: "subscription",
+    resourceId: orgId,
+  });
 }
