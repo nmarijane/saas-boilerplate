@@ -73,40 +73,13 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Features
 
-### Core
+**Core** -- Authentication (email, Google, GitHub, MFA), multi-tenancy (orgs, RBAC), Stripe billing (checkout, portal, webhooks), onboarding wizard
 
-- **Authentication** -- Email/password, Google, GitHub, MFA (TOTP), email verification, password reset
-- **Multi-tenancy** -- Organizations, member roles (owner/admin/member), team invitations
-- **Billing** -- Stripe checkout, subscription management, customer portal, webhook handlers
-- **Onboarding** -- 3-step wizard (profile, organization, team invite)
+**Platform** -- Dashboard with real-time stats, admin panel (users, orgs, audit log, feature flags, changelog, metrics), settings (profile, team, billing, API keys, webhooks), in-app notifications
 
-### Platform
+**Developer** -- API keys (SHA-256 hashed, scoped), webhooks (HMAC-SHA256 signed, delivery log), feature flags (plan/org gating), event bus (17 types), audit log, file upload (local + S3), rate limiting (memory/Redis/Upstash), feedback widget, email templates, health check
 
-- **Dashboard** -- Real-time stats, notifications, data tables
-- **Admin Panel** -- Users, organizations, audit log, feature flags, changelog, metrics (MRR)
-- **Settings** -- Profile, notifications, team, billing, API keys, webhooks, danger zone
-- **Notifications** -- In-app notifications with bell icon, mark as read, notification types
-
-### Developer
-
-- **API Keys** -- SHA-256 hashed, scoped, with usage tracking
-- **Webhooks** -- HMAC-SHA256 signed, pattern matching, delivery log with retries
-- **Feature Flags** -- Plan/org-based gating, in-memory cache (60s TTL), admin UI
-- **Event Bus** -- Central emitter, 17 event types, drives audit log + webhooks + notifications
-- **Audit Log** -- Full trail with retention policy and purge job
-- **File Upload** -- Adapter pattern (local + S3), validation, ownership checks
-- **Rate Limiting** -- Memory, Redis, or Upstash adapters (Edge-compatible)
-- **Feedback Widget** -- User feedback with screenshot support, admin review
-- **Email Templates** -- Welcome, verify, reset, invitation, payment, cancellation
-- **Health Check** -- `/api/health` endpoint with DB + service checks
-
-### Security
-
-- **Security headers** -- CSP, HSTS, X-Frame-Options, nosniff, Permissions-Policy
-- **Input validation** -- Zod on all server actions
-- **API route auth** -- Session-based with ownership verification
-- **Role-based access** -- Server-side permission checks on all mutations
-- **Error handling** -- `safeAction` wrapper, no internal error leaks
+**Security** -- Security headers (CSP, HSTS, X-Frame-Options), Zod validation, session-based API auth, role-based access control, `safeAction` error wrapper
 
 ---
 
