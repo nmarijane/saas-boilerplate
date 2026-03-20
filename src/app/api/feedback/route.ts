@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireApiAuth } from "@/features/auth/api-auth";
+import { getUserOrganizations } from "@/features/auth/organization/queries";
 import { submitFeedback, updateFeedbackStatus } from "@/features/feedback/actions";
 import { getFeedbacks } from "@/features/feedback/queries";
 
@@ -43,6 +44,17 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") ?? undefined;
     const orgId = searchParams.get("orgId") ?? undefined;
+
+    // Verify user has access to the requested org
+    if (orgId) {
+      const userOrgs = await getUserOrganizations(auth.session.user.id);
+      if (!userOrgs.some((o) => o.id === orgId)) {
+        return NextResponse.json(
+          { error: "Forbidden", code: "FORBIDDEN", status: 403 },
+          { status: 403 },
+        );
+      }
+    }
 
     const feedbacks = await getFeedbacks({ status, orgId });
     return NextResponse.json({ feedbacks });
