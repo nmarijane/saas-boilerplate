@@ -87,7 +87,7 @@ Open [http://localhost:3000](http://localhost:3000).
 | **i18n** | next-intl (en, fr) |
 | **Monitoring** | Sentry + LogTape |
 | **Testing** | Vitest + Playwright + Storybook |
-| **CI/CD** | GitHub Actions + Dependabot |
+| **CI/CD** | GitHub Actions + Dependabot + Claude Code Review |
 
 ---
 
@@ -100,6 +100,8 @@ Open [http://localhost:3000](http://localhost:3000).
 **Developer** -- API keys (SHA-256 hashed, scoped), webhooks (HMAC-SHA256 signed, delivery log), feature flags (plan/org gating), event bus (17 types), audit log, file upload (local + S3), rate limiting (memory/Redis/Upstash), feedback widget, email templates, health check
 
 **Security** -- Security headers (CSP, HSTS, X-Frame-Options), Zod validation, session-based API auth, role-based access control, `safeAction` error wrapper
+
+**CI/CD** -- 6 parallel jobs (lint, typecheck, test, build, storybook, audit), automatic coverage badge, Dependabot weekly updates, and **Claude Code AI reviewer** that reviews every PR for security, quality, and convention adherence. Mention `@claude` in any PR comment to get AI assistance.
 
 ---
 
