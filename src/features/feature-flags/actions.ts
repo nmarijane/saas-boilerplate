@@ -3,6 +3,7 @@
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { requireAdmin } from "@/features/auth/guards";
 import { featureFlag } from "@/models/feature-flag";
 import { db } from "@/shared/lib/DB";
 import { generateId } from "@/shared/utils/helpers";
@@ -19,6 +20,7 @@ const flagSchema = z.object({
 });
 
 export async function createFeatureFlag(input: z.infer<typeof flagSchema>) {
+  await requireAdmin();
   const parsed = flagSchema.parse(input);
 
   await db.insert(featureFlag).values({
@@ -33,6 +35,8 @@ export async function updateFeatureFlag(
   flagId: string,
   input: Partial<z.infer<typeof flagSchema>>,
 ) {
+  await requireAdmin();
+
   const flag = await db.query.featureFlag.findFirst({
     where: eq(featureFlag.id, flagId),
   });
@@ -49,6 +53,8 @@ export async function updateFeatureFlag(
 }
 
 export async function deleteFeatureFlag(flagId: string) {
+  await requireAdmin();
+
   const flag = await db.query.featureFlag.findFirst({
     where: eq(featureFlag.id, flagId),
   });

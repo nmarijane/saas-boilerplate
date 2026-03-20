@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { requireAdmin } from "@/features/auth/guards";
 import { changelogEntry } from "@/models/changelog";
 import { db } from "@/shared/lib/DB";
 import { generateId } from "@/shared/utils/helpers";
@@ -18,6 +19,7 @@ const changelogSchema = z.object({
 export async function createChangelogEntry(
   input: z.infer<typeof changelogSchema>,
 ) {
+  await requireAdmin();
   const parsed = changelogSchema.parse(input);
 
   await db.insert(changelogEntry).values({
@@ -33,6 +35,8 @@ export async function updateChangelogEntry(
   entryId: string,
   input: Partial<z.infer<typeof changelogSchema>>,
 ) {
+  await requireAdmin();
+
   await db
     .update(changelogEntry)
     .set(input)
@@ -43,6 +47,8 @@ export async function updateChangelogEntry(
 }
 
 export async function deleteChangelogEntry(entryId: string) {
+  await requireAdmin();
+
   await db.delete(changelogEntry).where(eq(changelogEntry.id, entryId));
 
   revalidatePath("/admin/changelog");
