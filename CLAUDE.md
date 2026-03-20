@@ -14,8 +14,11 @@ Architecture monolithe modulaire (feature-based).
 - **Paiement:** Stripe
 - **i18n:** next-intl
 - **Emails:** React Email + Nodemailer (SMTP)
+- **Jobs:** Inngest (background tasks, retries)
 - **Logging:** LogTape
+- **Monitoring:** Sentry
 - **Testing:** Vitest + Playwright + Storybook
+- **CI/CD:** GitHub Actions + Dependabot + Claude Code Review
 - **DX:** ESLint (Antfu), Prettier, Lefthook, Commitlint, Knip, T3 Env
 
 ## Architecture
@@ -30,34 +33,46 @@ src/
       (admin)/            # Panel admin
     api/                  # Routes API (hors locale)
   features/               # Modules métier isolés
+    admin/                # Panel admin (users, orgs, metrics)
+    api-keys/             # Gestion des clés API
+    audit/                # Audit log
     auth/                 # Better Auth, organizations, RBAC
     billing/              # Stripe, plans, webhooks
-    onboarding/           # Wizard d'onboarding
-    notifications/        # Notifs in-app
-    feedback/             # Widget feedback
-    upload/               # Upload fichiers
+    changelog/            # Changelog produit
+    dashboard/            # Dashboard avec stats
     email/                # Templates React Email
+    events/               # Event bus central (17 types)
+    feature-flags/        # Feature flags (plan/org gating)
+    feedback/             # Widget feedback
+    jobs/                 # Background jobs (Inngest)
+    notifications/        # Notifs in-app
+    onboarding/           # Wizard d'onboarding
+    settings/             # Settings utilisateur/org
+    upload/               # Upload fichiers (local + S3)
+    webhooks/             # Webhook delivery + signatures
   shared/                 # Code partagé entre features
     components/           # shadcn/ui + composants réutilisables
     hooks/                # Hooks React partagés
-    lib/                  # DB, env, logger, i18n, SEO configs
+    lib/                  # DB, env, logger, i18n, SEO, rate-limit
     types/                # Types globaux
     utils/                # Helpers génériques
   models/                 # Schemas Drizzle ORM
   locales/                # Fichiers de traduction (en, fr)
   styles/                 # CSS global
+  proxy.ts                # Proxy (ex-middleware) — rate limiting, i18n, auth guards
 ```
 
 ## Conventions
 
 - **Feature pattern:** Chaque feature dans `features/` a : `actions.ts`, `queries.ts`, `hooks/`, `components/`
 - **Queries:** server-only (`"use server"`), retournent des données depuis Drizzle
-- **Actions:** Server Actions avec validation Zod
+- **Actions:** Server Actions avec validation Zod, wrappées dans `safeAction()` pour les mutations client
 - **Composants:** React Server Components par défaut, Client Components quand nécessaire (`"use client"`)
 - **Nommage fichiers:** kebab-case pour les fichiers, PascalCase pour les composants
 - **Imports:** absolus avec prefix `@/` (ex: `@/features/auth/auth`)
 - **Commits:** conventional commits (commitlint)
 - **Ne pas utiliser Clerk** — toujours Better Auth
+- **Proxy:** `src/proxy.ts` (pas `middleware.ts` — convention Next.js 16)
 
 ## Règles strictes de qualité
 
@@ -81,6 +96,7 @@ src/
 - Toujours vérifier les permissions côté serveur (ne jamais se fier à des vérifications côté client uniquement)
 - Ne jamais exposer de secrets, clés API ou données sensibles côté client
 - Utiliser des headers de sécurité appropriés (CSP, HSTS, etc.)
+- Les server actions admin doivent appeler `requireAdmin()`, les actions org doivent appeler `requireRole()`
 
 ### Future-proof
 - Privilégier les API stables et les patterns recommandés par la documentation officielle
@@ -94,20 +110,33 @@ src/
 Le guide complet pour initialiser un nouveau SaaS depuis ce boilerplate est dans `docs/SETUP.md`.
 Il couvre : clonage, configuration des env vars (avec où les obtenir), suppression des modules inutiles, personnalisation, déploiement.
 
-## Design doc
-
-Le design complet est dans `docs/superpowers/specs/2026-03-17-saas-boilerplate-design.md`
-
 ## Commandes
 
 ```bash
-npm run dev          # Dev local (PGlite + hot reload)
-npm run build        # Build production + migration DB
-npm run lint         # ESLint
-npm run test         # Vitest
-npm run test:e2e     # Playwright
-npm run db:generate  # Générer migration Drizzle
-npm run db:migrate   # Appliquer migrations
-npm run db:studio    # Drizzle Studio
-npm run db:seed      # Seed DB (plans, admin)
+# Dev
+npm run dev              # Dev local (PGlite + hot reload)
+npm run storybook        # Storybook sur port 6006
+npm run email:dev        # Preview des templates email
+
+# Qualité
+npm run lint             # ESLint
+npm run check:types      # TypeScript type check
+npm run check:deps       # Dépendances inutiles (Knip)
+npm run format           # Prettier
+
+# Tests
+npm run test             # Vitest (unit + integration)
+npm run test:watch       # Vitest en watch mode
+npm run test:e2e         # Playwright E2E
+
+# Base de données
+npm run db:generate      # Générer migration Drizzle
+npm run db:migrate       # Appliquer migrations
+npm run db:studio        # Drizzle Studio
+npm run db:seed          # Seed DB (plans, admin, dev user)
+
+# Production
+npm run build            # Build production
+npm start                # Serveur production
+npm run docker:up        # Docker Compose
 ```
