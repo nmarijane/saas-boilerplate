@@ -242,7 +242,10 @@ npm run db:seed
 
 The seed creates:
 - 3 billing plans (Free, Pro, Enterprise)
-- 1 admin user (admin@example.com)
+- 1 admin user: `admin@example.com` / `admin123`
+- 1 dev user: `dev@example.com` / `admin123`
+
+You can sign in immediately with either account — no SMTP or OAuth setup needed.
 
 ## Phase 6: Verify Everything Works
 
