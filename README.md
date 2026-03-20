@@ -7,8 +7,10 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-blue)
 
-A production-ready, modular Next.js boilerplate for building SaaS applications fast.
-Self-hosted auth, Stripe billing, multi-tenancy, and 20+ features out of the box.
+Every SaaS starts the same way: auth, billing, multi-tenancy, email, admin panel, API keys...
+We all build the same foundation over and over. And if you use AI coding agents, they burn through tokens regenerating the same boilerplate every time.
+
+This project fixes that. One solid, production-ready foundation with 20+ features already wired — so you and your agents can skip straight to building what actually makes your product unique.
 
 ---
 
