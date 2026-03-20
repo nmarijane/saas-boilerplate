@@ -16,6 +16,18 @@ Update `package.json`:
 - Change `"name"` to your project name
 - Update `"version"` to `"0.1.0"`
 
+Update `README.md`:
+- Replace all `nmarijane/saas-boilerplate` with your `username/repo-name` (badges, links)
+- Update the project title and description
+
+### CI/CD (works automatically)
+
+The GitHub Actions workflows (`.github/workflows/`) are included. Once you push to GitHub:
+- **Lint, typecheck, test, build, storybook, audit** — work immediately, no config needed
+- **Dependabot** — works immediately, sends weekly PRs for outdated deps
+- **Coverage badge** — updates automatically on push to main
+- **Claude Code review** — requires setup: run `claude /install-github-app` in your terminal, or add `ANTHROPIC_API_KEY` to your repo secrets
+
 ## Phase 2: Configure Environment
 
 ```bash
