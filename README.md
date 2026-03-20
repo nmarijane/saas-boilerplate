@@ -1,16 +1,23 @@
+<div align="center">
+
 # SaaS Boilerplate
+
+**Stop rebuilding auth, billing, and multi-tenancy for every new SaaS.**
+
+Every project starts the same way. Your AI agents burn tokens regenerating the same foundation.
+Clone this once, and go straight to building what makes your product unique.
 
 [![CI](https://github.com/nmarijane/saas-boilerplate/actions/workflows/ci.yml/badge.svg)](https://github.com/nmarijane/saas-boilerplate/actions/workflows/ci.yml)
 ![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/nmarijane/saas-boilerplate/main/.github/badges/coverage.json)
-![Node.js](https://img.shields.io/badge/Node.js-22-339933?logo=nodedotjs&logoColor=white)
 ![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-blue)
 
-Every SaaS starts the same way: auth, billing, multi-tenancy, email, admin panel, API keys...
-We all build the same foundation over and over. And if you use AI coding agents, they burn through tokens regenerating the same boilerplate every time.
+**20+ features** -- Auth, Stripe, RBAC, API keys, webhooks, feature flags, admin panel, and more.
+**Zero config** -- `npm install && npm run dev`. PGlite in-memory DB, no setup needed.
+**AI-native** -- `CLAUDE.md` + `docs/SETUP.md` included so your agents have full context from day one.
 
-This project fixes that. One solid, production-ready foundation with 20+ features already wired — so you and your agents can skip straight to building what actually makes your product unique.
+</div>
 
 ---
 
