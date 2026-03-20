@@ -12,6 +12,7 @@ export default antfu(
       "migrations",
       "local.db",
       "docs",
+      ".claude",
     ],
   },
   {
