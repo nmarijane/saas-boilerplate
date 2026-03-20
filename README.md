@@ -12,24 +12,25 @@ Self-hosted auth, Stripe billing, multi-tenancy, and 20+ features out of the box
 
 ---
 
-## Setup with Claude Code
-
-The fastest way to start a new project from this boilerplate is with [**saas-forge**](https://github.com/nmarijane/saas-forge) — a Claude Code plugin that brainstorms your idea, scaffolds the project, removes what you don't need, and generates your business logic automatically.
-
-```bash
-# Install the plugin
-npx skills add nmarijane/saas-forge
-
-# Create your SaaS
-/saas-forge:saas A project management tool for freelancers
-```
-
-saas-forge will:
-1. **Brainstorm** your idea — data model, user flows, which features to keep or remove
-2. **Scaffold** the project — clone, customize, clean up unused features
-3. **Generate** your business code — Drizzle models, server actions, components, pages
-
-No manual setup. No guessing which files to delete. Just describe your app and go.
+> [!TIP]
+> ### Setup with Claude Code
+>
+> The fastest way to start a new project from this boilerplate is with [**saas-forge**](https://github.com/nmarijane/saas-forge) — a Claude Code plugin that brainstorms your idea, scaffolds the project, removes what you don't need, and generates your business logic automatically.
+>
+> ```bash
+> # Install the plugin
+> npx skills add nmarijane/saas-forge
+>
+> # Create your SaaS
+> /saas-forge:saas A project management tool for freelancers
+> ```
+>
+> saas-forge will:
+> 1. **Brainstorm** your idea — data model, user flows, which features to keep or remove
+> 2. **Scaffold** the project — clone, customize, clean up unused features
+> 3. **Generate** your business code — Drizzle models, server actions, components, pages
+>
+> No manual setup. No guessing which files to delete. Just describe your app and go.
 
 ---
 
