@@ -53,6 +53,11 @@ const plans: Array<{
   },
 ];
 
+async function hashPassword(password: string): Promise<string> {
+  const { hashPassword: hash } = await import("better-auth/crypto");
+  return hash(password);
+}
+
 async function seed() {
   console.log("Seeding database...");
 
@@ -67,33 +72,68 @@ async function seed() {
   }
   console.log("Plans seeded: Free, Pro, Enterprise");
 
-  // Seed admin user
-  const adminId = "admin-seed-001";
-  await db
-    .insert(schema.user)
-    .values({
-      id: adminId,
-      name: "Admin",
-      email: "admin@example.com",
-      emailVerified: true,
-      isAdmin: true,
-      onboardingCompleted: true,
-    })
-    .onConflictDoNothing({ target: schema.user.id });
+  // Dev accounts — ONLY in non-production environments
+  const isProd = process.env.NODE_ENV === "production";
 
-  // Create admin account with password "admin123" (for dev only)
-  await db
-    .insert(schema.account)
-    .values({
-      id: "admin-account-001",
-      accountId: adminId,
-      providerId: "credential",
-      userId: adminId,
-      password: "$2a$10$placeholder_hash_replace_on_first_login",
-    })
-    .onConflictDoNothing({ target: schema.account.id });
+  if (isProd) {
+    console.log("Production detected — skipping dev accounts (security)");
+  } else {
+    const passwordHash = await hashPassword("admin123");
 
-  console.log("Admin user seeded: admin@example.com");
+    // Seed admin user
+    const adminId = "admin-seed-001";
+    await db
+      .insert(schema.user)
+      .values({
+        id: adminId,
+        name: "Admin",
+        email: "admin@example.com",
+        emailVerified: true,
+        isAdmin: true,
+        onboardingCompleted: true,
+      })
+      .onConflictDoNothing({ target: schema.user.id });
+
+    await db
+      .insert(schema.account)
+      .values({
+        id: "admin-account-001",
+        accountId: adminId,
+        providerId: "credential",
+        userId: adminId,
+        password: passwordHash,
+      })
+      .onConflictDoNothing({ target: schema.account.id });
+
+    console.log("Admin seeded: admin@example.com / admin123");
+
+    // Seed dev user (non-admin)
+    const devId = "dev-seed-001";
+    await db
+      .insert(schema.user)
+      .values({
+        id: devId,
+        name: "Dev User",
+        email: "dev@example.com",
+        emailVerified: true,
+        isAdmin: false,
+        onboardingCompleted: false,
+      })
+      .onConflictDoNothing({ target: schema.user.id });
+
+    await db
+      .insert(schema.account)
+      .values({
+        id: "dev-account-001",
+        accountId: devId,
+        providerId: "credential",
+        userId: devId,
+        password: passwordHash,
+      })
+      .onConflictDoNothing({ target: schema.account.id });
+
+    console.log("Dev user seeded: dev@example.com / admin123");
+  }
   console.log("Seeding complete!");
   process.exit(0);
 }
