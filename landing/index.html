@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SaaS Boilerplate — Stop Rebuilding the Same Foundation</title>
+  <meta name="description" content="Production-ready Next.js boilerplate with 20+ features. Auth, billing, multi-tenancy, and more — so your AI agents skip straight to business logic." />
+  <meta property="og:title" content="SaaS Boilerplate" />
+  <meta property="og:description" content="Stop wasting tokens rebuilding auth, billing, and RBAC. 20+ features, zero config." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://nmarijane.github.io/saas-boilerplate" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            bg: '#0A0F1E',
+            surface: '#111827',
+            border: '#1F2937',
+            accent: '#3B82F6',
+            'accent-hover': '#2563EB',
+            muted: '#9CA3AF',
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+          },
+        },
+      },
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    body { background: #0A0F1E; }
+    .gradient-text {
+      background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 50%, #EC4899 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .glow { box-shadow: 0 0 60px rgba(59, 130, 246, 0.15); }
+    .feature-card:hover { border-color: #3B82F6; transform: translateY(-2px); }
+    .code-block { background: #111827; border: 1px solid #1F2937; }
+    @keyframes fade-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fade-up { animation: fade-up 0.6s ease-out forwards; }
+    .animate-delay-1 { animation-delay: 0.1s; opacity: 0; }
+    .animate-delay-2 { animation-delay: 0.2s; opacity: 0; }
+    .animate-delay-3 { animation-delay: 0.3s; opacity: 0; }
+    .animate-delay-4 { animation-delay: 0.4s; opacity: 0; }
+  </style>
+</head>
+<body class="dark text-white antialiased">
+
+  <!-- Nav -->
+  <nav class="fixed top-0 z-50 w-full border-b border-border/50 bg-bg/80 backdrop-blur-xl">
+    <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+      <a href="#" class="flex items-center gap-2 text-lg font-bold">
+        <span class="text-2xl">⚡</span>
+        <span>SaaS Boilerplate</span>
+      </a>
+      <div class="flex items-center gap-6">
+        <a href="#features" class="hidden text-sm text-muted hover:text-white transition-colors sm:block">Features</a>
+        <a href="#stack" class="hidden text-sm text-muted hover:text-white transition-colors sm:block">Stack</a>
+        <a href="#start" class="hidden text-sm text-muted hover:text-white transition-colors sm:block">Get Started</a>
+        <a href="https://github.com/nmarijane/saas-boilerplate" target="_blank" class="flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium hover:bg-white/20 transition-colors">
+          <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="relative overflow-hidden pt-32 pb-20 sm:pt-40 sm:pb-32">
+    <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(59,130,246,0.08)_0%,_transparent_50%)]"></div>
+    <div class="relative mx-auto max-w-4xl px-6 text-center">
+      <div class="animate-fade-up">
+        <div class="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-1.5 text-sm text-muted">
+          <span class="inline-block h-2 w-2 rounded-full bg-green-500"></span>
+          v1.1.0 — 92% test coverage
+        </div>
+      </div>
+      <h1 class="animate-fade-up animate-delay-1 text-4xl font-extrabold leading-tight tracking-tight sm:text-6xl lg:text-7xl">
+        Stop rebuilding the<br /><span class="gradient-text">same SaaS foundation</span>
+      </h1>
+      <p class="animate-fade-up animate-delay-2 mx-auto mt-6 max-w-2xl text-lg text-muted sm:text-xl">
+        Every project starts with auth, billing, multi-tenancy, admin panels...
+        Your AI agents burn tokens regenerating it every time.
+        <strong class="text-white">Clone once, build what matters.</strong>
+      </p>
+      <div class="animate-fade-up animate-delay-3 mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+        <a href="#start" class="rounded-xl bg-accent px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-accent/25 hover:bg-accent-hover transition-all">
+          Get Started
+        </a>
+        <a href="https://github.com/nmarijane/saas-boilerplate" target="_blank" class="rounded-xl border border-border px-8 py-3.5 text-sm font-semibold hover:border-muted transition-all">
+          View on GitHub
+        </a>
+      </div>
+      <div class="animate-fade-up animate-delay-4 mt-8 flex flex-wrap items-center justify-center gap-3">
+        <img src="https://img.shields.io/badge/Next.js-16-000?logo=nextdotjs&logoColor=white&style=flat-square" alt="Next.js" />
+        <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black&style=flat-square" alt="React" />
+        <img src="https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white&style=flat-square" alt="TypeScript" />
+        <img src="https://img.shields.io/badge/Stripe-20-635BFF?logo=stripe&logoColor=white&style=flat-square" alt="Stripe" />
+        <img src="https://img.shields.io/badge/MIT-License-blue?style=flat-square" alt="License" />
+      </div>
+    </div>
+  </section>
+
+  <!-- Problem -->
+  <section class="border-t border-border py-20 sm:py-28">
+    <div class="mx-auto max-w-5xl px-6">
+      <div class="grid gap-12 md:grid-cols-2 md:items-center">
+        <div>
+          <h2 class="text-3xl font-bold sm:text-4xl">The same code,<br />every single time</h2>
+          <p class="mt-4 text-muted leading-relaxed">
+            Auth flows, Stripe webhooks, role-based access, email templates, admin dashboards...
+            You've built them before. Your AI agent has generated them before.
+            That's hundreds of dollars in tokens and days of setup — for code that's identical across projects.
+          </p>
+        </div>
+        <div class="code-block rounded-xl p-6 font-mono text-sm leading-relaxed">
+          <div class="text-muted">// Your typical new SaaS project:</div>
+          <div class="mt-2 text-red-400">❌ Auth system <span class="text-muted">.............. 2 days</span></div>
+          <div class="text-red-400">❌ Stripe billing <span class="text-muted">........... 2 days</span></div>
+          <div class="text-red-400">❌ Multi-tenancy <span class="text-muted">............ 1 day</span></div>
+          <div class="text-red-400">❌ Admin panel <span class="text-muted">.............. 1 day</span></div>
+          <div class="text-red-400">❌ API keys + webhooks <span class="text-muted">...... 1 day</span></div>
+          <div class="text-red-400">❌ Email templates <span class="text-muted">.......... 1 day</span></div>
+          <div class="text-red-400">❌ CI/CD + testing <span class="text-muted">.......... 1 day</span></div>
+          <div class="mt-3 border-t border-border pt-3 text-white">
+            = <span class="text-red-400 font-semibold">9 days</span> before writing business logic
+          </div>
+          <div class="mt-4 text-green-400">
+            ✅ With this boilerplate: <span class="font-semibold">npm install && npm run dev</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section id="features" class="border-t border-border py-20 sm:py-28">
+    <div class="mx-auto max-w-6xl px-6">
+      <div class="text-center">
+        <h2 class="text-3xl font-bold sm:text-4xl">20+ features, ready to go</h2>
+        <p class="mt-4 text-muted">Everything you need, nothing you don't. Remove what you don't use.</p>
+      </div>
+      <div class="mt-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+
+        <div class="feature-card rounded-xl border border-border bg-surface p-6 transition-all">
+          <div class="mb-3 text-2xl">🔐</div>
+          <h3 class="font-semibold">Authentication</h3>
+          <p class="mt-1 text-sm text-muted">Email, Google, GitHub, MFA, email verification, password reset</p>
+        </div>
+
+        <div class="feature-card rounded-xl border border-border bg-surface p-6 transition-all">
+          <div class="mb-3 text-2xl">💳</div>
+          <h3 class="font-semibold">Stripe Billing</h3>
+          <p class="mt-1 text-sm text-muted">Checkout, subscriptions, customer portal, webhook handlers</p>
+        </div>
+
+        <div class="feature-card rounded-xl border border-border bg-surface p-6 transition-all">
+          <div class="mb-3 text-2xl">👥</div>
+          <h3 class="font-semibold">Multi-tenancy</h3>
+          <p class="mt-1 text-sm text-muted">Organizations, RBAC (owner/admin/member), team invitations</p>
+        </div>
+
+        <div class="feature-card rounded-xl border border-border bg-surface p-6 transition-all">
+          <div class="mb-3 text-2xl">🎯</div>
+          <h3 class="font-semibold">Onboarding</h3>
+          <p class="mt-1 text-sm text-muted">3-step wizard — profile, organization, team invite</p>
+        </div>
+
+        <div class="feature-card rounded-xl border border-border bg-surface p-6 transition-all">
+          <div class="mb-3 text-2xl">📊</div>
+          <h3 class="font-semibold">Dashboard & Admin</h3>
+          <p class="mt-1 text-sm text-muted">Stats, users, orgs, audit log, metrics, changelog</p>
+        </div>
+
+        <div class="feature-card rounded-xl border border-border bg-surface p-6 transition-all">
+          <div class="mb-3 text-2xl">🔑</div>
+          <h3 class="font-semibold">API Keys & Webhooks</h3>
+          <p class="mt-1 text-sm text-muted">SHA-256 hashed keys, HMAC-signed webhooks, delivery log</p>
+        </div>
+
+        <div class="feature-card rounded-xl border border-border bg-surface p-6 transition-all">
+          <div class="mb-3 text-2xl">🚩</div>
+          <h3 class="font-semibold">Feature Flags</h3>
+          <p class="mt-1 text-sm text-muted">Plan/org-based gating, in-memory cache, admin UI</p>
+        </div>
+
+        <div class="feature-card rounded-xl border border-border bg-surface p-6 transition-all">
+          <div class="mb-3 text-2xl">🛡️</div>
+          <h3 class="font-semibold">Security</h3>
+          <p class="mt-1 text-sm text-muted">CSP, HSTS, Zod validation, RBAC, safeAction wrapper</p>
+        </div>
+
+        <div class="feature-card rounded-xl border border-border bg-surface p-6 transition-all">
+          <div class="mb-3 text-2xl">📧</div>
+          <h3 class="font-semibold">Email Templates</h3>
+          <p class="mt-1 text-sm text-muted">Welcome, verify, reset, invitation, payment, cancellation</p>
+        </div>
+
+        <div class="feature-card rounded-xl border border-border bg-surface p-6 transition-all">
+          <div class="mb-3 text-2xl">📁</div>
+          <h3 class="font-semibold">File Upload</h3>
+          <p class="mt-1 text-sm text-muted">Local + S3 adapter, validation, ownership checks</p>
+        </div>
+
+        <div class="feature-card rounded-xl border border-border bg-surface p-6 transition-all">
+          <div class="mb-3 text-2xl">🔔</div>
+          <h3 class="font-semibold">Notifications</h3>
+          <p class="mt-1 text-sm text-muted">In-app bell icon, mark as read, notification types</p>
+        </div>
+
+        <div class="feature-card rounded-xl border border-border bg-surface p-6 transition-all">
+          <div class="mb-3 text-2xl">🤖</div>
+          <h3 class="font-semibold">AI-Native CI</h3>
+          <p class="mt-1 text-sm text-muted">Claude Code auto-reviewer, coverage badge, Dependabot</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Tech Stack -->
+  <section id="stack" class="border-t border-border py-20 sm:py-28">
+    <div class="mx-auto max-w-5xl px-6 text-center">
+      <h2 class="text-3xl font-bold sm:text-4xl">Built with the modern stack</h2>
+      <p class="mt-4 text-muted">All latest major versions. Zero deprecated packages.</p>
+      <div class="mt-12 flex flex-wrap items-center justify-center gap-3">
+        <a href="https://nextjs.org" target="_blank"><img src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js" /></a>
+        <a href="https://react.dev" target="_blank"><img src="https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React" /></a>
+        <a href="https://www.typescriptlang.org" target="_blank"><img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" /></a>
+        <a href="https://tailwindcss.com" target="_blank"><img src="https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" /></a>
+        <a href="https://ui.shadcn.com" target="_blank"><img src="https://img.shields.io/badge/shadcn/ui-000000?style=for-the-badge&logo=shadcnui&logoColor=white" alt="shadcn/ui" /></a>
+        <a href="https://www.postgresql.org" target="_blank"><img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" /></a>
+        <a href="https://orm.drizzle.team" target="_blank"><img src="https://img.shields.io/badge/Drizzle-C5F74F?style=for-the-badge&logo=drizzle&logoColor=black" alt="Drizzle ORM" /></a>
+        <a href="https://stripe.com" target="_blank"><img src="https://img.shields.io/badge/Stripe-635BFF?style=for-the-badge&logo=stripe&logoColor=white" alt="Stripe" /></a>
+        <a href="https://sentry.io" target="_blank"><img src="https://img.shields.io/badge/Sentry-362D59?style=for-the-badge&logo=sentry&logoColor=white" alt="Sentry" /></a>
+        <a href="https://storybook.js.org" target="_blank"><img src="https://img.shields.io/badge/Storybook-FF4785?style=for-the-badge&logo=storybook&logoColor=white" alt="Storybook" /></a>
+        <a href="https://vitest.dev" target="_blank"><img src="https://img.shields.io/badge/Vitest-6E9F18?style=for-the-badge&logo=vitest&logoColor=white" alt="Vitest" /></a>
+        <a href="https://playwright.dev" target="_blank"><img src="https://img.shields.io/badge/Playwright-2EAD33?style=for-the-badge&logo=playwright&logoColor=white" alt="Playwright" /></a>
+        <a href="https://www.docker.com" target="_blank"><img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" /></a>
+        <a href="https://github.com/features/actions" target="_blank"><img src="https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white" alt="GitHub Actions" /></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="border-t border-border py-20 sm:py-28">
+    <div class="mx-auto max-w-5xl px-6">
+      <div class="text-center">
+        <h2 class="text-3xl font-bold sm:text-4xl">3 steps to launch</h2>
+      </div>
+      <div class="mt-16 grid gap-8 md:grid-cols-3">
+        <div class="text-center">
+          <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10 text-2xl font-bold text-accent">1</div>
+          <h3 class="mt-4 text-lg font-semibold">Clone</h3>
+          <p class="mt-2 text-sm text-muted">Clone the repo. <code class="rounded bg-surface px-1.5 py-0.5 text-xs">npm install</code> and you're running.</p>
+        </div>
+        <div class="text-center">
+          <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10 text-2xl font-bold text-accent">2</div>
+          <h3 class="mt-4 text-lg font-semibold">Remove what you don't need</h3>
+          <p class="mt-2 text-sm text-muted">Each feature is isolated. Delete the folder, done. No billing? Delete <code class="rounded bg-surface px-1.5 py-0.5 text-xs">features/billing/</code>.</p>
+        </div>
+        <div class="text-center">
+          <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10 text-2xl font-bold text-accent">3</div>
+          <h3 class="mt-4 text-lg font-semibold">Build your product</h3>
+          <p class="mt-2 text-sm text-muted">Focus 100% on business logic. Auth, billing, admin — already done.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI Native -->
+  <section class="border-t border-border py-20 sm:py-28">
+    <div class="mx-auto max-w-5xl px-6">
+      <div class="grid gap-12 md:grid-cols-2 md:items-center">
+        <div>
+          <div class="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/5 px-3 py-1 text-xs font-medium text-accent">
+            AI-Native
+          </div>
+          <h2 class="mt-4 text-3xl font-bold sm:text-4xl">Built for AI agents</h2>
+          <p class="mt-4 text-muted leading-relaxed">
+            <code class="rounded bg-surface px-1.5 py-0.5 text-sm">CLAUDE.md</code> gives your agent full project context.
+            <code class="rounded bg-surface px-1.5 py-0.5 text-sm">docs/SETUP.md</code> is a step-by-step guide designed for LLMs.
+            Claude Code reviews every PR automatically via <code class="rounded bg-surface px-1.5 py-0.5 text-sm">@claude</code>.
+          </p>
+          <p class="mt-4 text-muted leading-relaxed">
+            Your agents don't waste tokens figuring out the codebase — they have everything from day one.
+          </p>
+        </div>
+        <div class="code-block rounded-xl p-6 font-mono text-sm leading-relaxed">
+          <div class="text-muted"># Your AI agent reads CLAUDE.md and knows:</div>
+          <div class="mt-2 text-green-400">✓ Architecture (18 feature modules)</div>
+          <div class="text-green-400">✓ Conventions (safeAction, requireAdmin)</div>
+          <div class="text-green-400">✓ Tech stack (Next.js 16, Drizzle, Stripe 20)</div>
+          <div class="text-green-400">✓ Security rules (Zod, RBAC, CSP)</div>
+          <div class="text-green-400">✓ All commands (dev, test, build, seed)</div>
+          <div class="mt-3 border-t border-border pt-3 text-muted">
+            # And SETUP.md guides it through:
+          </div>
+          <div class="text-blue-400">→ Env vars (what, where, how to get them)</div>
+          <div class="text-blue-400">→ Feature removal (dependency map)</div>
+          <div class="text-blue-400">→ Model creation (templates)</div>
+          <div class="text-blue-400">→ Deployment checklist</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick Start -->
+  <section id="start" class="border-t border-border py-20 sm:py-28">
+    <div class="mx-auto max-w-3xl px-6 text-center">
+      <h2 class="text-3xl font-bold sm:text-4xl">Start in 30 seconds</h2>
+      <p class="mt-4 text-muted">No database setup. No env vars. PGlite runs in-memory.</p>
+      <div class="code-block glow mt-10 rounded-xl p-8 text-left font-mono text-sm">
+        <div class="text-muted"># Clone and start</div>
+        <div class="mt-1"><span class="text-accent">$</span> git clone https://github.com/nmarijane/saas-boilerplate.git my-saas</div>
+        <div><span class="text-accent">$</span> cd my-saas && npm install</div>
+        <div><span class="text-accent">$</span> npm run dev</div>
+        <div class="mt-4 text-muted"># Seed dev accounts (admin@example.com / admin123)</div>
+        <div><span class="text-accent">$</span> npm run db:seed</div>
+        <div class="mt-4 text-green-400">→ Open http://localhost:3000</div>
+      </div>
+      <div class="mt-8">
+        <a href="https://github.com/nmarijane/saas-boilerplate/blob/main/docs/SETUP.md" target="_blank" class="text-sm text-accent hover:underline">
+          Read the full Setup Guide →
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="border-t border-border py-12">
+    <div class="mx-auto max-w-5xl px-6">
+      <div class="flex flex-col items-center justify-between gap-6 sm:flex-row">
+        <div class="flex items-center gap-2 text-sm text-muted">
+          <span class="text-lg">⚡</span>
+          <span>SaaS Boilerplate — MIT License</span>
+        </div>
+        <div class="flex items-center gap-6 text-sm text-muted">
+          <a href="https://github.com/nmarijane/saas-boilerplate" target="_blank" class="hover:text-white transition-colors">GitHub</a>
+          <a href="https://github.com/nmarijane/saas-boilerplate/blob/main/docs/SETUP.md" target="_blank" class="hover:text-white transition-colors">Documentation</a>
+          <a href="https://github.com/nmarijane/saas-boilerplate/releases" target="_blank" class="hover:text-white transition-colors">Releases</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
