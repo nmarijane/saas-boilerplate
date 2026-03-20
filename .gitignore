@@ -50,3 +50,6 @@ storybook-static/
 
 # vercel
 .vercel/
+
+# stitch
+.stitch/
