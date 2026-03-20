@@ -17,6 +17,9 @@ dist/
 # debug
 npm-debug.log*
 
+# typescript
+*.tsbuildinfo
+
 # IDEs
 .idea/
 *.swp
