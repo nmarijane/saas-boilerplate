@@ -9,6 +9,7 @@ Clone this once, and go straight to building what makes your product unique.
 
 [![CI](https://github.com/nmarijane/saas-boilerplate/actions/workflows/ci.yml/badge.svg)](https://github.com/nmarijane/saas-boilerplate/actions/workflows/ci.yml)
 ![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/nmarijane/saas-boilerplate/main/.github/badges/coverage.json)
+![Node.js](https://img.shields.io/badge/Node.js-22-339933?logo=nodedotjs&logoColor=white)
 ![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-blue)
@@ -125,24 +126,31 @@ src/
       (app)/              # Protected app (dashboard, settings)
       (admin)/            # Admin panel
     api/                  # API routes
-  features/               # Feature modules (isolated)
+  features/               # 18 feature modules (isolated)
+    admin/                # Admin panel (users, orgs, metrics)
+    api-keys/             # API key management (SHA-256)
+    audit/                # Audit log with retention
     auth/                 # Better Auth, organizations, RBAC
     billing/              # Stripe, plans, webhooks
+    changelog/            # Product changelog
+    dashboard/            # Dashboard with real-time stats
+    email/                # React Email templates
+    events/               # Event bus (17 types)
+    feature-flags/        # Feature flags (plan/org gating)
+    feedback/             # Feedback widget + admin review
+    jobs/                 # Background jobs (Inngest)
     notifications/        # In-app notifications
-    feedback/             # Feedback widget
+    onboarding/           # 3-step wizard
+    settings/             # User & org settings
     upload/               # File upload (local + S3)
-    email/                # Email templates
-    onboarding/           # Wizard
-    api-keys/             # API key management
-    webhooks/             # Webhook delivery
-    feature-flags/        # Feature flag system
-    events/               # Event bus
+    webhooks/             # Webhook delivery + HMAC signatures
   shared/                 # Shared code
     components/           # shadcn/ui + reusable components
     hooks/                # React hooks
     lib/                  # DB, env, logger, i18n, SEO, rate-limit
   models/                 # Drizzle ORM schemas
   locales/                # Translation files (en.json, fr.json)
+  proxy.ts                # Rate limiting, i18n, auth guards
 ```
 
 ---
@@ -170,7 +178,7 @@ npm run test:e2e         # Playwright E2E tests
 npm run db:generate      # Generate Drizzle migration
 npm run db:migrate       # Apply migrations
 npm run db:studio        # Open Drizzle Studio
-npm run db:seed          # Seed database (plans, admin user)
+npm run db:seed          # Seed database (plans, admin + dev user)
 
 # Production
 npm run build            # Production build
