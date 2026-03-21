@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 
 import { requireAuth } from "@/features/auth/guards";
+import { ActiveSessions } from "@/features/settings/components/active-sessions";
+import { ChangePasswordForm } from "@/features/settings/components/change-password-form";
+import { ConnectedAccounts } from "@/features/settings/components/connected-accounts";
 import { ProfileForm } from "@/features/settings/components/profile-form";
 import { PageHeader } from "@/shared/components/data/page-header";
 import {
@@ -45,7 +48,7 @@ export default async function ProfilePage({ params }: Props) {
         <CardHeader>
           <CardTitle>{t("updateProfile")}</CardTitle>
           <CardDescription>
-            Update your personal information.
+            {t("title")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -65,14 +68,39 @@ export default async function ProfilePage({ params }: Props) {
         <CardHeader>
           <CardTitle>{t("changePassword")}</CardTitle>
           <CardDescription>
-            Update your password to keep your account secure.
+            {t("changePasswordDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground text-sm">
-            Password management is handled via Better Auth. Use the forgot
-            password flow to reset your password.
-          </p>
+          <ChangePasswordForm />
+        </CardContent>
+      </Card>
+
+      <Separator />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("connectedAccounts")}</CardTitle>
+          <CardDescription>
+            {t("connectedAccountsDescription")}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ConnectedAccounts />
+        </CardContent>
+      </Card>
+
+      <Separator />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("activeSessions")}</CardTitle>
+          <CardDescription>
+            {t("activeSessionsDescription")}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ActiveSessions />
         </CardContent>
       </Card>
     </div>
