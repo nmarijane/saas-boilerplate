@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
@@ -9,11 +9,13 @@ import * as schema from "@/models";
 const client = new PGlite();
 export const testDb = drizzle(client, { schema });
 
-// Read migration SQL
-const migrationSQL = readFileSync(
-  resolve(__dirname, "../migrations/0000_shallow_dust.sql"),
-  "utf-8",
-);
+// Read all migration SQL files in order
+const migrationsDir = resolve(__dirname, "../migrations");
+const migrationSQL = readdirSync(migrationsDir)
+  .filter((f) => f.endsWith(".sql"))
+  .sort()
+  .map((f) => readFileSync(resolve(migrationsDir, f), "utf-8"))
+  .join("\n--> statement-breakpoint\n");
 
 // Mock modules — vi.mock calls are hoisted by Vitest, so testDb is available
 vi.mock("@/shared/lib/DB", () => ({
