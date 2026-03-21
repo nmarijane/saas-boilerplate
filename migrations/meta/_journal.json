@@ -22,6 +22,13 @@
       "when": 1774101228592,
       "tag": "0002_flat_the_santerians",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1774110522381,
+      "tag": "0003_mysterious_amazoness",
+      "breakpoints": true
     }
   ]
 }

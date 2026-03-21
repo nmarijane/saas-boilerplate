@@ -189,5 +189,17 @@
     "terms": "Terms of Service",
     "privacy": "Privacy Policy",
     "mentions": "Legal Notice"
+  },
+  "ai": {
+    "title": "AI Chat",
+    "newConversation": "New conversation",
+    "noProviders": "AI not configured",
+    "noProvidersDescription": "Add an AI provider API key to enable AI chat.",
+    "sendMessage": "Send a message...",
+    "credits": "credits",
+    "unlimited": "Unlimited",
+    "insufficientCredits": "Insufficient credits",
+    "selectModel": "Select model",
+    "stopGeneration": "Stop generation"
   }
 }

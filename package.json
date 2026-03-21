@@ -23,6 +23,11 @@
     "docker:up": "docker-compose -f docker/docker-compose.yml up -d"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.63",
+    "@ai-sdk/google": "^3.0.52",
+    "@ai-sdk/groq": "^3.0.31",
+    "@ai-sdk/openai": "^3.0.47",
+    "@ai-sdk/react": "^3.0.136",
     "@aws-sdk/client-s3": "^3.1013.0",
     "@axe-core/playwright": "^4.11.1",
     "@electric-sql/pglite": "^0.4.1",
@@ -44,6 +49,7 @@
     "@sentry/nextjs": "^10.45.0",
     "@t3-oss/env-nextjs": "^0.13.10",
     "@upstash/ratelimit": "^2.0.8",
+    "ai": "^6.0.134",
     "better-auth": "^1.5.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -60,6 +66,8 @@
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-hook-form": "^7.71.2",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "sonner": "^2.0.7",
     "stripe": "^20.4.1",
     "tailwind-merge": "^3.5.0",
