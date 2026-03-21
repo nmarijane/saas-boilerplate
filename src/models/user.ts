@@ -13,6 +13,9 @@ export const user = pgTable("user", {
   image: text("image"),
   isAdmin: boolean("is_admin").notNull().default(false),
   onboardingCompleted: boolean("onboarding_completed").notNull().default(false),
+  twoFactorEnabled: boolean("two_factor_enabled").default(false),
+  twoFactorSecret: text("two_factor_secret"),
+  twoFactorBackupCodes: text("two_factor_backup_codes"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
