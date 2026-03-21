@@ -33,7 +33,15 @@
     "orContinueWith": "Ou continuer avec",
     "emailSent": "Email envoyé ! Vérifiez votre boîte de réception.",
     "invalidCredentials": "Email ou mot de passe invalide",
-    "passwordMismatch": "Les mots de passe ne correspondent pas"
+    "passwordMismatch": "Les mots de passe ne correspondent pas",
+    "passwordTooWeak": "Le mot de passe ne remplit pas tous les critères",
+    "passwordStrength": {
+      "minLength": "Au moins 8 caractères",
+      "uppercase": "Une lettre majuscule",
+      "lowercase": "Une lettre minuscule",
+      "number": "Un chiffre",
+      "special": "Un caractère spécial"
+    }
   },
   "dashboard": {
     "title": "Tableau de bord",

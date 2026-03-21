@@ -1,17 +1,25 @@
 import { drizzle } from "drizzle-orm/node-postgres";
+import { migrate as migratePg } from "drizzle-orm/node-postgres/migrator";
 import { drizzle as drizzlePglite } from "drizzle-orm/pglite";
+import { migrate as migratePglite } from "drizzle-orm/pglite/migrator";
 import * as schema from "../src/models";
+
+const migrationsFolder = "./migrations";
 
 async function createDb() {
   const databaseUrl = process.env.DATABASE_URL;
 
   if (databaseUrl) {
-    return drizzle(databaseUrl, { schema });
+    const db = drizzle(databaseUrl, { schema });
+    await migratePg(db, { migrationsFolder });
+    return db;
   }
 
   const { PGlite } = await import("@electric-sql/pglite");
   const client = new PGlite("./local.db");
-  return drizzlePglite(client, { schema });
+  const db = drizzlePglite(client, { schema });
+  await migratePglite(db, { migrationsFolder });
+  return db;
 }
 
 const plans: Array<{

@@ -10,6 +10,7 @@ import { authClient } from "@/features/auth/auth-client";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
+import { PasswordInput } from "@/shared/components/ui/password-input";
 import { useRouter } from "@/shared/lib/i18n-navigation";
 import { SocialButtons } from "./social-buttons";
 
@@ -77,9 +78,8 @@ export function SignInForm() {
               {t("forgotPassword")}
             </a>
           </div>
-          <Input
+          <PasswordInput
             id="password"
-            type="password"
             autoComplete="current-password"
             {...register("password")}
           />

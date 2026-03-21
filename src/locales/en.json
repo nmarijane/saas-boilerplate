@@ -33,7 +33,15 @@
     "orContinueWith": "Or continue with",
     "emailSent": "Email sent! Check your inbox.",
     "invalidCredentials": "Invalid email or password",
-    "passwordMismatch": "Passwords do not match"
+    "passwordMismatch": "Passwords do not match",
+    "passwordTooWeak": "Password does not meet all requirements",
+    "passwordStrength": {
+      "minLength": "At least 8 characters",
+      "uppercase": "One uppercase letter",
+      "lowercase": "One lowercase letter",
+      "number": "One number",
+      "special": "One special character"
+    }
   },
   "dashboard": {
     "title": "Dashboard",
