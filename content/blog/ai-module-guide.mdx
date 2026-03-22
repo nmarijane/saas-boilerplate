@@ -1,0 +1,42 @@
+---
+title: "Building AI-Powered Features with the AI Module"
+description: "Learn how to leverage the built-in AI chat module with multi-provider support and credit system."
+date: "2025-01-20"
+author: "Team"
+tags: ["ai", "guide", "features"]
+published: true
+---
+
+## AI Module Overview
+
+The AI module provides a complete chat interface with support for multiple AI providers out of the box.
+
+### Supported Providers
+
+| Provider | Models | Setup |
+|----------|--------|-------|
+| OpenAI | GPT-4o, GPT-4o Mini, o3-mini | `OPENAI_API_KEY` |
+| Anthropic | Claude Sonnet 4, Claude 3.5 Haiku | `ANTHROPIC_API_KEY` |
+| Google | Gemini 2.0 Flash | `GOOGLE_GENERATIVE_AI_API_KEY` |
+| Groq | Llama 3.3 70B | `GROQ_API_KEY` |
+| Ollama | Any local model | `OLLAMA_BASE_URL` |
+
+### Credit System
+
+Credits are allocated per plan:
+
+- **Free**: 100 credits/month
+- **Pro**: 5,000 credits/month
+- **Enterprise**: Unlimited
+
+Each model has different credit costs based on token usage. The system automatically tracks usage and deducts credits.
+
+## Getting Started
+
+Add any provider's API key to your `.env.local`:
+
+```bash
+OPENAI_API_KEY=sk-your-key-here
+```
+
+That's it. The AI chat page is immediately available at `/ai`.
