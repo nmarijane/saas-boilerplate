@@ -195,5 +195,17 @@
     "terms": "Conditions d'utilisation",
     "privacy": "Politique de confidentialité",
     "mentions": "Mentions légales"
+  },
+  "ai": {
+    "title": "Chat IA",
+    "newConversation": "Nouvelle conversation",
+    "noProviders": "IA non configurée",
+    "noProvidersDescription": "Ajoutez une clé API d'un fournisseur IA pour activer le chat IA.",
+    "sendMessage": "Envoyer un message...",
+    "credits": "crédits",
+    "unlimited": "Illimité",
+    "insufficientCredits": "Crédits insuffisants",
+    "selectModel": "Sélectionner un modèle",
+    "stopGeneration": "Arrêter la génération"
   }
 }

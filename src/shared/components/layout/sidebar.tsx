@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  BotIcon,
   LayoutDashboardIcon,
   MenuIcon,
   PanelLeftCloseIcon,
@@ -33,6 +34,11 @@ const defaultNavItems: NavItem[] = [
     label: "Dashboard",
     href: "/dashboard",
     icon: <LayoutDashboardIcon className="size-4" />,
+  },
+  {
+    label: "AI Chat",
+    href: "/ai",
+    icon: <BotIcon className="size-4" />,
   },
   {
     label: "Settings",

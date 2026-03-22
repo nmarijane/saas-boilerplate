@@ -33,6 +33,14 @@ export const env = createEnv({
     // Inngest
     INNGEST_EVENT_KEY: z.string().optional(),
     INNGEST_SIGNING_KEY: z.string().optional(),
+    // AI
+    OPENAI_API_KEY: z.string().optional(),
+    ANTHROPIC_API_KEY: z.string().optional(),
+    GOOGLE_GENERATIVE_AI_API_KEY: z.string().optional(),
+    GROQ_API_KEY: z.string().optional(),
+    OLLAMA_BASE_URL: z.string().url().optional(),
+    AI_DEFAULT_MODEL: z.string().default("gpt-4o-mini"),
+    AI_CREDITS_PER_ORG_MONTHLY: z.coerce.number().int().positive().default(1000),
   },
   client: {
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().default(""),
@@ -70,6 +78,13 @@ export const env = createEnv({
     INNGEST_EVENT_KEY: process.env.INNGEST_EVENT_KEY,
     INNGEST_SIGNING_KEY: process.env.INNGEST_SIGNING_KEY,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+    GOOGLE_GENERATIVE_AI_API_KEY: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+    GROQ_API_KEY: process.env.GROQ_API_KEY,
+    OLLAMA_BASE_URL: process.env.OLLAMA_BASE_URL,
+    AI_DEFAULT_MODEL: process.env.AI_DEFAULT_MODEL,
+    AI_CREDITS_PER_ORG_MONTHLY: process.env.AI_CREDITS_PER_ORG_MONTHLY,
   },
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
 });

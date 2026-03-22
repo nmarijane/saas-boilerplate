@@ -35,11 +35,13 @@ export const PLANS: PlanConfig[] = [
       prioritySupport: false,
       customBranding: false,
       advancedAnalytics: false,
+      aiChat: true,
     },
     limits: {
       members: 1,
       projects: 3,
       storage: 100, // MB
+      aiCredits: 100,
     },
   },
   {
@@ -61,11 +63,13 @@ export const PLANS: PlanConfig[] = [
       prioritySupport: true,
       customBranding: false,
       advancedAnalytics: true,
+      aiChat: true,
     },
     limits: {
       members: 10,
       projects: 50,
       storage: 10_000, // MB
+      aiCredits: 5000,
     },
     highlighted: true,
   },
@@ -88,11 +92,13 @@ export const PLANS: PlanConfig[] = [
       prioritySupport: true,
       customBranding: true,
       advancedAnalytics: true,
+      aiChat: true,
     },
     limits: {
       members: -1, // unlimited
       projects: -1,
       storage: -1,
+      aiCredits: -1,
     },
   },
 ];
@@ -104,12 +110,14 @@ export const FEATURE_LABELS: Record<string, string> = {
   prioritySupport: "Priority Support",
   customBranding: "Custom Branding",
   advancedAnalytics: "Advanced Analytics",
+  aiChat: "AI Chat",
 };
 
 export const LIMIT_LABELS: Record<string, string> = {
   members: "Team Members",
   projects: "Projects",
   storage: "Storage (MB)",
+  aiCredits: "AI Credits / month",
 };
 
 export function getPlanById(planId: string): PlanConfig | undefined {
