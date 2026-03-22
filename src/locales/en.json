@@ -130,6 +130,12 @@
     },
     "changelog": {
       "title": "Changelog"
+    },
+    "blog": {
+      "title": "Blog",
+      "navTitle": "Blog",
+      "description": "Insights, guides, and updates from our team.",
+      "noPosts": "No posts yet. Check back soon!"
     }
   },
   "admin": {

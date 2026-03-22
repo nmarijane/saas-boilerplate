@@ -40,6 +40,12 @@ function MarketingHeader() {
             >
               {t("marketing.changelog.title")}
             </Link>
+            <Link
+              href="/blog"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {t("marketing.blog.navTitle")}
+            </Link>
           </nav>
         </div>
         <div className="flex items-center gap-3">

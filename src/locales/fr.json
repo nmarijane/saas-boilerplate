@@ -130,6 +130,12 @@
     },
     "changelog": {
       "title": "Journal des modifications"
+    },
+    "blog": {
+      "title": "Blog",
+      "navTitle": "Blog",
+      "description": "Insights, guides et actualités de notre équipe.",
+      "noPosts": "Aucun article pour le moment. Revenez bientôt !"
     }
   },
   "admin": {
