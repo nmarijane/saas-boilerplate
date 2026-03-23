@@ -47,7 +47,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@react-email/components": "^1.0.10",
     "@sentry/nextjs": "^10.45.0",
-    "@t3-oss/env-nextjs": "^0.13.10",
+    "@t3-oss/env-nextjs": "^0.13.11",
     "@upstash/ratelimit": "^2.0.8",
     "ai": "^6.0.134",
     "better-auth": "^1.5.5",
