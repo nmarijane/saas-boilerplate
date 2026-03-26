@@ -1,6 +1,7 @@
 name: 🚀 Feature Request
 description: Suggest a new feature or improvement to the boilerplate
-labels: ["enhancement"]
+labels:
+  - enhancement
 body:
   - type: markdown
     attributes:
@@ -38,7 +39,7 @@ body:
     attributes:
       label: Problem / Motivation
       description: What problem does this feature solve? Why do you need it?
-      placeholder: "I always have to add X manually when starting a new project because..."
+      placeholder: I always have to add X manually when starting a new project because...
     validations:
       required: true
 
