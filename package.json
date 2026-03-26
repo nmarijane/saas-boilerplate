@@ -76,7 +76,7 @@
     "zod": "^4.3.6"
   },
   "optionalDependencies": {
-    "fast-xml-parser": "^5.5.7",
+    "fast-xml-parser": "^5.5.8",
     "kysely": "^0.28.14"
   },
   "devDependencies": {
