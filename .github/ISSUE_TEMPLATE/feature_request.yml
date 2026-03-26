@@ -1,0 +1,74 @@
+name: 🚀 Feature Request
+description: Suggest a new feature or improvement to the boilerplate
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have an idea to make saas-boilerplate better? We'd love to hear it!
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of the boilerplate would this feature improve?
+      options:
+        - Authentication (Better Auth)
+        - Billing (Stripe)
+        - Multi-tenancy / Organizations
+        - API Keys
+        - Webhooks
+        - Feature Flags
+        - Admin Panel
+        - Notifications
+        - File Upload
+        - Background Jobs (Inngest)
+        - Email
+        - i18n
+        - CI/CD
+        - Docker / Deployment
+        - DX / Developer tooling
+        - New feature module
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / Motivation
+      description: What problem does this feature solve? Why do you need it?
+      placeholder: I always have to add X manually when starting a new project because...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe your ideal solution. How should it work?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Have you considered any alternative approaches or workarounds?
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any other context, screenshots, or references that might help (similar features in other boilerplates, libraries you'd like to see integrated, etc.).
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have searched existing issues and this is not a duplicate
+          required: true
+        - label: This feature would benefit the general saas-boilerplate user base (not just my specific use case)
+          required: true

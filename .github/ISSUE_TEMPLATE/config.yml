@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Discussion / Q&A
+    url: https://github.com/nmarijane/saas-boilerplate/discussions
+    about: For questions, ideas, and general discussion, use GitHub Discussions instead.
+  - name: 📖 Documentation / Setup Guide
+    url: https://github.com/nmarijane/saas-boilerplate/blob/main/docs/SETUP.md
+    about: Check the setup guide before opening an issue — most questions are answered there.
