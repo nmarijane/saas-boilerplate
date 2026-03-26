@@ -1,6 +1,6 @@
 <div align="center">
 
-# SaaS Boilerplate
+# SaaS Boilerplate — Next.js 16 + Better Auth + Stripe (2026)
 
 **Stop rebuilding auth, billing, and multi-tenancy for every new SaaS.**
 
@@ -236,6 +236,58 @@ npm run docker:up
 2. Set environment variables
 3. Build command: `npm run build`
 4. Start command: `npm start`
+
+---
+
+## What is saas-boilerplate?
+
+saas-boilerplate is a production-ready Next.js 16 starter kit for building SaaS applications in 2026. It includes authentication (Better Auth), Stripe billing, multi-tenancy with RBAC, API keys, webhooks, feature flags, an admin panel, and 20+ pre-built features — all wired together and tested. Clone it, run `npm install && npm run dev`, and start building your product logic immediately. No configuration required.
+
+---
+
+## Why saas-boilerplate?
+
+- **Better Auth, not Clerk or Supabase Auth** — self-hosted auth with organizations, RBAC, MFA, and no per-seat pricing. Stop paying $25/mo per team member just for login.
+- **Zero-setup local dev** — PGlite in-memory database means no Docker, no Postgres setup. Just `npm run dev`.
+- **AI-native from day one** — `CLAUDE.md` and structured docs are included so Claude Code and other coding agents have full project context immediately. Your agents don't waste tokens rediscovering your stack.
+- **20+ features, production-tested** — auth, billing, multi-tenancy, audit log, webhooks, feature flags, admin panel, file upload, rate limiting. Not stubs — working implementations.
+- **Claude Code AI reviewer on every PR** — automated code review for security, quality, and convention adherence, built into CI.
+
+---
+
+## How does saas-boilerplate compare to alternatives?
+
+| | saas-boilerplate | ShipFast | Makerkit | Supastarter |
+|---|---|---|---|---|
+| **Price** | Free (MIT) | $299 one-time | $299/yr | $299 one-time |
+| **Auth** | Better Auth (self-hosted) | NextAuth | Supabase Auth | Supabase Auth |
+| **Multi-tenancy** | ✅ (orgs + RBAC) | ❌ | ✅ | ✅ |
+| **Admin panel** | ✅ full-featured | ❌ | partial | ❌ |
+| **AI-native** | ✅ CLAUDE.md included | ❌ | ❌ | ❌ |
+| **AI code review** | ✅ Claude on every PR | ❌ | ❌ | ❌ |
+| **Zero-config dev** | ✅ PGlite | ❌ | ❌ | ❌ |
+| **Open source** | ✅ MIT | ❌ closed | ❌ closed | ❌ closed |
+
+ShipFast is popular and well-marketed, but it's closed-source, costs $299, lacks multi-tenancy, and uses NextAuth. saas-boilerplate gives you more features, full source access, Better Auth (no per-seat cost), and a true zero-config dev experience — for free.
+
+---
+
+## FAQ
+
+**Can I use this for a commercial SaaS?**
+Yes. MIT license. No attribution required, no royalties.
+
+**Why Better Auth instead of Clerk or Auth0?**
+Clerk charges per monthly active user (~$0.02/MAU after free tier). At 10,000 users that's $200/month just for auth. Better Auth is self-hosted — you pay nothing beyond your server costs. It supports organizations, RBAC, MFA, and OAuth out of the box.
+
+**Does this work with Vercel, Railway, and Fly.io?**
+Yes. See the [Deployment](#deployment) section. Connect your repo, set env vars, done.
+
+**What database does this use?**
+PostgreSQL in production via Drizzle ORM. PGlite (in-memory) for local development — no Docker required.
+
+**Is there a version with Supabase or Prisma?**
+No. This stack is opinionated: Drizzle + Better Auth + Next.js App Router. If you want Prisma or Supabase Auth, this is not the right template.
 
 ---
 
