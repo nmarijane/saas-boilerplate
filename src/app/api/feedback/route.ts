@@ -70,7 +70,7 @@ export async function PATCH(request: Request) {
   const auth = await requireApiAuth();
   if (!auth.authenticated) return auth.response;
 
-  if (!auth.session.user.isAdmin) {
+  if (!(auth.session.user as Record<string, unknown>).isAdmin) {
     return NextResponse.json(
       { error: "Forbidden", code: "FORBIDDEN", status: 403 },
       { status: 403 },
