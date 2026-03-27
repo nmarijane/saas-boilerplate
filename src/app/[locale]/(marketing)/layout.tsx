@@ -53,6 +53,9 @@ function MarketingHeader() {
           <Button variant="ghost" size="sm" asChild>
             <Link href="/sign-in">{t("auth.signIn")}</Link>
           </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/waitlist">{t("waitlist.joinButton")}</Link>
+          </Button>
           <Button size="sm" asChild>
             <Link href="/sign-up">{t("auth.signUp")}</Link>
           </Button>

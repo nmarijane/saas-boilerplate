@@ -29,7 +29,9 @@ export type EventName =
   | "upload.created"
   | "ai.conversation_created"
   | "ai.message_sent"
-  | "ai.credits_consumed";
+  | "ai.credits_consumed"
+  | "waitlist.joined"
+  | "waitlist.invited";
 
 export interface AppEvent {
   name: EventName;

@@ -150,7 +150,8 @@
     "featureFlagsDescription": "Manage feature flags and rollout rules",
     "totalUsers": "Total Users",
     "totalOrgs": "Total Organizations",
-    "mrr": "MRR"
+    "mrr": "MRR",
+    "waitlist": "Waitlist"
   },
   "notifications": {
     "title": "Notifications",
@@ -207,5 +208,32 @@
     "insufficientCredits": "Insufficient credits",
     "selectModel": "Select model",
     "stopGeneration": "Stop generation"
+  },
+  "waitlist": {
+    "pageTitle": "Join the Waitlist",
+    "pageDescription": "Be among the first to get access. Join our exclusive waitlist.",
+    "heroTitle": "Get Early Access",
+    "heroSubtitle": "Join the waitlist and be among the first to experience our product.",
+    "totalJoined": "{count} people have already joined",
+    "emailLabel": "Email address",
+    "emailPlaceholder": "you@example.com",
+    "joinButton": "Join Waitlist",
+    "joining": "Joining...",
+    "error": "Something went wrong. Please try again.",
+    "statusTitle": "You're on the list! 🎉",
+    "statusDescription": "{total} people are waiting",
+    "yourPosition": "Your current position",
+    "referralStats": "You've referred {count} people — keep going!",
+    "sharePrompt": "Share your link to move up the queue. Each referral moves you 5 spots up!",
+    "referralLink": "Your referral link",
+    "copy": "Copy link",
+    "copied": "Copied!",
+    "shareTwitter": "Share on X",
+    "share": "Share",
+    "referralPageTitle": "You've been invited!",
+    "referralPageDescription": "Your friend invited you to join the waitlist.",
+    "referralHeroTitle": "Your friend invited you 👋",
+    "referralHeroSubtitle": "Join {count} others already on the waitlist.",
+    "joinAheadOf": "Join now and skip ahead of {count} people"
   }
 }
