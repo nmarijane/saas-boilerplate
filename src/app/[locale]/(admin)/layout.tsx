@@ -4,6 +4,7 @@ import {
   BuildingIcon,
   ClipboardListIcon,
   FlagIcon,
+  ListOrderedIcon,
   UsersIcon,
 } from "lucide-react";
 
@@ -41,6 +42,11 @@ const adminNavItems = [
     label: "Changelog",
     href: "/admin/changelog",
     icon: <BookOpenIcon className="size-4" />,
+  },
+  {
+    label: "Waitlist",
+    href: "/admin/waitlist",
+    icon: <ListOrderedIcon className="size-4" />,
   },
 ];
 

@@ -150,7 +150,8 @@
     "featureFlagsDescription": "Gérer les feature flags et les règles de déploiement",
     "totalUsers": "Utilisateurs totaux",
     "totalOrgs": "Organisations totales",
-    "mrr": "MRR"
+    "mrr": "MRR",
+    "waitlist": "Liste d'attente"
   },
   "notifications": {
     "title": "Notifications",
@@ -207,5 +208,32 @@
     "insufficientCredits": "Crédits insuffisants",
     "selectModel": "Sélectionner un modèle",
     "stopGeneration": "Arrêter la génération"
+  },
+  "waitlist": {
+    "pageTitle": "Rejoindre la liste d'attente",
+    "pageDescription": "Soyez parmi les premiers à y accéder. Rejoignez notre liste d'attente exclusive.",
+    "heroTitle": "Accès anticipé",
+    "heroSubtitle": "Rejoignez la liste d'attente et soyez parmi les premiers à découvrir notre produit.",
+    "totalJoined": "{count} personnes ont déjà rejoint",
+    "emailLabel": "Adresse email",
+    "emailPlaceholder": "vous@exemple.com",
+    "joinButton": "Rejoindre la liste",
+    "joining": "Inscription...",
+    "error": "Une erreur s'est produite. Veuillez réessayer.",
+    "statusTitle": "Vous êtes sur la liste ! 🎉",
+    "statusDescription": "{total} personnes attendent",
+    "yourPosition": "Votre position actuelle",
+    "referralStats": "Vous avez référé {count} personne(s) — continuez !",
+    "sharePrompt": "Partagez votre lien pour monter dans la file. Chaque parrainage vous fait gagner 5 places !",
+    "referralLink": "Votre lien de parrainage",
+    "copy": "Copier le lien",
+    "copied": "Copié !",
+    "shareTwitter": "Partager sur X",
+    "share": "Partager",
+    "referralPageTitle": "Vous êtes invité !",
+    "referralPageDescription": "Votre ami vous a invité à rejoindre la liste d'attente.",
+    "referralHeroTitle": "Votre ami vous a invité 👋",
+    "referralHeroSubtitle": "Rejoignez {count} personnes déjà sur la liste.",
+    "joinAheadOf": "Rejoignez maintenant et passez devant {count} personnes"
   }
 }
