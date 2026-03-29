@@ -105,6 +105,21 @@ src/
 - Écrire du code qui n'aura pas besoin d'être réécrit à la prochaine version majeure
 - Préférer les standards web natifs (Fetch API, Web Crypto, Web Streams) aux abstractions tierces quand c'est possible
 
+## Agent-Readable API Schema
+
+This boilerplate exposes a machine-readable API schema for AI coding agents at:
+
+```
+GET /api/agent-docs
+```
+
+No authentication required. Returns a JSON schema of all available endpoints, their auth requirements, request/response shapes, and auth instructions. Designed to be consumed by agents (Claude Code, Codex, etc.) when building integrations or testing API calls against this SaaS.
+
+Example:
+```bash
+curl http://localhost:3000/api/agent-docs | jq '.endpoints[].path'
+```
+
 ## Setup d'un nouveau projet
 
 Le guide complet pour initialiser un nouveau SaaS depuis ce boilerplate est dans `docs/SETUP.md`.
