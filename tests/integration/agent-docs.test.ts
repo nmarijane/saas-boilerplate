@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { GET } from "@/app/api/agent-docs/route";
 
-describe("GET /api/agent-docs", () => {
+describe("gET /api/agent-docs", () => {
   it("returns 200 with valid schema structure", async () => {
     const response = await GET();
     expect(response.status).toBe(200);
