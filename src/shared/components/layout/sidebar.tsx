@@ -6,8 +6,10 @@ import {
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
   SettingsIcon,
+  TrophyIcon,
 } from "lucide-react";
 import { useState } from "react";
+import { AchievementSummary } from "@/features/achievements/components/achievement-summary";
 import { PresenceList } from "@/features/presence/components/presence-list";
 import { Button } from "@/shared/components/ui/button";
 import { Separator } from "@/shared/components/ui/separator";
@@ -38,6 +40,11 @@ const defaultNavItems: NavItem[] = [
     label: "Settings",
     href: "/settings/profile",
     icon: <SettingsIcon className="size-4" />,
+  },
+  {
+    label: "Achievements",
+    href: "/settings/achievements",
+    icon: <TrophyIcon className="size-4" />,
   },
 ];
 
@@ -181,6 +188,11 @@ export function Sidebar({
           <div className="py-2">
             <PresenceList />
           </div>
+        </div>
+
+        {/* Achievements */}
+        <div className="px-2">
+          <AchievementSummary />
         </div>
 
         {/* User menu */}
