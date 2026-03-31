@@ -1,5 +1,6 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { drizzle as drizzlePglite } from "drizzle-orm/pglite";
+import { achievementSeeds } from "../src/features/achievements/seed";
 import * as schema from "../src/models";
 
 async function createDb() {
@@ -94,6 +95,16 @@ async function seed() {
     .onConflictDoNothing({ target: schema.account.id });
 
   console.log("Admin user seeded: admin@example.com");
+
+  // Seed achievements
+  for (const a of achievementSeeds) {
+    await db
+      .insert(schema.achievement)
+      .values(a)
+      .onConflictDoNothing({ target: schema.achievement.id });
+  }
+  console.log(`Achievements seeded: ${achievementSeeds.length} definitions`);
+
   console.log("Seeding complete!");
   process.exit(0);
 }
