@@ -26,7 +26,9 @@ export type EventName =
   | "webhook.deleted"
   | "feature_flag.updated"
   | "feedback.created"
-  | "upload.created";
+  | "upload.created"
+  | "presence.changed"
+  | "achievement.unlocked";
 
 export interface AppEvent {
   name: EventName;
