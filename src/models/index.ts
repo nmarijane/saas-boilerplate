@@ -1,3 +1,4 @@
+export * from "./achievement";
 export * from "./api-key";
 export * from "./audit-log";
 export * from "./changelog";
