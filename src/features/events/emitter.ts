@@ -1,5 +1,6 @@
 import type { EventName, EventPayload } from "./types";
 import { getLogger } from "@logtape/logtape";
+import { handleAchievement } from "./handlers/achievement";
 import { handleAuditLog } from "./handlers/audit-log";
 import { handleNotification } from "./handlers/notification";
 import { handleWebhook } from "./handlers/webhook";
@@ -27,5 +28,10 @@ export async function emitEvent(name: EventName, payload: EventPayload): Promise
   // Notifications are non-critical -- errors are logged
   handleNotification(event).catch((error: unknown) => {
     logger.error`Notification handler failed for ${name}: ${error}`;
+  });
+
+  // Achievements are non-critical -- errors are logged
+  handleAchievement(event).catch((error: unknown) => {
+    logger.error`Achievement handler failed for ${name}: ${error}`;
   });
 }
