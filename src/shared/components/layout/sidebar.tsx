@@ -8,8 +8,8 @@ import {
   SettingsIcon,
 } from "lucide-react";
 import { useState } from "react";
+import { PresenceList } from "@/features/presence/components/presence-list";
 import { Button } from "@/shared/components/ui/button";
-
 import { Separator } from "@/shared/components/ui/separator";
 import {
   Sheet,
@@ -174,6 +174,14 @@ export function Sidebar({
 
         {/* Navigation */}
         <div className="flex-1 overflow-y-auto py-2">{navContent}</div>
+
+        {/* Online members */}
+        <div className="py-2">
+          <Separator />
+          <div className="py-2">
+            <PresenceList />
+          </div>
+        </div>
 
         {/* User menu */}
         {userMenu && (
