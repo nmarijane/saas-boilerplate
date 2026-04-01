@@ -84,15 +84,17 @@ Open [http://localhost:3000](http://localhost:3000).
 
 - **Dashboard** -- Real-time stats, notifications, data tables
 - **Admin Panel** -- Users, organizations, audit log, feature flags, changelog, metrics (MRR)
-- **Settings** -- Profile, notifications, team, billing, API keys, webhooks, danger zone
+- **Settings** -- Profile, notifications, team, billing, API keys, webhooks, achievements, danger zone
 - **Notifications** -- In-app notifications with bell icon, mark as read, notification types
+- **User Presence** -- Real-time online/idle/offline status via SSE, current page indicator, sidebar member list
+- **Achievements** -- Badge/gamification system with progress tracking, streaks, categories, points, and profile page
 
 ### Developer
 
 - **API Keys** -- SHA-256 hashed, scoped, with usage tracking
 - **Webhooks** -- HMAC-SHA256 signed, pattern matching, delivery log with retries
 - **Feature Flags** -- Plan/org-based gating, in-memory cache (60s TTL), admin UI
-- **Event Bus** -- Central emitter, 17 event types, drives audit log + webhooks + notifications
+- **Event Bus** -- Central emitter, 19 event types, drives audit log + webhooks + notifications + achievements
 - **Audit Log** -- Full trail with retention policy and purge job
 - **File Upload** -- Adapter pattern (local + S3), validation, ownership checks
 - **Rate Limiting** -- Memory, Redis, or Upstash adapters (Edge-compatible)
@@ -133,6 +135,8 @@ src/
     webhooks/             # Webhook delivery
     feature-flags/        # Feature flag system
     events/               # Event bus
+    presence/             # Real-time user presence (SSE)
+    achievements/         # Badge/gamification system
   shared/                 # Shared code
     components/           # shadcn/ui + reusable components
     hooks/                # React hooks
@@ -166,7 +170,7 @@ npm run test:e2e         # Playwright E2E tests
 npm run db:generate      # Generate Drizzle migration
 npm run db:migrate       # Apply migrations
 npm run db:studio        # Open Drizzle Studio
-npm run db:seed          # Seed database (plans, admin user)
+npm run db:seed          # Seed database (plans, admin user, achievements)
 
 # Production
 npm run build            # Production build
