@@ -20,7 +20,8 @@
     "db:seed": "tsx scripts/seed.ts",
     "email:dev": "email dev",
     "storybook": "storybook dev -p 6006",
-    "docker:up": "docker-compose -f docker/docker-compose.yml up -d"
+    "docker:up": "docker-compose -f docker/docker-compose.yml up -d",
+    "generate:context": "tsx scripts/generate-claude-context.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.64",
