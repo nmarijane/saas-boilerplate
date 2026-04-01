@@ -107,6 +107,20 @@
       "title": "Journal des modifications"
     }
   },
+  "achievements": {
+    "title": "Accomplissements",
+    "description": "Suivez votre progression et gagnez des badges",
+    "totalPoints": "Points totaux",
+    "unlocked": "Badges débloqués",
+    "currentStreak": "Jours consécutifs",
+    "badges": "badges",
+    "categories": {
+      "onboarding": "Premiers pas",
+      "social": "Social",
+      "usage": "Utilisation",
+      "streak": "Séries"
+    }
+  },
   "admin": {
     "title": "Administration",
     "users": "Utilisateurs",
@@ -159,6 +173,15 @@
     "member": "Membre",
     "switchOrg": "Changer d'organisation",
     "createOrg": "Créer une organisation"
+  },
+  "presence": {
+    "online": "{count, plural, =1 {1 membre en ligne} other {# membres en ligne}}",
+    "noOneOnline": "Personne n'est en ligne",
+    "status": {
+      "online": "En ligne",
+      "idle": "Absent",
+      "offline": "Hors ligne"
+    }
   },
   "legal": {
     "terms": "Conditions d'utilisation",

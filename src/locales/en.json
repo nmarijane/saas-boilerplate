@@ -107,6 +107,20 @@
       "title": "Changelog"
     }
   },
+  "achievements": {
+    "title": "Achievements",
+    "description": "Track your progress and earn badges",
+    "totalPoints": "Total Points",
+    "unlocked": "Badges Unlocked",
+    "currentStreak": "Day Streak",
+    "badges": "badges",
+    "categories": {
+      "onboarding": "Getting Started",
+      "social": "Social",
+      "usage": "Usage",
+      "streak": "Streaks"
+    }
+  },
   "admin": {
     "title": "Admin",
     "users": "Users",
@@ -159,6 +173,15 @@
     "member": "Member",
     "switchOrg": "Switch Organization",
     "createOrg": "Create Organization"
+  },
+  "presence": {
+    "online": "{count, plural, =1 {1 member online} other {# members online}}",
+    "noOneOnline": "No one is online",
+    "status": {
+      "online": "Online",
+      "idle": "Away",
+      "offline": "Offline"
+    }
   },
   "legal": {
     "terms": "Terms of Service",
