@@ -24,7 +24,7 @@
     "generate:context": "tsx scripts/generate-claude-context.ts"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^3.0.64",
+    "@ai-sdk/anthropic": "^3.0.66",
     "@ai-sdk/google": "^3.0.53",
     "@ai-sdk/groq": "^3.0.31",
     "@ai-sdk/openai": "^3.0.48",
