@@ -28,7 +28,7 @@
     "@ai-sdk/google": "^3.0.58",
     "@ai-sdk/groq": "^3.0.31",
     "@ai-sdk/openai": "^3.0.48",
-    "@ai-sdk/react": "^3.0.140",
+    "@ai-sdk/react": "^3.0.193",
     "@aws-sdk/client-s3": "^3.1053.0",
     "@axe-core/playwright": "^4.11.1",
     "@electric-sql/pglite": "^0.4.6",
