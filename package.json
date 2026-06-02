@@ -59,7 +59,7 @@
     "drizzle-orm": "^0.45.2",
     "gray-matter": "^4.0.3",
     "inngest": "^4.1.0",
-    "ioredis": "^5.10.1",
+    "ioredis": "^5.11.0",
     "lucide-react": "^0.577.0",
     "next": "^16.2.2",
     "next-intl": "^4.9.0",
