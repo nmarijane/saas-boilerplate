@@ -110,8 +110,8 @@
   },
   "marketing": {
     "hero": {
-      "title": "Construisez votre SaaS plus vite",
-      "subtitle": "Boilerplate prêt pour la production avec auth, facturation, et tout ce dont vous avez besoin.",
+      "title": "Des outils IA et des solutions sur mesure pour votre organisation",
+      "subtitle": "Utilisez des outils IA éprouvés sur vos propres documents, avec des espaces sécurisés, des résultats clairs et une facturation simple.",
       "cta": "Commencer"
     },
     "features": {
