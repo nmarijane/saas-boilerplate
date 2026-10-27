@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-const APP_NAME = "SaaS Boilerplate";
+const APP_NAME = "AI Chambers";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
 interface PageMetaOptions {

@@ -9,10 +9,10 @@ import "@ai-chambers/design-system/styles.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "SaaS Boilerplate",
-    template: "%s | SaaS Boilerplate",
+    default: "AI Chambers",
+    template: "%s | AI Chambers",
   },
-  description: "Production-ready SaaS boilerplate built with Next.js",
+  description: "AI tools and tailored solutions for your organisation",
 };
 
 export function generateStaticParams() {
