@@ -6,6 +6,7 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import { auth } from "@/features/auth/auth";
 import { getServerSession, requireRole } from "@/features/auth/guards";
+import { assertCanAddMember } from "@/features/billing/helpers";
 import { sendEmail } from "@/features/email/send";
 import { InvitationEmail } from "@/features/email/templates/invitation";
 import { organizationMember, organization as organizationTable } from "@/models/organization";
@@ -49,6 +50,7 @@ export async function inviteMember(data: z.infer<typeof inviteSchema>) {
     if (!session) throw new Error("Unauthorized");
 
     await requireRole(parsed.orgId, session.user.id, "admin");
+    await assertCanAddMember(parsed.orgId);
 
     const result = await auth.api.createInvitation({
       headers: await headers(),

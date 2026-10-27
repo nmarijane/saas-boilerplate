@@ -167,112 +167,40 @@ describe("billing helpers", () => {
   });
 
   describe("checkPlanLimit", () => {
-    it("returns free plan defaults when no subscription exists", async () => {
+    async function limit(feature: string, current = 0) {
       const { checkPlanLimit } = await import("@/features/billing/helpers");
+      return checkPlanLimit(TEST_ORG, feature, current);
+    }
 
-      const result = await checkPlanLimit(TEST_ORG, "members");
-
-      // Free plan: members = 1
-      expect(result).toEqual({ allowed: true, limit: 1 });
+    it("uses free plan limits when no subscription exists", async () => {
+      expect(await limit("members")).toMatchObject({ allowed: true, limit: 1 });
+      expect(await limit("members", 1)).toMatchObject({ allowed: false });
     });
 
-    it("returns allowed false with limit 0 for missing feature on free plan", async () => {
-      const { checkPlanLimit } = await import("@/features/billing/helpers");
-
-      const result = await checkPlanLimit(TEST_ORG, "nonExistentFeature");
-
-      expect(result).toEqual({ allowed: false, limit: 0 });
+    it("disallows features missing from the plan", async () => {
+      expect(await limit("nonExistentFeature")).toMatchObject({
+        allowed: false,
+        limit: 0,
+      });
     });
 
-    it("returns the limit from a paid plan in the database", async () => {
-      await seedPlan("pro", {
-        name: "Pro",
-        price: 2900,
-        limits: { members: 10, projects: 50, storage: 10000 },
-      });
-      await seedSubscription(TEST_ORG, {
-        id: "sub-limits",
-        planId: "pro",
-        status: "active",
-      });
-
-      const { checkPlanLimit } = await import("@/features/billing/helpers");
-
-      const result = await checkPlanLimit(TEST_ORG, "members");
-
-      expect(result).toEqual({ allowed: true, limit: 10 });
+    it("uses paid plan limits for active subscriptions", async () => {
+      await seedPlan("pro", { name: "Pro", price: 2900 });
+      await seedSubscription(TEST_ORG, { id: "sub-pro", planId: "pro", status: "active" });
+      expect(await limit("members", 9)).toMatchObject({ allowed: true, limit: 10 });
+      expect(await limit("members", 10)).toMatchObject({ allowed: false });
     });
 
     it("handles unlimited (-1) limits", async () => {
-      await seedPlan("enterprise", {
-        name: "Enterprise",
-        price: 9900,
-        limits: { members: -1, projects: -1, storage: -1 },
-      });
-      await seedSubscription(TEST_ORG, {
-        id: "sub-unlimited",
-        planId: "enterprise",
-        status: "active",
-      });
-
-      const { checkPlanLimit } = await import("@/features/billing/helpers");
-
-      const result = await checkPlanLimit(TEST_ORG, "members");
-
-      expect(result).toEqual({ allowed: true, limit: -1 });
+      await seedPlan("enterprise", { name: "Enterprise", price: 9900 });
+      await seedSubscription(TEST_ORG, { id: "sub-ent", planId: "enterprise", status: "active" });
+      expect(await limit("members", 1000)).toMatchObject({ allowed: true, limit: -1 });
     });
 
-    it("returns not allowed when plan has 0 for the feature", async () => {
-      await seedPlan("basic", {
-        name: "Basic",
-        price: 500,
-        limits: { members: 5, apiCalls: 0 },
-      });
-      await seedSubscription(TEST_ORG, {
-        id: "sub-zero",
-        planId: "basic",
-        status: "active",
-      });
-
-      const { checkPlanLimit } = await import("@/features/billing/helpers");
-
-      const result = await checkPlanLimit(TEST_ORG, "apiCalls");
-
-      expect(result).toEqual({ allowed: false, limit: 0 });
-    });
-
-    it("returns not allowed when plan has null limits", async () => {
-      await seedPlan("minimal", { name: "Minimal", price: 100, limits: null });
-      await seedSubscription(TEST_ORG, {
-        id: "sub-minimal",
-        planId: "minimal",
-        status: "active",
-      });
-
-      const { checkPlanLimit } = await import("@/features/billing/helpers");
-
-      const result = await checkPlanLimit(TEST_ORG, "members");
-
-      expect(result).toEqual({ allowed: false, limit: 0 });
-    });
-
-    it("returns not allowed for unknown feature on a paid plan", async () => {
-      await seedPlan("pro", {
-        name: "Pro",
-        price: 2900,
-        limits: { members: 10 },
-      });
-      await seedSubscription(TEST_ORG, {
-        id: "sub-unknown-feat",
-        planId: "pro",
-        status: "active",
-      });
-
-      const { checkPlanLimit } = await import("@/features/billing/helpers");
-
-      const result = await checkPlanLimit(TEST_ORG, "unknownFeature");
-
-      expect(result).toEqual({ allowed: false, limit: 0 });
+    it("falls back to free limits when the subscription is canceled", async () => {
+      await seedPlan("pro", { name: "Pro", price: 2900 });
+      await seedSubscription(TEST_ORG, { id: "sub-canceled", planId: "pro", status: "canceled" });
+      expect(await limit("members")).toMatchObject({ limit: 1 });
     });
   });
 

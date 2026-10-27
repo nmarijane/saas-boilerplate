@@ -2,6 +2,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate as migratePg } from "drizzle-orm/node-postgres/migrator";
 import { drizzle as drizzlePglite } from "drizzle-orm/pglite";
 import { migrate as migratePglite } from "drizzle-orm/pglite/migrator";
+import { PLANS } from "../src/features/billing/plans";
 import * as schema from "../src/models";
 
 const migrationsFolder = "./migrations";
@@ -22,44 +23,15 @@ async function createDb() {
   return db;
 }
 
-const plans: Array<{
-  id: string;
-  name: string;
-  stripePriceId: string | null;
-  features: Record<string, boolean>;
-  limits: Record<string, number>;
-  price: number;
-}> = [
-  {
-    id: "free",
-    name: "Free",
-    stripePriceId: null,
-    features: { dashboard: true, feedback: true },
-    limits: { members: 1, projects: 3, storage: 100, aiCredits: 100 },
-    price: 0,
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    stripePriceId: process.env.STRIPE_PRICE_PRO_MONTHLY ?? null,
-    features: { dashboard: true, feedback: true, notifications: true },
-    limits: { members: 10, projects: 50, storage: 10_000, aiCredits: 5000 },
-    price: 2900,
-  },
-  {
-    id: "enterprise",
-    name: "Enterprise",
-    stripePriceId: process.env.STRIPE_PRICE_ENTERPRISE_MONTHLY ?? null,
-    features: {
-      dashboard: true,
-      feedback: true,
-      notifications: true,
-      priority_support: true,
-    },
-    limits: { members: -1, projects: -1, storage: -1, aiCredits: -1 },
-    price: 9900,
-  },
-];
+// Single source of truth: src/features/billing/plans.ts
+const plans = PLANS.map((p) => ({
+  id: p.id,
+  name: p.name,
+  stripePriceId: p.stripePriceId.monthly || null,
+  features: p.features,
+  limits: p.limits,
+  price: p.price.monthly * 100,
+}));
 
 async function hashPassword(password: string): Promise<string> {
   const { hashPassword: hash } = await import("better-auth/crypto");
