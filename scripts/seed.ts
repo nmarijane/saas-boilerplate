@@ -35,29 +35,29 @@ const plans: Array<{
     name: "Free",
     stripePriceId: null,
     features: { dashboard: true, feedback: true },
-    limits: { members: 3, uploads: 10 },
+    limits: { members: 1, projects: 3, storage: 100, aiCredits: 100 },
     price: 0,
   },
   {
     id: "pro",
     name: "Pro",
-    stripePriceId: null,
+    stripePriceId: process.env.STRIPE_PRICE_PRO_MONTHLY ?? null,
     features: { dashboard: true, feedback: true, notifications: true },
-    limits: { members: 20, uploads: 100 },
-    price: 1900,
+    limits: { members: 10, projects: 50, storage: 10_000, aiCredits: 5000 },
+    price: 2900,
   },
   {
     id: "enterprise",
     name: "Enterprise",
-    stripePriceId: null,
+    stripePriceId: process.env.STRIPE_PRICE_ENTERPRISE_MONTHLY ?? null,
     features: {
       dashboard: true,
       feedback: true,
       notifications: true,
       priority_support: true,
     },
-    limits: { members: -1, uploads: -1 },
-    price: 4900,
+    limits: { members: -1, projects: -1, storage: -1, aiCredits: -1 },
+    price: 9900,
   },
 ];
 
@@ -76,7 +76,16 @@ async function seed() {
     await db
       .insert(schema.plan)
       .values(p)
-      .onConflictDoNothing({ target: schema.plan.id });
+      .onConflictDoUpdate({
+        target: schema.plan.id,
+        set: {
+          name: p.name,
+          stripePriceId: p.stripePriceId,
+          features: p.features,
+          limits: p.limits,
+          price: p.price,
+        },
+      });
   }
   console.log("Plans seeded: Free, Pro, Enterprise");
 
@@ -98,9 +107,18 @@ async function seed() {
         email: "admin@example.com",
         emailVerified: true,
         isAdmin: true,
+        isPlatformAdmin: true,
         onboardingCompleted: true,
       })
-      .onConflictDoNothing({ target: schema.user.id });
+      .onConflictDoUpdate({
+        target: schema.user.id,
+        set: {
+          isAdmin: true,
+          isPlatformAdmin: true,
+          onboardingCompleted: true,
+          emailVerified: true,
+        },
+      });
 
     await db
       .insert(schema.account)
@@ -114,6 +132,27 @@ async function seed() {
       .onConflictDoNothing({ target: schema.account.id });
 
     console.log("Admin seeded: admin@example.com / admin123");
+
+    // Seed a default organization for the admin/dev users to use locally.
+    const devOrgId = "dev-org-001";
+    await db
+      .insert(schema.organization)
+      .values({
+        id: devOrgId,
+        name: "AI Chambers Dev Workspace",
+        slug: "ai-chambers-dev",
+      })
+      .onConflictDoNothing({ target: schema.organization.id });
+
+    await db
+      .insert(schema.organizationMember)
+      .values({
+        id: "dev-org-member-admin",
+        userId: adminId,
+        organizationId: devOrgId,
+        role: "owner",
+      })
+      .onConflictDoNothing({ target: schema.organizationMember.id });
 
     // Seed dev user (non-admin)
     const devId = "dev-seed-001";
@@ -140,8 +179,19 @@ async function seed() {
       })
       .onConflictDoNothing({ target: schema.account.id });
 
+    await db
+      .insert(schema.organizationMember)
+      .values({
+        id: "dev-org-member-dev",
+        userId: devId,
+        organizationId: devOrgId,
+        role: "member",
+      })
+      .onConflictDoNothing({ target: schema.organizationMember.id });
+
     console.log("Dev user seeded: dev@example.com / admin123");
   }
+
   console.log("Seeding complete!");
   process.exit(0);
 }

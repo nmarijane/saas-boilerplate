@@ -27,14 +27,12 @@ interface CreateKeyModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   orgId: string;
-  userId: string;
 }
 
 export function CreateKeyModal({
   open,
   onOpenChange,
   orgId,
-  userId,
 }: CreateKeyModalProps) {
   const [name, setName] = useState("");
   const [scopes, setScopes] = useState<string[]>(["*"]);
@@ -55,7 +53,7 @@ export function CreateKeyModal({
     if (!name.trim() || scopes.length === 0) return;
 
     startTransition(async () => {
-      const result = await createApiKeyAction(orgId, userId, {
+      const result = await createApiKeyAction(orgId, {
         name: name.trim(),
         scopes,
         expiresAt: expiresAt ? new Date(expiresAt) : undefined,

@@ -2,7 +2,7 @@
 
 import type { OnboardingStepId } from "@/features/onboarding/steps";
 import { useCallback, useState } from "react";
-import { authClient } from "@/features/auth/auth-client";
+import { completeOnboarding } from "@/features/onboarding/actions";
 import { ONBOARDING_STEPS, TOTAL_STEPS } from "@/features/onboarding/steps";
 import { useRouter } from "@/shared/lib/i18n-navigation";
 
@@ -31,9 +31,7 @@ export function useOnboarding() {
   const complete = useCallback(async () => {
     setIsCompleting(true);
     try {
-      await authClient.updateUser({
-        onboardingCompleted: true,
-      } as Record<string, unknown>);
+      await completeOnboarding();
       router.push("/dashboard");
     } catch {
       setIsCompleting(false);

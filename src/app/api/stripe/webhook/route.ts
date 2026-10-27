@@ -1,4 +1,5 @@
 import type Stripe from "stripe";
+import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getStripe } from "@/features/billing/stripe";
 import {
@@ -8,9 +9,17 @@ import {
   handleSubscriptionDeleted,
   handleSubscriptionUpdated,
 } from "@/features/billing/webhook-handlers";
+import { processedStripeEvent } from "@/models";
+import { db } from "@/shared/lib/DB";
 import { env } from "@/shared/lib/env";
 
 export async function POST(request: Request) {
+  if (!env.STRIPE_WEBHOOK_SECRET) {
+    return NextResponse.json(
+      { error: "Stripe webhooks are not configured" },
+      { status: 503 },
+    );
+  }
   const body = await request.text();
   const signature = request.headers.get("stripe-signature");
 
@@ -27,14 +36,24 @@ export async function POST(request: Request) {
     event = getStripe().webhooks.constructEvent(
       body,
       signature,
-      env.STRIPE_WEBHOOK_SECRET
+      env.STRIPE_WEBHOOK_SECRET,
     );
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json(
       { error: `Webhook signature verification failed: ${message}` },
-      { status: 400 }
+      { status: 400 },
     );
+  }
+
+  const [claimed] = await db
+    .insert(processedStripeEvent)
+    .values({ id: event.id, type: event.type })
+    .onConflictDoNothing()
+    .returning();
+
+  if (!claimed) {
+    return NextResponse.json({ received: true, duplicate: true });
   }
 
   try {
@@ -64,6 +83,10 @@ export async function POST(request: Request) {
         break;
     }
   } catch (err) {
+    // Release the claim so Stripe's retry can reprocess the event.
+    await db
+      .delete(processedStripeEvent)
+      .where(eq(processedStripeEvent.id, event.id));
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json(
       { error: `Webhook handler failed: ${message}` },

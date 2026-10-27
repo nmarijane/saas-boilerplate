@@ -8,6 +8,10 @@ import {
 import { testDb } from "../setup";
 
 // Mock Stripe SDK
+vi.hoisted(() => {
+  process.env.STRIPE_PRICE_PRO_MONTHLY = "price_pro_monthly";
+});
+
 const mockCheckoutCreate = vi.fn();
 const mockPortalCreate = vi.fn();
 const mockCustomerCreate = vi.fn();
@@ -50,7 +54,7 @@ describe("billing helpers", () => {
         "@/features/billing/helpers"
       );
 
-      const result = await createCheckoutSession(TEST_ORG, STRIPE_PRICE_ID);
+      const result = await createCheckoutSession(TEST_ORG, "pro");
 
       expect(mockCustomerCreate).not.toHaveBeenCalled();
       expect(mockCheckoutCreate).toHaveBeenCalledWith(
@@ -58,7 +62,7 @@ describe("billing helpers", () => {
           customer: STRIPE_CUSTOMER_ID,
           mode: "subscription",
           line_items: [{ price: STRIPE_PRICE_ID, quantity: 1 }],
-          metadata: { orgId: TEST_ORG },
+          metadata: { orgId: TEST_ORG, planId: "pro", interval: "monthly" },
         }),
       );
       expect(result).toEqual(mockSession);
@@ -73,7 +77,7 @@ describe("billing helpers", () => {
         "@/features/billing/helpers"
       );
 
-      const result = await createCheckoutSession(TEST_ORG, STRIPE_PRICE_ID);
+      const result = await createCheckoutSession(TEST_ORG, "pro");
 
       expect(mockCustomerCreate).toHaveBeenCalledWith({
         metadata: { orgId: TEST_ORG },
@@ -86,29 +90,6 @@ describe("billing helpers", () => {
       expect(result).toEqual(mockSession);
     });
 
-    it("uses custom success and cancel URLs when provided", async () => {
-      mockCustomerCreate.mockResolvedValue({ id: "cus_url_test" });
-      mockCheckoutCreate.mockResolvedValue({ id: "cs_test_url" });
-
-      const { createCheckoutSession } = await import(
-        "@/features/billing/helpers"
-      );
-
-      await createCheckoutSession(
-        TEST_ORG,
-        STRIPE_PRICE_ID,
-        "https://example.com/success",
-        "https://example.com/cancel",
-      );
-
-      expect(mockCheckoutCreate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          success_url: "https://example.com/success",
-          cancel_url: "https://example.com/cancel",
-        }),
-      );
-    });
-
     it("uses default URLs when no custom URLs are provided", async () => {
       mockCustomerCreate.mockResolvedValue({ id: "cus_default_url" });
       mockCheckoutCreate.mockResolvedValue({ id: "cs_default_url" });
@@ -117,7 +98,7 @@ describe("billing helpers", () => {
         "@/features/billing/helpers"
       );
 
-      await createCheckoutSession(TEST_ORG, STRIPE_PRICE_ID);
+      await createCheckoutSession(TEST_ORG, "pro");
 
       expect(mockCheckoutCreate).toHaveBeenCalledWith(
         expect.objectContaining({

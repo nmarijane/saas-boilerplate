@@ -1,4 +1,5 @@
 import { createHmac } from "node:crypto";
+import { fetchSafeWebhook } from "@/features/webhooks/safe-url";
 import { webhookDelivery } from "@/models/webhook";
 import { db } from "@/shared/lib/DB";
 import { inngest } from "@/shared/lib/inngest/client";
@@ -34,7 +35,7 @@ export const deliverWebhookJob = inngest.createFunction(
     let responseBody: string | null = null;
 
     try {
-      const response = await fetch(url, {
+      const response = await fetchSafeWebhook(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

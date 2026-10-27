@@ -1,4 +1,5 @@
 export * from "./ai";
+export * from "./ai-chambers";
 export * from "./api-key";
 export * from "./audit-log";
 export * from "./changelog";
@@ -6,6 +7,7 @@ export * from "./feature-flag";
 export * from "./feedback";
 export * from "./notification";
 export * from "./organization";
+export * from "./payment";
 export * from "./subscription";
 export * from "./upload";
 export * from "./user";

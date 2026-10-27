@@ -4,9 +4,10 @@
  * Run: npx tsx scripts/generate-claude-context.ts
  */
 import { readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
-import { join, relative } from "node:path";
+import { join, relative, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const ROOT = new URL("..", import.meta.url).pathname.replace(/\/$/, "");
+const ROOT = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const MODELS_DIR = join(ROOT, "src/models");
 const FEATURES_DIR = join(ROOT, "src/features");
 const API_DIR = join(ROOT, "src/app/api");

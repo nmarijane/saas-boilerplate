@@ -6,7 +6,7 @@ import { createCheckoutSession } from "../helpers";
 
 interface UpgradeButtonProps {
   orgId: string;
-  priceId: string;
+  planId: string;
   label?: string;
   variant?: "default" | "outline" | "secondary";
   size?: "default" | "sm" | "lg";
@@ -14,7 +14,7 @@ interface UpgradeButtonProps {
 
 export function UpgradeButton({
   orgId,
-  priceId,
+  planId,
   label = "Upgrade",
   variant = "default",
   size = "default",
@@ -22,10 +22,10 @@ export function UpgradeButton({
   const [loading, setLoading] = useState(false);
 
   async function handleClick() {
-    if (!priceId) return;
+    if (!planId) return;
     setLoading(true);
     try {
-      const session = await createCheckoutSession(orgId, priceId);
+      const session = await createCheckoutSession(orgId, planId, "monthly");
       if (session.url) {
         window.location.href = session.url;
       }
@@ -39,7 +39,7 @@ export function UpgradeButton({
       variant={variant}
       size={size}
       onClick={handleClick}
-      disabled={loading || !priceId}
+      disabled={loading || !planId}
     >
       {loading ? "Redirecting..." : label}
     </Button>

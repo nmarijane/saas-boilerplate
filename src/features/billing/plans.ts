@@ -15,6 +15,8 @@ export interface PlanConfig {
   highlighted?: boolean;
 }
 
+export type BillingInterval = "monthly" | "yearly";
+
 export const PLANS: PlanConfig[] = [
   {
     id: "free",
@@ -122,6 +124,14 @@ export const LIMIT_LABELS: Record<string, string> = {
 
 export function getPlanById(planId: string): PlanConfig | undefined {
   return PLANS.find((p) => p.id === planId);
+}
+
+export function getPlanByPriceId(priceId: string): PlanConfig | undefined {
+  return PLANS.find(
+    (candidate) =>
+      candidate.stripePriceId.monthly === priceId ||
+      candidate.stripePriceId.yearly === priceId,
+  );
 }
 
 export function getFreePlan(): PlanConfig {

@@ -5,6 +5,7 @@ import { ThemeProvider } from "next-themes";
 import { Toaster } from "sonner";
 import { routing } from "@/shared/lib/i18n-routing";
 import "@/styles/global.css";
+import "@ai-chambers/design-system/styles.css";
 
 export const metadata: Metadata = {
   title: {
@@ -29,7 +30,7 @@ export default async function LocaleLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning data-ac-theme={undefined}>
       <body>
         <ThemeProvider
           attribute="class"
