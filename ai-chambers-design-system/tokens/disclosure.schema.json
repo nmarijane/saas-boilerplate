@@ -1,0 +1,121 @@
+{
+  "source": "gravityforms-export-2026-10-22.json",
+  "title": "AI Tool 1 - Organise Disclosure Material",
+  "currency": "AUD",
+  "priceMinorUnits": 4999,
+  "pricingMode": "per-run",
+  "pagePricingEnabled": false,
+  "fields": [
+    {
+      "id": 9,
+      "type": "uid",
+      "label": "Job ID",
+      "required": false,
+      "visibility": "hidden",
+      "allowedExtensions": null,
+      "maxFileSizeMB": null,
+      "maxFiles": ""
+    },
+    {
+      "id": 1,
+      "type": "name",
+      "label": "Your name",
+      "required": true,
+      "visibility": "visible",
+      "allowedExtensions": null,
+      "maxFileSizeMB": null,
+      "maxFiles": ""
+    },
+    {
+      "id": 3,
+      "type": "email",
+      "label": "Your email",
+      "required": true,
+      "visibility": "visible",
+      "allowedExtensions": null,
+      "maxFileSizeMB": null,
+      "maxFiles": ""
+    },
+    {
+      "id": 43,
+      "type": "name",
+      "label": "Your client's name",
+      "required": true,
+      "visibility": "visible",
+      "allowedExtensions": null,
+      "maxFileSizeMB": null,
+      "maxFiles": ""
+    },
+    {
+      "id": 36,
+      "type": "text",
+      "label": "Matter number",
+      "required": false,
+      "visibility": "visible",
+      "allowedExtensions": null,
+      "maxFileSizeMB": null,
+      "maxFiles": ""
+    },
+    {
+      "id": 4,
+      "type": "fileupload",
+      "label": "Disclosure material",
+      "required": true,
+      "visibility": "visible",
+      "allowedExtensions": "pdf, jpg, gif, png, jpeg, doc, docx, txt",
+      "maxFileSizeMB": 100,
+      "maxFiles": "20"
+    },
+    {
+      "id": 37,
+      "type": "product",
+      "label": "Base price",
+      "required": false,
+      "visibility": "visible",
+      "allowedExtensions": null,
+      "maxFileSizeMB": null,
+      "maxFiles": ""
+    },
+    {
+      "id": 20,
+      "type": "total",
+      "label": "Total price",
+      "required": false,
+      "visibility": "visible",
+      "allowedExtensions": null,
+      "maxFileSizeMB": null,
+      "maxFiles": ""
+    },
+    {
+      "id": 23,
+      "type": "coupon",
+      "label": "Discount code",
+      "required": false,
+      "visibility": "visible",
+      "allowedExtensions": null,
+      "maxFileSizeMB": null,
+      "maxFiles": ""
+    },
+    {
+      "id": 21,
+      "type": "stripe_creditcard",
+      "label": "Payment details",
+      "required": true,
+      "visibility": "visible",
+      "allowedExtensions": null,
+      "maxFileSizeMB": null,
+      "maxFiles": ""
+    },
+    {
+      "id": 19,
+      "type": "tos",
+      "label": "Terms of use and disclaimer",
+      "required": true,
+      "visibility": "visible",
+      "allowedExtensions": null,
+      "maxFileSizeMB": null,
+      "maxFiles": ""
+    }
+  ],
+  "terms": "This tool uses artificial intelligence to assist with document analysis and drafting based solely on the information you provide. Outputs are generated automatically and may contain errors, omissions, or misinterpretations. The results are not legal advice and are not a substitute for your own professional skill, judgment, or independent review. You remain solely responsible for verifying the accuracy, completeness, and appropriateness of all outputs before relying on them, filing them, or providing them to clients, courts, or third parties. By submitting this form, you confirm that you are an Australian legal practitioner and are using this tool in the course of professional legal practice."
+}

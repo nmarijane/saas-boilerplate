@@ -1,0 +1,159 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "id": "F01",
+      "pattern": "24-column desktop grid and responsive rules",
+      "status": "implemented",
+      "owner": "src/styles/layout.css",
+      "verification": "browser:24/12/4 geometry"
+    },
+    {
+      "id": "F02",
+      "pattern": "Typography/density/spacing/colour tokens",
+      "status": "implemented",
+      "owner": "tokens/tokens.json",
+      "verification": "static contrast + browser typography"
+    },
+    {
+      "id": "F03",
+      "pattern": "Icons/borders/radii/elevation",
+      "status": "specified and partial reference",
+      "owner": "DESIGN.md",
+      "verification": "visual inspection; full host baseline required"
+    },
+    {
+      "id": "F04",
+      "pattern": "Interaction states and accessibility",
+      "status": "reference tested; host gate",
+      "owner": "docs/09-ACCEPTANCE.md",
+      "verification": "axe + keyboard tests; manual screen reader pending"
+    },
+    {
+      "id": "D01",
+      "pattern": "Shared configurable RecordTable",
+      "status": "implemented local reference",
+      "owner": "src/components/RecordTable.tsx",
+      "verification": "models + browser"
+    },
+    {
+      "id": "D02",
+      "pattern": "Advanced query/filter builder",
+      "status": "implemented scalar reference",
+      "owner": "src/components/QueryBuilder.tsx",
+      "verification": "nested query tests"
+    },
+    {
+      "id": "D03",
+      "pattern": "Saved views and columns",
+      "status": "implemented session reference",
+      "owner": "src/models/records.ts",
+      "verification": "restore + resize/hide browser tests"
+    },
+    {
+      "id": "D04",
+      "pattern": "Bulk/selection/context menus",
+      "status": "implemented local reference",
+      "owner": "src/components/RecordTable.tsx",
+      "verification": "selection model + browser"
+    },
+    {
+      "id": "D05",
+      "pattern": "Inspector and timeline",
+      "status": "implemented reference",
+      "owner": "src/components/Primitives.tsx",
+      "verification": "focus return + visual"
+    },
+    {
+      "id": "N01",
+      "pattern": "Compact forms and validation",
+      "status": "implemented limited reference",
+      "owner": "examples/main.tsx",
+      "verification": "browser validation"
+    },
+    {
+      "id": "N02",
+      "pattern": "Search select/date/autocomplete",
+      "status": "select implemented; date/autocomplete specified",
+      "owner": "docs/04-FORMS.md",
+      "verification": "select browser test; host calendar tests required"
+    },
+    {
+      "id": "N03",
+      "pattern": "Global/module navigation",
+      "status": "reference implemented",
+      "owner": "src/components/AppShell.tsx",
+      "verification": "browser screenshots; host routes required"
+    },
+    {
+      "id": "N04",
+      "pattern": "Command palette/shortcuts",
+      "status": "reference implemented",
+      "owner": "src/components/AppShell.tsx",
+      "verification": "CtrlK/Tab/Enter/Escape"
+    },
+    {
+      "id": "N05",
+      "pattern": "Settings/preferences",
+      "status": "specified + local examples",
+      "owner": "docs/08-SCREENS.md",
+      "verification": "host persistence/permissions required"
+    },
+    {
+      "id": "M01",
+      "pattern": "Motion/reduced motion",
+      "status": "implemented",
+      "owner": "src/styles/layout.css",
+      "verification": "browser reduced motion"
+    },
+    {
+      "id": "M02",
+      "pattern": "Drawer/popover/tooltip transitions",
+      "status": "PF-backed partial reference",
+      "owner": "docs/05-NAVIGATION.md",
+      "verification": "modal/select tests; full host overlay matrix required"
+    },
+    {
+      "id": "M03",
+      "pattern": "Saving/loading/empty/error",
+      "status": "specified + partial reference",
+      "owner": "contracts/state-matrix.json",
+      "verification": "host state matrix required"
+    },
+    {
+      "id": "M04",
+      "pattern": "Undo/retry/conflict",
+      "status": "model implemented; host UI specified",
+      "owner": "src/models/operations.ts",
+      "verification": "stale completion/conflict tests + demo retry"
+    },
+    {
+      "id": "R01",
+      "pattern": "Mobile list/selection",
+      "status": "implemented reference",
+      "owner": "src/components/RecordTable.tsx",
+      "verification": "390/360px browser"
+    },
+    {
+      "id": "R02",
+      "pattern": "Mobile sheets/navigation",
+      "status": "implemented reference",
+      "owner": "src/components/AppShell.tsx",
+      "verification": "mobile sheet test"
+    },
+    {
+      "id": "R03",
+      "pattern": "Role-aware/auditable controls",
+      "status": "contract only",
+      "owner": "docs/07-OPERATIONS.md",
+      "verification": "backend host tests mandatory"
+    },
+    {
+      "id": "R04",
+      "pattern": "Performance/regression",
+      "status": "test harness + budgets specified",
+      "owner": "docs/09-ACCEPTANCE.md",
+      "verification": "reference build measured; production budget not certified"
+    }
+  ]
+}

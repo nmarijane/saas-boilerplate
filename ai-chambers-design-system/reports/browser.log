@@ -1,0 +1,26 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> @ai-chambers/design-system@1.0.0 test:browser
+> node tests/browser.mjs
+
+PASS compact heading typography
+PASS single-line table rows
+PASS search/clear restores results
+PASS explicit andall-matching selection
+PASS column visibility andkeyboard resizing
+PASS session saved-view creation
+PASS saved view actually restores column visibility and widths
+PASS nested filter builder apply
+PASS inspector Escape andfocus restoration
+PASS command palette shortcut
+PASS desktop light automated accessibility
+PASS desktop dark automated accessibility
+PASS authored select search andform validation
+PASS responsive24/12/4 grid geometry
+PASS disclosure validation doesnot submit payment
+PASS mobile list andno page overflow
+PASS mobile sheet andtouch buttons
+PASS mobile automated accessibility
+PASS 360px reflow
+PASS reduced motion removes spatial animations
+PASS error recovery

@@ -1,0 +1,120 @@
+/* Supported PF6 token bridge + explicitly scoped component overrides. */
+:root {
+  --pf-t--global--font--family--body: var(--ac-font-sans);
+  --pf-t--global--font--family--heading: var(--ac-font-sans);
+  --pf-t--global--font--family--mono: var(--ac-font-mono);
+  --pf-t--global--font--size--body--default: var(--ac-type-body);
+  --pf-t--global--font--weight--heading--default: var(--ac-type-medium);
+  --pf-t--global--color--brand--default: var(--ac-color-primary);
+  --pf-t--global--color--brand--hover: var(--ac-color-primary-hover);
+  --pf-t--global--text--color--regular: var(--ac-color-text);
+  --pf-t--global--text--color--subtle: var(--ac-color-muted);
+  --pf-t--global--background--color--primary--default: var(--ac-color-surface);
+  --pf-t--global--background--color--secondary--default: var(--ac-color-canvas);
+  --pf-t--global--border--color--default: var(--ac-color-border);
+  --pf-t--global--border--radius--small: var(--ac-size-radius);
+}
+.ac-button.pf-v6-c-button {
+  --pf-v6-c-button--FontSize: var(--ac-type-body);
+  --pf-v6-c-button--PaddingBlockStart: var(--ac-space-1);
+  --pf-v6-c-button--PaddingBlockEnd: var(--ac-space-1);
+  --pf-v6-c-button--PaddingInlineStart: var(--ac-space-2);
+  --pf-v6-c-button--PaddingInlineEnd: var(--ac-space-2);
+  min-height: var(--ac-size-button);
+  border-radius: var(--ac-size-radius);
+  position: relative;
+  white-space: nowrap;
+}
+.ac-invisible {
+  visibility: hidden;
+}
+.ac-button-progress {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+.pf-v6-c-menu-toggle {
+  min-height: var(--ac-size-input);
+  font-size: var(--ac-type-body);
+  padding: var(--ac-space-1) var(--ac-space-2);
+}
+.pf-v6-c-form__group-label {
+  padding: 0;
+  font-size: var(--ac-type-body);
+}
+.pf-v6-c-form-control {
+  min-height: var(--ac-size-input);
+  font-size: var(--ac-type-body);
+}
+.pf-v6-c-form {
+  gap: var(--ac-space-3);
+}
+.pf-v6-c-menu,
+.pf-v6-c-menu__item {
+  font-size: var(--ac-type-body);
+}
+.ac-pill {
+  border: 0 !important;
+  color: var(--ac-color-muted) !important;
+  background: var(--ac-color-canvas) !important;
+  font-size: var(--ac-type-meta);
+}
+.ac-pill-success {
+  color: var(--ac-color-success) !important;
+  background: var(--ac-color-success-surface) !important;
+}
+.ac-pill-warning {
+  color: var(--ac-color-warning) !important;
+  background: var(--ac-color-warning-surface) !important;
+}
+.ac-pill-danger {
+  color: var(--ac-color-danger) !important;
+  background: var(--ac-color-danger-surface) !important;
+}
+.ac-pill-info {
+  color: var(--ac-color-info) !important;
+  background: var(--ac-color-info-surface) !important;
+}
+.ac-overlay .pf-v6-c-modal-box {
+  background: var(--ac-color-surface);
+  color: var(--ac-color-text);
+  max-height: calc(100dvh - 32px);
+}
+.ac-overlay .pf-v6-c-modal-box__title-text {
+  font-size: var(--ac-type-page);
+  font-weight: 500;
+  line-height: 24px;
+}
+.ac-inspector.pf-v6-c-modal-box {
+  position: fixed;
+  right: 0;
+  top: 0;
+  margin: 0;
+  width: min(560px, 100%);
+  height: 100dvh;
+  max-height: 100dvh;
+  border-radius: 0;
+  animation: ac-enter var(--ac-motion-drawer) ease-out;
+}
+/* PF Label paints its own content layer; bridge its variables as well. */
+.ac-pill {
+  --pf-v6-c-label--BackgroundColor: var(--ac-color-canvas);
+  --pf-v6-c-label--Color: var(--ac-color-muted);
+}
+.ac-pill-success {
+  --pf-v6-c-label--BackgroundColor: var(--ac-color-success-surface);
+  --pf-v6-c-label--Color: var(--ac-color-success);
+}
+.ac-pill-warning {
+  --pf-v6-c-label--BackgroundColor: var(--ac-color-warning-surface);
+  --pf-v6-c-label--Color: var(--ac-color-warning);
+}
+.ac-pill-danger {
+  --pf-v6-c-label--BackgroundColor: var(--ac-color-danger-surface);
+  --pf-v6-c-label--Color: var(--ac-color-danger);
+}
+.ac-pill-info {
+  --pf-v6-c-label--BackgroundColor: var(--ac-color-info-surface);
+  --pf-v6-c-label--Color: var(--ac-color-info);
+}

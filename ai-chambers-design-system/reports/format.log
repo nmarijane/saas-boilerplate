@@ -1,0 +1,48 @@
+src/components/AppShell.tsx 93ms
+src/components/Primitives.tsx 18ms
+src/components/QueryBuilder.tsx 25ms
+src/components/RecordTable.tsx 68ms
+src/env.d.ts 2ms
+src/index.ts 1ms
+src/models/operations.ts 7ms
+src/models/records.ts 25ms
+src/styles/index.css 18ms
+src/styles/layout.css 49ms
+src/styles/patternfly.css 10ms
+src/styles/tokens.css 6ms
+src/tokens.ts 6ms
+examples/main.tsx 27ms
+tests/browser.mjs 48ms
+tests/model.test.ts 13ms
+scripts/copy-assets.mjs 2ms
+scripts/generate-tokens.mjs 5ms
+scripts/verify.mjs 10ms
+package-lock.json 17ms (unchanged)
+package.json 1ms (unchanged)
+premium-ui.json 1ms
+tsconfig.build.json 1ms
+tsconfig.json 1ms
+tokens/disclosure.schema.json 3ms (unchanged)
+tokens/tokens.json 3ms
+contracts/enterprise-patterns.json 2ms
+contracts/state-matrix.json 1ms
+vite.config.ts 2ms
+AGENTS.md 27ms (unchanged)
+CHANGELOG.md 4ms (unchanged)
+DESIGN.md 14ms
+README.md 17ms
+SOURCES.md 5ms
+THIRD-PARTY-NOTICES.md 4ms (unchanged)
+UX-CONTRACT.md 13ms
+docs/00-ADOPTION.md 6ms
+docs/01-FOUNDATIONS.md 9ms
+docs/02-COMPONENTS.md 10ms
+docs/03-RECORDS.md 14ms
+docs/04-FORMS.md 7ms
+docs/05-NAVIGATION.md 5ms
+docs/06-FEEDBACK.md 6ms
+docs/07-OPERATIONS.md 5ms (unchanged)
+docs/08-SCREENS.md 8ms
+docs/09-ACCEPTANCE.md 9ms
+docs/10-GOVERNANCE.md 3ms (unchanged)
+references/README.md 2ms (unchanged)

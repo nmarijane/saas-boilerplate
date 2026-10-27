@@ -1,0 +1,122 @@
+{
+  "status": "passed",
+  "checks": {
+    "contrast": [
+      {
+        "theme": "light",
+        "foreground": "text",
+        "background": "surface",
+        "ratio": 14.38,
+        "minimum": 4.5
+      },
+      {
+        "theme": "light",
+        "foreground": "muted",
+        "background": "surface",
+        "ratio": 6.35,
+        "minimum": 4.5
+      },
+      {
+        "theme": "light",
+        "foreground": "text",
+        "background": "canvas",
+        "ratio": 13.39,
+        "minimum": 4.5
+      },
+      {
+        "theme": "light",
+        "foreground": "success",
+        "background": "successSurface",
+        "ratio": 6.27,
+        "minimum": 4.5
+      },
+      {
+        "theme": "light",
+        "foreground": "warning",
+        "background": "warningSurface",
+        "ratio": 5.98,
+        "minimum": 4.5
+      },
+      {
+        "theme": "light",
+        "foreground": "danger",
+        "background": "dangerSurface",
+        "ratio": 5.85,
+        "minimum": 4.5
+      },
+      {
+        "theme": "light",
+        "foreground": "info",
+        "background": "infoSurface",
+        "ratio": 5.89,
+        "minimum": 4.5
+      },
+      {
+        "theme": "light",
+        "foreground": "primary",
+        "ratio": 5.51,
+        "minimum": 4.5
+      },
+      {
+        "theme": "dark",
+        "foreground": "text",
+        "background": "surface",
+        "ratio": 13.13,
+        "minimum": 4.5
+      },
+      {
+        "theme": "dark",
+        "foreground": "muted",
+        "background": "surface",
+        "ratio": 8.22,
+        "minimum": 4.5
+      },
+      {
+        "theme": "dark",
+        "foreground": "text",
+        "background": "canvas",
+        "ratio": 14.88,
+        "minimum": 4.5
+      },
+      {
+        "theme": "dark",
+        "foreground": "success",
+        "background": "successSurface",
+        "ratio": 7.4,
+        "minimum": 4.5
+      },
+      {
+        "theme": "dark",
+        "foreground": "warning",
+        "background": "warningSurface",
+        "ratio": 7.32,
+        "minimum": 4.5
+      },
+      {
+        "theme": "dark",
+        "foreground": "danger",
+        "background": "dangerSurface",
+        "ratio": 6.99,
+        "minimum": 4.5
+      },
+      {
+        "theme": "dark",
+        "foreground": "info",
+        "background": "infoSurface",
+        "ratio": 6.81,
+        "minimum": 4.5
+      },
+      {
+        "theme": "dark",
+        "foreground": "primary",
+        "ratio": 8.39,
+        "minimum": 4.5
+      }
+    ],
+    "patternFlyBridgeVariables": 20,
+    "disclosureSchema": true,
+    "requiredContracts": true,
+    "staticAntiPatterns": true
+  },
+  "limits": "Palette/static checks do not prove full accessibility or production behaviour."
+}

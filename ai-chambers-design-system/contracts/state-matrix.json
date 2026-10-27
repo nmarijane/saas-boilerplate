@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "states": {
+    "default": {},
+    "hover": {
+      "notEssentialOnly": true
+    },
+    "focus": {
+      "visible": true,
+      "minimumContrast": 3
+    },
+    "disabled": {
+      "explainReason": true
+    },
+    "busy": {
+      "stableGeometry": true,
+      "duplicateSubmitBlocked": true
+    },
+    "loading": {
+      "bounded": true
+    },
+    "empty": {
+      "actionable": true
+    },
+    "error": {
+      "preserveContext": true,
+      "retry": true
+    },
+    "conflict": {
+      "preserveLocalDraft": true,
+      "explicitResolution": true
+    }
+  },
+  "requiredViewports": [360, 390, 768, 1024, 1440, 1920],
+  "themes": ["light", "dark"],
+  "motion": ["normal", "reduced"],
+  "requiredHostCapabilities": [
+    "serverPaging",
+    "tenantIsolation",
+    "privateFiles",
+    "scopedViews",
+    "idempotentWrites",
+    "permissionRevalidation",
+    "sourceProvenance",
+    "auditEvents"
+  ],
+  "releasePolicy": "A contract-only capability is not implemented until its host tests pass."
+}
