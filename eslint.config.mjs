@@ -10,6 +10,7 @@ export default antfu(
       ".next",
       "dist",
       "migrations",
+      "ai-chambers-design-system",
       "local.db",
       "docs",
       ".claude",

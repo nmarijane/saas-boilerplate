@@ -19,6 +19,10 @@ vi.mock("@/features/upload/validation", () => ({
   validateFile: vi.fn().mockReturnValue({ valid: true }),
 }));
 
+vi.mock("@/features/auth/organization/active-org", () => ({
+  getActiveOrgId: vi.fn().mockResolvedValue("test-org-1"),
+}));
+
 const UPLOAD_USER = "test-user-1";
 const UPLOAD_ORG = "test-org-1";
 
@@ -50,7 +54,7 @@ describe("upload actions", () => {
       expect(mockPut).toHaveBeenCalledOnce();
       const putArgs = mockPut.mock.calls[0];
       expect(putArgs[0]).toContain(UPLOAD_ORG);
-      expect(putArgs[0]).toContain("test.png");
+      expect(putArgs[0]).not.toContain("test.png");
       expect(putArgs[2]).toBe("image/png");
 
       // Verify DB record was created
@@ -79,22 +83,10 @@ describe("upload actions", () => {
       expect(rows).toHaveLength(0);
     });
 
-    it("returns error when userId is missing", async () => {
-      const { uploadFile } = await import("@/features/upload/actions");
-
-      const mockFile = new File(["test content"], "test.png", { type: "image/png" });
-      const formData = new FormData();
-      formData.set("file", mockFile);
-      formData.set("orgId", UPLOAD_ORG);
-
-      const result = await uploadFile(formData);
-
-      expect(result).toEqual({ error: "Missing required fields" });
-      expect(mockPut).not.toHaveBeenCalled();
-    });
-
     it("returns error when orgId is missing", async () => {
       const { uploadFile } = await import("@/features/upload/actions");
+      const { getActiveOrgId } = await import("@/features/auth/organization/active-org");
+      vi.mocked(getActiveOrgId).mockResolvedValueOnce(null);
 
       const mockFile = new File(["test content"], "test.png", { type: "image/png" });
       const formData = new FormData();

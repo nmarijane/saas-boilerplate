@@ -24,6 +24,7 @@
     "generate:context": "tsx scripts/generate-claude-context.ts"
   },
   "dependencies": {
+    "@ai-chambers/design-system": "file:./ai-chambers-design-system",
     "@ai-sdk/anthropic": "^3.0.66",
     "@ai-sdk/google": "^3.0.58",
     "@ai-sdk/groq": "^3.0.31",

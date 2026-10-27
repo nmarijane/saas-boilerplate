@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { requireApiAuth } from "@/features/auth/api-auth";
-import { getActiveOrgId } from "@/features/auth/organization/active-org";
 import { uploadFile } from "@/features/upload/actions";
 
 export async function POST(request: Request) {
@@ -9,17 +8,6 @@ export async function POST(request: Request) {
 
   try {
     const formData = await request.formData();
-
-    const orgId = await getActiveOrgId();
-    if (!orgId) {
-      return NextResponse.json(
-        { error: "No active organization", code: "NO_ORG", status: 400 },
-        { status: 400 },
-      );
-    }
-
-    formData.set("userId", auth.session.user.id);
-    formData.set("orgId", orgId);
 
     const result = await uploadFile(formData);
 

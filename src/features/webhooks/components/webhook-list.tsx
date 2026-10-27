@@ -31,7 +31,7 @@ function ActiveToggle({ endpoint }: { endpoint: WebhookRow }) {
   function handleToggle(checked: boolean) {
     setOptimisticActive(checked);
     startTransition(async () => {
-      await toggleWebhookEndpointAction(endpoint.id, checked);
+      await toggleWebhookEndpointAction(endpoint.id, endpoint.orgId, checked);
     });
   }
 
@@ -48,17 +48,15 @@ function ActiveToggle({ endpoint }: { endpoint: WebhookRow }) {
 function DeleteButton({
   endpointId,
   orgId,
-  userId,
 }: {
   endpointId: string;
   orgId: string;
-  userId: string;
 }) {
   const [isPending, startTransition] = useTransition();
 
   function handleDelete() {
     startTransition(async () => {
-      await deleteWebhookEndpointAction(endpointId, orgId, userId);
+      await deleteWebhookEndpointAction(endpointId, orgId);
     });
   }
 
@@ -77,10 +75,9 @@ function DeleteButton({
 interface WebhookListProps {
   endpoints: WebhookRow[];
   orgId: string;
-  userId: string;
 }
 
-export function WebhookList({ endpoints, orgId, userId }: WebhookListProps) {
+export function WebhookList({ endpoints, orgId }: WebhookListProps) {
   const [modalOpen, setModalOpen] = useState(false);
 
   const columns: Column<WebhookRow>[] = [
@@ -114,7 +111,7 @@ export function WebhookList({ endpoints, orgId, userId }: WebhookListProps) {
       key: "id",
       header: "Actions",
       cell: (row) => (
-        <DeleteButton endpointId={row.id} orgId={orgId} userId={userId} />
+        <DeleteButton endpointId={row.id} orgId={orgId} />
       ),
     },
   ];
@@ -138,7 +135,6 @@ export function WebhookList({ endpoints, orgId, userId }: WebhookListProps) {
         open={modalOpen}
         onOpenChange={setModalOpen}
         orgId={orgId}
-        userId={userId}
       />
     </div>
   );

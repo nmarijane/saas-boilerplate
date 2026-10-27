@@ -98,8 +98,11 @@ export function ConnectedAccounts() {
       return;
     }
 
+    const target = accounts.find((account) => account.providerId === providerId);
+    if (!target) return;
+
     setActionLoading(providerId);
-    const { error } = await authClient.unlinkAccount({ providerId });
+    const { error } = await authClient.unlinkAccount({ accountId: target.id });
 
     if (error) {
       toast.error(error.message ?? tCommon("error"));

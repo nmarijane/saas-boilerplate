@@ -2,6 +2,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate as migratePg } from "drizzle-orm/node-postgres/migrator";
 import { drizzle as drizzlePglite } from "drizzle-orm/pglite";
 import { migrate as migratePglite } from "drizzle-orm/pglite/migrator";
+import { PLANS } from "../src/features/billing/plans";
 import * as schema from "../src/models";
 
 const migrationsFolder = "./migrations";
@@ -22,44 +23,15 @@ async function createDb() {
   return db;
 }
 
-const plans: Array<{
-  id: string;
-  name: string;
-  stripePriceId: string | null;
-  features: Record<string, boolean>;
-  limits: Record<string, number>;
-  price: number;
-}> = [
-  {
-    id: "free",
-    name: "Free",
-    stripePriceId: null,
-    features: { dashboard: true, feedback: true },
-    limits: { members: 3, uploads: 10 },
-    price: 0,
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    stripePriceId: null,
-    features: { dashboard: true, feedback: true, notifications: true },
-    limits: { members: 20, uploads: 100 },
-    price: 1900,
-  },
-  {
-    id: "enterprise",
-    name: "Enterprise",
-    stripePriceId: null,
-    features: {
-      dashboard: true,
-      feedback: true,
-      notifications: true,
-      priority_support: true,
-    },
-    limits: { members: -1, uploads: -1 },
-    price: 4900,
-  },
-];
+// Single source of truth: src/features/billing/plans.ts
+const plans = PLANS.map((p) => ({
+  id: p.id,
+  name: p.name,
+  stripePriceId: p.stripePriceId.monthly || null,
+  features: p.features,
+  limits: p.limits,
+  price: p.price.monthly * 100,
+}));
 
 async function hashPassword(password: string): Promise<string> {
   const { hashPassword: hash } = await import("better-auth/crypto");
@@ -76,7 +48,16 @@ async function seed() {
     await db
       .insert(schema.plan)
       .values(p)
-      .onConflictDoNothing({ target: schema.plan.id });
+      .onConflictDoUpdate({
+        target: schema.plan.id,
+        set: {
+          name: p.name,
+          stripePriceId: p.stripePriceId,
+          features: p.features,
+          limits: p.limits,
+          price: p.price,
+        },
+      });
   }
   console.log("Plans seeded: Free, Pro, Enterprise");
 
@@ -98,9 +79,18 @@ async function seed() {
         email: "admin@example.com",
         emailVerified: true,
         isAdmin: true,
+        isPlatformAdmin: true,
         onboardingCompleted: true,
       })
-      .onConflictDoNothing({ target: schema.user.id });
+      .onConflictDoUpdate({
+        target: schema.user.id,
+        set: {
+          isAdmin: true,
+          isPlatformAdmin: true,
+          onboardingCompleted: true,
+          emailVerified: true,
+        },
+      });
 
     await db
       .insert(schema.account)
@@ -114,6 +104,27 @@ async function seed() {
       .onConflictDoNothing({ target: schema.account.id });
 
     console.log("Admin seeded: admin@example.com / admin123");
+
+    // Seed a default organization for the admin/dev users to use locally.
+    const devOrgId = "dev-org-001";
+    await db
+      .insert(schema.organization)
+      .values({
+        id: devOrgId,
+        name: "AI Chambers Dev Workspace",
+        slug: "ai-chambers-dev",
+      })
+      .onConflictDoNothing({ target: schema.organization.id });
+
+    await db
+      .insert(schema.organizationMember)
+      .values({
+        id: "dev-org-member-admin",
+        userId: adminId,
+        organizationId: devOrgId,
+        role: "owner",
+      })
+      .onConflictDoNothing({ target: schema.organizationMember.id });
 
     // Seed dev user (non-admin)
     const devId = "dev-seed-001";
@@ -140,8 +151,19 @@ async function seed() {
       })
       .onConflictDoNothing({ target: schema.account.id });
 
+    await db
+      .insert(schema.organizationMember)
+      .values({
+        id: "dev-org-member-dev",
+        userId: devId,
+        organizationId: devOrgId,
+        role: "member",
+      })
+      .onConflictDoNothing({ target: schema.organizationMember.id });
+
     console.log("Dev user seeded: dev@example.com / admin123");
   }
+
   console.log("Seeding complete!");
   process.exit(0);
 }

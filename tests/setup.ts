@@ -48,6 +48,13 @@ vi.mock("@/features/auth/guards", () => ({
     },
     session: { id: "test-session-2" },
   }),
+  requireOrgRole: vi.fn().mockImplementation(async () => ({
+    session: {
+      user: { id: "test-user-1", name: "Test User", email: "test@test.com" },
+      session: { id: "test-session-1" },
+    },
+    member: { role: "owner" },
+  })),
   getServerSession: vi.fn().mockResolvedValue({
     user: { id: "test-user-1", name: "Test User", email: "test@test.com" },
     session: { id: "test-session-1" },

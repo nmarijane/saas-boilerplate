@@ -43,12 +43,16 @@ export const auth = betterAuth({
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID ?? "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
-      enabled: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
+      enabled: !!(
+        process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+      ),
     },
     github: {
       clientId: process.env.GITHUB_CLIENT_ID ?? "",
       clientSecret: process.env.GITHUB_CLIENT_SECRET ?? "",
-      enabled: !!(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET),
+      enabled: !!(
+        process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET
+      ),
     },
   },
   user: {
@@ -56,17 +60,21 @@ export const auth = betterAuth({
       isAdmin: {
         type: "boolean",
         defaultValue: false,
+        input: false,
+      },
+      isPlatformAdmin: {
+        type: "boolean",
+        defaultValue: false,
+        input: false,
       },
       onboardingCompleted: {
         type: "boolean",
         defaultValue: false,
+        input: false,
       },
     },
   },
-  plugins: [
-    organization(),
-    twoFactor(),
-  ],
+  plugins: [organization(), twoFactor()],
 });
 
 export type Session = typeof auth.$Infer.Session;

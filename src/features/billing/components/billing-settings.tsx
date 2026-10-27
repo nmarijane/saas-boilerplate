@@ -43,10 +43,10 @@ export function BillingSettings({
     }
   }
 
-  async function handleUpgrade(priceId: string) {
+  async function handleUpgrade(planId: string) {
     setLoading("upgrade");
     try {
-      const session = await createCheckoutSession(orgId, priceId);
+      const session = await createCheckoutSession(orgId, planId, "monthly");
       if (session.url) {
         window.location.href = session.url;
       }
@@ -157,7 +157,7 @@ export function BillingSettings({
               return (
                 <Button
                   onClick={() =>
-                    handleUpgrade(proPlan.stripePriceId.monthly)
+                    handleUpgrade(proPlan.id)
                   }
                   disabled={
                     loading === "upgrade" || !proPlan.stripePriceId.monthly
