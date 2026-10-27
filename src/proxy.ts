@@ -37,17 +37,26 @@ export async function proxy(request: NextRequest) {
   const response = intlMiddleware(request);
 
   // 3. Auth guards — protect (app) and (admin) routes
-  const sessionToken =
-    request.cookies.get("better-auth.session_token")?.value;
+  const sessionToken = request.cookies.get("better-auth.session_token")?.value;
   const localeMatch = pathname.match(LOCALE_PREFIX_RE);
   const pathWithoutLocale = localeMatch
     ? pathname.slice(localeMatch[0].length)
     : pathname;
 
-  const isAppRoute = pathWithoutLocale.startsWith("/dashboard") ||
+  const isAppRoute =
+    pathWithoutLocale.startsWith("/dashboard") ||
     pathWithoutLocale.startsWith("/settings") ||
-    pathWithoutLocale.startsWith("/onboarding");
-  const isAdminRoute = pathWithoutLocale.startsWith("/admin");
+    pathWithoutLocale.startsWith("/onboarding") ||
+    pathWithoutLocale.startsWith("/ai") ||
+    pathWithoutLocale.startsWith("/tools") ||
+    pathWithoutLocale.startsWith("/solutions") ||
+    pathWithoutLocale.startsWith("/runs") ||
+    pathWithoutLocale.startsWith("/admin") ||
+    pathWithoutLocale.startsWith("/platform") ||
+    pathWithoutLocale.startsWith("/billing");
+  const isAdminRoute =
+    pathWithoutLocale.startsWith("/admin") ||
+    pathWithoutLocale.startsWith("/platform");
 
   if ((isAppRoute || isAdminRoute) && !sessionToken) {
     const locale = localeMatch?.[1] ?? routing.defaultLocale;

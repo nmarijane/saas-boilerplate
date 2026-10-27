@@ -37,13 +37,26 @@ export async function requireRole(
 ) {
   const session = await requireAuth();
 
+  if (session.user.id !== userId) {
+    redirect("/dashboard");
+  }
+
+  return requireOrgRoleForSession(orgId, minRole, session);
+}
+
+async function requireOrgRoleForSession(
+  orgId: string,
+  minRole: OrgRole,
+  session: Awaited<ReturnType<typeof requireAuth>>,
+) {
+
   const members = await db
     .select()
     .from(organizationMember)
     .where(
       and(
         eq(organizationMember.organizationId, orgId),
-        eq(organizationMember.userId, userId),
+        eq(organizationMember.userId, session.user.id),
       ),
     )
     .limit(1);
@@ -62,4 +75,9 @@ export async function requireRole(
   }
 
   return { session, member };
+}
+
+export async function requireOrgRole(orgId: string, minRole: OrgRole) {
+  const session = await requireAuth();
+  return requireOrgRoleForSession(orgId, minRole, session);
 }

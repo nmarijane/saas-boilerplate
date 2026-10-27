@@ -1,0 +1,115 @@
+export declare const tokens: {
+    readonly color: {
+        readonly brand: "#8A1BE1";
+        readonly primary: "#526B87";
+        readonly primaryHover: "#40566F";
+        readonly surface: "#FFFFFF";
+        readonly canvas: "#F5F7F9";
+        readonly text: "#202B36";
+        readonly muted: "#526171";
+        readonly border: "#C4CDD6";
+        readonly divider: "#E2E7EC";
+        readonly focus: "#526B87";
+        readonly sidebar: "#202B36";
+        readonly sidebarText: "#F2F5F7";
+        readonly selected: "#E8EEF4";
+        readonly success: "#286344";
+        readonly successSurface: "#EAF3ED";
+        readonly warning: "#795614";
+        readonly warningSurface: "#FBF2DE";
+        readonly danger: "#A53232";
+        readonly dangerSurface: "#FAEBEB";
+        readonly info: "#365F84";
+        readonly infoSurface: "#EAF1F7";
+        readonly sidebarActive: "#34485B";
+    };
+    readonly dark: {
+        readonly primary: "#B4C8DE";
+        readonly primaryHover: "#D2DFEC";
+        readonly surface: "#202B36";
+        readonly canvas: "#17212B";
+        readonly text: "#F2F5F7";
+        readonly muted: "#BBC5CF";
+        readonly border: "#738397";
+        readonly divider: "#3E4E5E";
+        readonly focus: "#B4C8DE";
+        readonly sidebar: "#111A23";
+        readonly sidebarText: "#F2F5F7";
+        readonly selected: "#34485B";
+        readonly success: "#AAD6B9";
+        readonly successSurface: "#233C30";
+        readonly warning: "#E3C78A";
+        readonly warningSurface: "#403520";
+        readonly danger: "#F1B0B0";
+        readonly dangerSurface: "#482B2B";
+        readonly info: "#B4CDE4";
+        readonly infoSurface: "#293D50";
+        readonly sidebarActive: "#34485B";
+    };
+    readonly type: {
+        readonly page: 18;
+        readonly section: 14;
+        readonly body: 13;
+        readonly meta: 12;
+        readonly mobileBody: 14;
+        readonly formMobile: 16;
+        readonly regular: 400;
+        readonly medium: 500;
+        readonly pageLine: 24;
+        readonly sectionLine: 20;
+        readonly bodyLine: 20;
+        readonly metaLine: 16;
+    };
+    readonly space: {
+        readonly "1": 4;
+        readonly "2": 8;
+        readonly "3": 12;
+        readonly "4": 16;
+        readonly "6": 24;
+        readonly "8": 32;
+    };
+    readonly size: {
+        readonly button: 28;
+        readonly input: 30;
+        readonly row: 36;
+        readonly rowComfortable: 44;
+        readonly touch: 44;
+        readonly icon: 16;
+        readonly iconButton: 28;
+        readonly sidebar: 192;
+        readonly sidebarCollapsed: 56;
+        readonly secondaryNav: 176;
+        readonly topbar: 40;
+        readonly radius: 4;
+        readonly border: 1;
+        readonly drawerMin: 320;
+        readonly drawerMax: 560;
+    };
+    readonly layout: {
+        readonly mobileColumns: 4;
+        readonly tabletColumns: 12;
+        readonly desktopColumns: 24;
+        readonly tabletMin: 768;
+        readonly desktopMin: 1200;
+        readonly gap: 12;
+        readonly pagePadding: 16;
+    };
+    readonly motion: {
+        readonly fast: 120;
+        readonly standard: 180;
+        readonly drawer: 220;
+        readonly searchDebounce: 300;
+    };
+    readonly layer: {
+        readonly base: 0;
+        readonly sticky: 10;
+        readonly popover: 100;
+        readonly drawer: 200;
+        readonly modal: 300;
+        readonly toast: 400;
+    };
+    readonly font: {
+        readonly sans: "\"Inter\", \"Segoe UI\", Arial, sans-serif";
+        readonly mono: "\"SFMono-Regular\", Consolas, monospace";
+    };
+};

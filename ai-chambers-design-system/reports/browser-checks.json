@@ -1,0 +1,43 @@
+{
+  "status": "passed",
+  "browser": "141.0.7390.37",
+  "checks": [
+    "compact heading typography",
+    "single-line table rows",
+    "search/clear restores results",
+    "explicit andall-matching selection",
+    "column visibility andkeyboard resizing",
+    "session saved-view creation",
+    "saved view actually restores column visibility and widths",
+    "nested filter builder apply",
+    "inspector Escape andfocus restoration",
+    "command palette shortcut",
+    "desktop light automated accessibility",
+    "desktop dark automated accessibility",
+    "authored select search andform validation",
+    "responsive24/12/4 grid geometry",
+    "disclosure validation doesnot submit payment",
+    "mobile list andno page overflow",
+    "mobile sheet andtouch buttons",
+    "mobile automated accessibility",
+    "360px reflow",
+    "reduced motion removes spatial animations",
+    "error recovery"
+  ],
+  "axe": [
+    {
+      "label": "desktop-light",
+      "violations": []
+    },
+    {
+      "label": "desktop-dark",
+      "violations": []
+    },
+    {
+      "label": "mobile-dark",
+      "violations": []
+    }
+  ],
+  "pageErrors": [],
+  "limits": "Local reference only. Not a manual screen-reader, multi-user backend, full app or cross-browser certification."
+}

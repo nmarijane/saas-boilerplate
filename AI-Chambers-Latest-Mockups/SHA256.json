@@ -1,0 +1,62 @@
+{
+  "concepts/01-tailored-solutions-catalogue.png": {
+    "sha256": "7366827daf279b98aee0253e47487659d39fecdb54f70ac2017595ef3b4eb0a6"
+  },
+  "concepts/02-admin-add-ai-tool.png": {
+    "sha256": "e303ea8e962d2ad1c02872e758db006bddf3d4f3d4f437324ee74da0b9a125d5"
+  },
+  "concepts/03-admin-add-tailored-solution.png": {
+    "sha256": "134e8859ee2ac412c86c5eb7cfe09e0a4062ff1e021695c80d0a048e70bc17c2"
+  },
+  "concepts/04-client-workspace-overview.png": {
+    "sha256": "d27a777004b658a47862e32008ea92d4001cf8037932297bc1e52d80ad175cca"
+  },
+  "concepts/05-admin-ai-tool-configuration.png": {
+    "sha256": "37ac712c17005ecec93c9f16756e36e6f2b5a75940e50f1ebed63e2322c3a4d4"
+  },
+  "concepts/06-organise-disclosure-material-form.png": {
+    "sha256": "0740b72e5962902901a735aad4c3159f3dac4450eb140e303c744167df0169cb"
+  },
+  "concepts/07-ai-tools-catalogue-selection-and-columns.png": {
+    "sha256": "a44add3fcd5edabe4dfbcff20b2438abd4e5523486d6191350d12ec9cdb73c9e"
+  },
+  "concepts/08-matter-assistant-chat-agent.png": {
+    "sha256": "bbfd1258d94d2cea11f14bea0f3129c6e1598cdfc5dd3f42704b9d36c2a6e0b8"
+  },
+  "concepts/09-workspace-settings-general.png": {
+    "sha256": "6ef6aede446bb206364b8fbc8b826e78b89344193c48d505be98d0296919c401"
+  },
+  "concepts/10-workspace-settings-security.png": {
+    "sha256": "f4ce8e108ec1f0437e5762a8a11a7c38d72f75a45f0b4a6862f1adea24cb9769"
+  },
+  "concepts/11-workspace-members-and-roles.png": {
+    "sha256": "bd4725564d7bfd19ff921f1e1a2414fb6a7613d07a79a95b6e0dd194d199c757"
+  },
+  "concepts/12-workspace-connections.png": {
+    "sha256": "f629b6a8abaa4c334417062472eca8eb2af6b0659b7341f3dd1f8dfbc2ffdb34"
+  },
+  "concepts/13-user-preferences.png": {
+    "sha256": "22f4440775047aa6c122104cce54693bc6304294076546f5cb3b84b52430a98d"
+  },
+  "concepts/14-runs-results-query-and-inspector.png": {
+    "sha256": "e8944c02579758660c9732f6251b48194fd7f7dd65d3416994ac0fee11963a58"
+  },
+  "concepts/15-workspace-settings-validation-and-conflict.png": {
+    "sha256": "5845fc9ee44e32cb2bfd7885cc5479c388387edf172bdd6d31e166fd16e56d5f"
+  },
+  "concepts/16-mobile-list-selection-and-bottom-sheet.png": {
+    "sha256": "6e3d8839e97171c327d36b301340046f15b4142bf097a79f4ea12953bf930c0e"
+  },
+  "concepts/17-design-foundations-and-interaction-states.png": {
+    "sha256": "a91b934505757e15db9a2c166f8b0c7c2630d24f310f37cae6a3d9d3817ecfaf"
+  },
+  "rendered-examples/desktop-light.png": {
+    "sha256": "99e4c433e47d8b8aad4a92ae2c26f9913dc4dc5463a463844bcad5e36d44be3b"
+  },
+  "rendered-examples/desktop-dark.png": {
+    "sha256": "09af2965e9b67b08784ba3b91f599641c74d88da7b626e8c9f26015645e0d3fa"
+  },
+  "rendered-examples/mobile-dark.png": {
+    "sha256": "cdc3e8ff5c8dd789f3cf2a5938d29a114e3ab3f45db0ee0971ca9399aee4694e"
+  }
+}

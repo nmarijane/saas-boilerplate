@@ -5,13 +5,14 @@ import { ThemeProvider } from "next-themes";
 import { Toaster } from "sonner";
 import { routing } from "@/shared/lib/i18n-routing";
 import "@/styles/global.css";
+import "@ai-chambers/design-system/styles.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "SaaS Boilerplate",
-    template: "%s | SaaS Boilerplate",
+    default: "AI Chambers",
+    template: "%s | AI Chambers",
   },
-  description: "Production-ready SaaS boilerplate built with Next.js",
+  description: "AI tools and tailored solutions for your organisation",
 };
 
 export function generateStaticParams() {
@@ -29,7 +30,7 @@ export default async function LocaleLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning data-ac-theme={undefined}>
       <body>
         <ThemeProvider
           attribute="class"

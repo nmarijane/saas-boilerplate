@@ -23,6 +23,10 @@ vi.mock("@/features/billing/stripe", () => ({
   }),
 }));
 
+vi.hoisted(() => {
+  process.env.STRIPE_PRICE_PRO_MONTHLY = "price_pro";
+});
+
 const BILL_USER = "bill-user-1";
 const BILL_ORG = "bill-org-1";
 const STRIPE_SUB_ID = "sub_test_stripe";

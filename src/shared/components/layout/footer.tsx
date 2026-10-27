@@ -47,7 +47,7 @@ export function Footer() {
           </Link>
         </div>
         <p className="text-sm text-muted-foreground">
-          &copy; {new Date().getFullYear()} SaaS Boilerplate
+          &copy; {new Date().getFullYear()} AI Chambers
         </p>
       </div>
     </footer>

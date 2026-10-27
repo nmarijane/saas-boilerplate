@@ -1,8 +1,9 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { requireOrgRole } from "@/features/auth/guards";
 import { emitEvent } from "@/features/events/emitter";
 import { apiKey } from "@/models/api-key";
 import { db } from "@/shared/lib/DB";
@@ -17,17 +18,17 @@ const createApiKeySchema = z.object({
 
 export async function createApiKeyAction(
   orgId: string,
-  userId: string,
   input: z.infer<typeof createApiKeySchema>,
 ) {
   const parsed = createApiKeySchema.parse(input);
+  const { session } = await requireOrgRole(orgId, "admin");
   const { key, prefix, hash } = generateApiKey();
   const id = generateId();
 
   await db.insert(apiKey).values({
     id,
     orgId,
-    createdBy: userId,
+    createdBy: session.user.id,
     name: parsed.name,
     prefix,
     hash,
@@ -37,7 +38,7 @@ export async function createApiKeyAction(
 
   await emitEvent("api_key.created", {
     orgId,
-    actorId: userId,
+    actorId: session.user.id,
     resourceType: "api_key",
     resourceId: id,
     metadata: { name: parsed.name },
@@ -51,16 +52,16 @@ export async function createApiKeyAction(
 export async function revokeApiKeyAction(
   keyId: string,
   orgId: string,
-  userId: string,
 ) {
+  const { session } = await requireOrgRole(orgId, "admin");
   await db
     .update(apiKey)
     .set({ revokedAt: new Date() })
-    .where(eq(apiKey.id, keyId));
+    .where(and(eq(apiKey.id, keyId), eq(apiKey.orgId, orgId)));
 
   await emitEvent("api_key.revoked", {
     orgId,
-    actorId: userId,
+    actorId: session.user.id,
     resourceType: "api_key",
     resourceId: keyId,
   });

@@ -1,8 +1,10 @@
 "use server";
 
 import { Buffer } from "node:buffer";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { requireAuth, requireOrgRole } from "@/features/auth/guards";
+import { getActiveOrgId } from "@/features/auth/organization/active-org";
 import { upload } from "@/models/upload";
 import { db } from "@/shared/lib/DB";
 import { generateId } from "@/shared/utils/helpers";
@@ -11,12 +13,13 @@ import { validateFile } from "./validation";
 
 export async function uploadFile(formData: FormData) {
   const file = formData.get("file") as File | null;
-  const userId = formData.get("userId") as string | null;
-  const orgId = formData.get("orgId") as string | null;
+  const session = await requireAuth();
+  const orgId = await getActiveOrgId();
 
-  if (!file || !userId || !orgId) {
+  if (!file || !orgId) {
     return { error: "Missing required fields" };
   }
+  await requireOrgRole(orgId, "member");
 
   const validation = validateFile(file);
   if (!validation.valid) {
@@ -24,7 +27,7 @@ export async function uploadFile(formData: FormData) {
   }
 
   const id = generateId();
-  const storageKey = `${orgId}/${id}-${file.name}`;
+  const storageKey = `${orgId}/${id}`;
   const buffer = Buffer.from(await file.arrayBuffer());
   const storage = await getStorageAdapter();
 
@@ -32,7 +35,7 @@ export async function uploadFile(formData: FormData) {
 
   await db.insert(upload).values({
     id,
-    userId,
+    userId: session.user.id,
     organizationId: orgId,
     filename: file.name,
     mimetype: file.type,
@@ -45,6 +48,7 @@ export async function uploadFile(formData: FormData) {
 }
 
 export async function deleteFile(uploadId: string) {
+  const session = await requireAuth();
   const [record] = await db
     .select()
     .from(upload)
@@ -55,10 +59,23 @@ export async function deleteFile(uploadId: string) {
     return { error: "File not found" };
   }
 
+  if (record.organizationId) {
+    await requireOrgRole(record.organizationId, "member");
+  } else if (record.userId !== session.user.id) {
+    return { error: "File not found" };
+  }
+
   const storage = await getStorageAdapter();
   await storage.delete(record.storageKey);
 
-  await db.delete(upload).where(eq(upload.id, uploadId));
+  await db
+    .delete(upload)
+    .where(
+      and(
+        eq(upload.id, uploadId),
+        eq(upload.userId, record.userId),
+      ),
+    );
   revalidatePath("/");
   return { success: true };
 }

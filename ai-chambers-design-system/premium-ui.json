@@ -1,0 +1,28 @@
+{
+  "profile": "product-admin",
+  "sourceRoots": ["src", "examples"],
+  "locale": "en-AU",
+  "canonicalMap": "UX-CONTRACT.md",
+  "requiredCapabilities": [
+    "Table Selection",
+    "Select/Listbox",
+    "Date",
+    "Form",
+    "Scrollbar",
+    "Toast",
+    "CRUD"
+  ],
+  "ownership": {
+    "Select/Listbox": "authored",
+    "Date": "authored"
+  },
+  "requiredCommands": ["unit", "browser", "static"],
+  "commands": {
+    "unit": "npm test",
+    "browser": "npm run test:browser",
+    "static": "npm run verify:static"
+  },
+  "evidence": {
+    "failurePaths": "tests/browser.mjs"
+  }
+}

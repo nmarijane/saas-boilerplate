@@ -1,37 +1,41 @@
 import type Stripe from "stripe";
 import { eq } from "drizzle-orm";
+
 import { emitEvent } from "@/features/events/emitter";
 import { subscription } from "@/models";
 import { db } from "@/shared/lib/DB";
 import { generateId } from "@/shared/utils/helpers";
+import { getPlanByPriceId } from "./plans";
 import { getStripe } from "./stripe";
 
 async function getOrgIdFromSubscription(
-  stripeSubscription: Stripe.Subscription
+  stripeSubscription: Stripe.Subscription,
 ): Promise<string | null> {
-  return (
-    (stripeSubscription.metadata?.orgId as string | undefined) ?? null
-  );
+  return (stripeSubscription.metadata?.orgId as string | undefined) ?? null;
+}
+
+function resolvePlanId(priceId: string | undefined) {
+  if (!priceId) throw new Error("Stripe subscription has no price");
+  const plan = getPlanByPriceId(priceId);
+  if (!plan || plan.id === "free") {
+    throw new Error(`Unrecognized Stripe price: ${priceId}`);
+  }
+  return plan.id;
 }
 
 export async function handleCheckoutCompleted(
-  session: Stripe.Checkout.Session
+  session: Stripe.Checkout.Session,
 ) {
   const orgId = session.metadata?.orgId;
   if (!orgId || !session.subscription) return;
 
   const stripeSubscription = await getStripe().subscriptions.retrieve(
-    session.subscription as string
+    session.subscription as string,
   );
 
   const priceId = stripeSubscription.items.data[0]?.price.id;
 
-  // Find the plan matching this price
-  const plan = await db.query.plan?.findFirst({
-    where: (p, { eq: eqOp }) => eqOp(p.stripePriceId, priceId ?? ""),
-  });
-
-  const planId = plan?.id ?? "pro";
+  const planId = resolvePlanId(priceId);
 
   // Check if a subscription record already exists
   const existing = await db.query.subscription.findFirst({
@@ -49,7 +53,7 @@ export async function handleCheckoutCompleted(
         status: "active",
         planId,
         currentPeriodEnd: new Date(
-          stripeSubscription.items.data[0].current_period_end * 1000
+          stripeSubscription.items.data[0].current_period_end * 1000,
         ),
         updatedAt: new Date(),
       })
@@ -63,7 +67,7 @@ export async function handleCheckoutCompleted(
       status: "active",
       planId,
       currentPeriodEnd: new Date(
-        stripeSubscription.items.data[0].current_period_end * 1000
+        stripeSubscription.items.data[0].current_period_end * 1000,
       ),
     });
   }
@@ -77,7 +81,8 @@ export async function handleCheckoutCompleted(
 }
 
 export async function handleInvoicePaid(invoice: Stripe.Invoice) {
-  const stripeSubscriptionId = invoice.parent?.subscription_details?.subscription as string | null;
+  const stripeSubscriptionId = invoice.parent?.subscription_details
+    ?.subscription as string | null;
   if (!stripeSubscriptionId) return;
 
   const sub = await db.query.subscription.findFirst({
@@ -102,7 +107,8 @@ export async function handleInvoicePaid(invoice: Stripe.Invoice) {
 }
 
 export async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
-  const stripeSubscriptionId = invoice.parent?.subscription_details?.subscription as string | null;
+  const stripeSubscriptionId = invoice.parent?.subscription_details
+    ?.subscription as string | null;
   if (!stripeSubscriptionId) return;
 
   const sub = await db.query.subscription.findFirst({
@@ -127,18 +133,14 @@ export async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
 }
 
 export async function handleSubscriptionUpdated(
-  stripeSubscription: Stripe.Subscription
+  stripeSubscription: Stripe.Subscription,
 ) {
   const orgId = await getOrgIdFromSubscription(stripeSubscription);
   if (!orgId) return;
 
   const priceId = stripeSubscription.items.data[0]?.price.id;
 
-  const plan = await db.query.plan?.findFirst({
-    where: (p, { eq: eqOp }) => eqOp(p.stripePriceId, priceId ?? ""),
-  });
-
-  const planId = plan?.id ?? "pro";
+  const planId = resolvePlanId(priceId);
 
   await db
     .update(subscription)
@@ -146,7 +148,7 @@ export async function handleSubscriptionUpdated(
       status: stripeSubscription.status === "active" ? "active" : "past_due",
       planId,
       currentPeriodEnd: new Date(
-        stripeSubscription.items.data[0].current_period_end * 1000
+        stripeSubscription.items.data[0].current_period_end * 1000,
       ),
       updatedAt: new Date(),
     })
@@ -161,7 +163,7 @@ export async function handleSubscriptionUpdated(
 }
 
 export async function handleSubscriptionDeleted(
-  stripeSubscription: Stripe.Subscription
+  stripeSubscription: Stripe.Subscription,
 ) {
   const orgId = await getOrgIdFromSubscription(stripeSubscription);
   if (!orgId) return;

@@ -1,0 +1,78 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> @ai-chambers/design-system@1.0.0 verify
+> npm run tokens && npm run format:check && npm run typecheck && npm test && npm run verify:static && npm run build
+
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> @ai-chambers/design-system@1.0.0 tokens
+> node scripts/generate-tokens.mjs
+
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> @ai-chambers/design-system@1.0.0 format:check
+> prettier --check src examples tests scripts docs tokens contracts *.md *.json *.ts
+
+Checking formatting...
+All matched files use Prettier code style!
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> @ai-chambers/design-system@1.0.0 typecheck
+> tsc --noEmit
+
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> @ai-chambers/design-system@1.0.0 test
+> node --import tsx --test tests/model.test.ts
+
+✔ nested all/any restricts scope correctly (1.314618ms)
+✔ search and deterministic multi sort compose (6.314321ms)
+✔ numeric comparison excludes absent and nonnumeric values (0.180511ms)
+✔ explicit selection toggles without duplicates (0.160181ms)
+✔ all-results selection uses exclusions (0.184989ms)
+✔ saved views roundtrip and reject missing required identity column (0.283176ms)
+✔ invalid view schemas and query fields are rejected (0.151308ms)
+✔ view storage keys isolate tenant/user/resource without delimiter collisions (0.146821ms)
+✔ duplicate save cannot start while saving (0.364298ms)
+✔ stale completion cannot overwrite a different operation (0.237417ms)
+✔ conflict retains local draft and requires reviewed resolution (0.209285ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 124.79013
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> @ai-chambers/design-system@1.0.0 verify:static
+> node scripts/verify.mjs
+
+Static checks passed: 16 contrast pairs, 20 verified PatternFly CSS variables, schema/contracts/anti-patterns.
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> @ai-chambers/design-system@1.0.0 build
+> tsc -p tsconfig.build.json && node scripts/copy-assets.mjs && vite build
+
+vite v7.3.7 building client environment for production...
+transforming...
+✓ 3930 modules transformed.
+rendering chunks...
+computing gzip size...
+preview-dist/index.html                                      0.37 kB │ gzip:   0.27 kB
+preview-dist/assets/PF-Bkg-Generic-Dark-BXzEO4HC.svg         4.86 kB │ gzip:   1.21 kB
+preview-dist/assets/PF-Bkg-Generic-Light-BCQFATCY.svg        4.92 kB │ gzip:   1.20 kB
+preview-dist/assets/Felt-Bkg-Generic-Dark-C47rH4Qs.svg       6.80 kB │ gzip:   1.61 kB
+preview-dist/assets/Felt-Bkg-Generic-Light-CLIWo2pl.svg      7.02 kB │ gzip:   1.62 kB
+preview-dist/assets/pf-v6-pficon-Dy6oiu9u.woff2             18.45 kB
+preview-dist/assets/RedHatMonoVF-DR_keSsW.woff2             29.91 kB
+preview-dist/assets/RedHatMonoVF-Italic-DxqvCP8M.woff2      32.70 kB
+preview-dist/assets/RedHatTextVF-DNKNjMr3.woff2             40.17 kB
+preview-dist/assets/RedHatDisplayVF-D7m-OdR-.woff2          40.79 kB
+preview-dist/assets/RedHatTextVF-Italic-Bw8r3dX4.woff2      42.29 kB
+preview-dist/assets/RedHatDisplayVF-Italic-DWi3aqlN.woff2   42.42 kB
+preview-dist/assets/logo-dark-original-l-u5aJc9.png         60.56 kB
+preview-dist/assets/index-BWsoHHbo.css                     828.67 kB │ gzip:  72.33 kB
+preview-dist/assets/index-al280wkO.js                      414.89 kB │ gzip: 130.92 kB
+✓ built in 3.09s

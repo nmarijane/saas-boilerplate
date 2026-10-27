@@ -1,0 +1,41 @@
+{
+  "scope": "reference preview build, not a production performance certification",
+  "assets": {
+    "index-DhyqYrvq.js": {
+      "bytes": 414882,
+      "gzipBytes": 130182
+    },
+    "index-vVG3FI3A.js": {
+      "bytes": 414740,
+      "gzipBytes": 130141
+    },
+    "index-C0lBBUxt.css": {
+      "bytes": 828451,
+      "gzipBytes": 70310
+    },
+    "index-Ct2bvXox.css": {
+      "bytes": 828637,
+      "gzipBytes": 70348
+    },
+    "index-Di8w1nkT.js": {
+      "bytes": 416085,
+      "gzipBytes": 130382
+    },
+    "index-BWsoHHbo.css": {
+      "bytes": 828665,
+      "gzipBytes": 70345
+    },
+    "index-DbhsAOFx.js": {
+      "bytes": 416098,
+      "gzipBytes": 130385
+    },
+    "index-al280wkO.js": {
+      "bytes": 414891,
+      "gzipBytes": 130191
+    },
+    "index-ioUDaHjM.css": {
+      "bytes": 827585,
+      "gzipBytes": 70195
+    }
+  }
+}

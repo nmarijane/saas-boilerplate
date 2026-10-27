@@ -4,6 +4,10 @@ import { organizationMember, organization as organizationTable } from "@/models/
 import { seedOrg, seedOrgMember, seedUser } from "../helpers/seed";
 import { testDb } from "../setup";
 
+vi.mock("@/features/billing/helpers", () => ({
+  assertCanAddMember: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock("@/features/auth/auth", () => ({
   auth: {
     api: {
