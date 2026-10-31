@@ -25,7 +25,7 @@ Update `README.md`:
 The GitHub Actions workflows (`.github/workflows/`) are included. Once you push to GitHub:
 - **Lint, typecheck, test, build, storybook, audit** — work immediately, no config needed
 - **Dependabot** — works immediately, sends weekly PRs for outdated deps
-- **Coverage badge** — updates automatically on push to main
+- **Coverage badge** — updates automatically on push to main; the CI commits it to a dedicated `badges` branch, so `main` can stay protected
 - **Claude Code review** — requires setup: run `claude /install-github-app` in your terminal, or add `ANTHROPIC_API_KEY` to your repo secrets
 
 ## Phase 2: Configure Environment

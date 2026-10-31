@@ -8,7 +8,7 @@ Every project starts the same way. Your AI agents burn tokens regenerating the s
 Clone this once, and go straight to building what makes your product unique.
 
 [![CI](https://github.com/nmarijane/saas-boilerplate/actions/workflows/ci.yml/badge.svg)](https://github.com/nmarijane/saas-boilerplate/actions/workflows/ci.yml)
-![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/nmarijane/saas-boilerplate/main/.github/badges/coverage.json)
+![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/nmarijane/saas-boilerplate/badges/coverage.json)
 ![Node.js](https://img.shields.io/badge/Node.js-22-339933?logo=nodedotjs&logoColor=white)
 ![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)
