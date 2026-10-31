@@ -98,8 +98,12 @@ export function ConnectedAccounts() {
       return;
     }
 
+    const account = accounts.find((a) => a.providerId === providerId);
+    if (!account) return;
+
     setActionLoading(providerId);
-    const { error } = await authClient.unlinkAccount({ providerId });
+    // Better Auth 1.7 unlinks by account record id, no longer by provider
+    const { error } = await authClient.unlinkAccount({ accountId: account.id });
 
     if (error) {
       toast.error(error.message ?? tCommon("error"));
