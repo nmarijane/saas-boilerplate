@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { authClient } from "@/features/auth/auth-client";
 import { useSession } from "@/features/auth/hooks/use-session";
-import { getUserOrganizations } from "@/features/auth/organization/queries";
+import { getUserOrganizationsAction } from "@/features/auth/organization/actions";
 import { Button } from "@/shared/components/ui/button";
 import {
   Popover,
@@ -13,7 +13,7 @@ import {
   PopoverTrigger,
 } from "@/shared/components/ui/popover";
 
-type Org = Awaited<ReturnType<typeof getUserOrganizations>>[number];
+type Org = Awaited<ReturnType<typeof getUserOrganizationsAction>>[number];
 
 export function OrgSwitcher() {
   const t = useTranslations("organization");
@@ -24,7 +24,7 @@ export function OrgSwitcher() {
 
   useEffect(() => {
     if (session?.user?.id) {
-      getUserOrganizations(session.user.id).then(setOrgs);
+      getUserOrganizationsAction().then(setOrgs);
     }
   }, [session?.user?.id]);
 

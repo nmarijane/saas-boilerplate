@@ -1,8 +1,7 @@
-"use server";
-
 import { and, eq, isNull } from "drizzle-orm";
 import { apiKey } from "@/models/api-key";
 import { db } from "@/shared/lib/DB";
+import "server-only";
 
 export async function getApiKeysForOrg(orgId: string) {
   return db

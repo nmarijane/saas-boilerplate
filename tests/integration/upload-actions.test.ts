@@ -15,7 +15,8 @@ vi.mock("@/features/upload/storage/adapter", () => ({
   }),
 }));
 
-vi.mock("@/features/upload/validation", () => ({
+vi.mock("@/features/upload/validation", async importOriginal => ({
+  ...(await importOriginal<typeof import("@/features/upload/validation")>()),
   validateFile: vi.fn().mockReturnValue({ valid: true }),
 }));
 
@@ -32,7 +33,7 @@ describe("upload actions", () => {
 
   describe("uploadFile", () => {
     it("uploads a file and inserts a record in DB", async () => {
-      const { uploadFile } = await import("@/features/upload/actions");
+      const { uploadFile } = await import("@/features/upload/service");
 
       const mockFile = new File(["test content"], "test.png", { type: "image/png" });
       const formData = new FormData();
@@ -63,8 +64,25 @@ describe("upload actions", () => {
       expect(rows[0].size).toBe(mockFile.size);
     });
 
+    it("keeps the storage key inside the organization folder, whatever the file name", async () => {
+      const { uploadFile } = await import("@/features/upload/service");
+
+      const formData = new FormData();
+      formData.set("file", new File(["x"], "../../../../etc/cron.d/evil.png", { type: "image/png" }));
+      formData.set("userId", UPLOAD_USER);
+      formData.set("orgId", UPLOAD_ORG);
+
+      await uploadFile(formData);
+
+      const key = mockPut.mock.calls[0][0] as string;
+      expect(key.startsWith(`${UPLOAD_ORG}/`)).toBe(true);
+      expect(key).not.toContain("..");
+      expect(key.split("/")).toHaveLength(2);
+      expect(key.endsWith("-evil.png")).toBe(true);
+    });
+
     it("returns error when file is missing", async () => {
-      const { uploadFile } = await import("@/features/upload/actions");
+      const { uploadFile } = await import("@/features/upload/service");
 
       const formData = new FormData();
       formData.set("userId", UPLOAD_USER);
@@ -80,7 +98,7 @@ describe("upload actions", () => {
     });
 
     it("returns error when userId is missing", async () => {
-      const { uploadFile } = await import("@/features/upload/actions");
+      const { uploadFile } = await import("@/features/upload/service");
 
       const mockFile = new File(["test content"], "test.png", { type: "image/png" });
       const formData = new FormData();
@@ -94,7 +112,7 @@ describe("upload actions", () => {
     });
 
     it("returns error when orgId is missing", async () => {
-      const { uploadFile } = await import("@/features/upload/actions");
+      const { uploadFile } = await import("@/features/upload/service");
 
       const mockFile = new File(["test content"], "test.png", { type: "image/png" });
       const formData = new FormData();
@@ -114,7 +132,7 @@ describe("upload actions", () => {
         error: "File too large. Maximum size is 10MB.",
       });
 
-      const { uploadFile } = await import("@/features/upload/actions");
+      const { uploadFile } = await import("@/features/upload/service");
 
       const mockFile = new File(["test content"], "huge.zip", { type: "application/zip" });
       const formData = new FormData();

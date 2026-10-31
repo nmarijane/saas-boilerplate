@@ -54,7 +54,6 @@ export function FeedbackModal({
 
     setSubmitting(true);
     await submitFeedback({
-      userId,
       orgId: orgId || undefined,
       type,
       message,

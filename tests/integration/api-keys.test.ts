@@ -2,9 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createApiKeyAction, revokeApiKeyAction } from "@/features/api-keys/actions";
 import { hashApiKey } from "@/features/api-keys/helpers";
 import { getActiveApiKeysForOrg, getApiKeysForOrg } from "@/features/api-keys/queries";
+import { requireRole } from "@/features/auth/guards";
 import { emitEvent } from "@/features/events/emitter";
 import { apiKey } from "@/models/api-key";
 import { seedOrg, seedUser } from "../helpers/seed";
+import { fakeRoleGrant } from "../helpers/session";
 import { testDb } from "../setup";
 
 const ORG_ID = "ak-org-1";
@@ -13,6 +15,7 @@ const USER_ID = "ak-user-1";
 describe("api-key actions", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
+    vi.mocked(requireRole).mockResolvedValue(fakeRoleGrant(USER_ID, "admin"));
     await testDb.delete(apiKey);
     await seedUser(USER_ID);
     await seedOrg(ORG_ID);
@@ -20,7 +23,7 @@ describe("api-key actions", () => {
 
   describe("createApiKeyAction", () => {
     it("creates a key and returns the raw key", async () => {
-      const result = await createApiKeyAction(ORG_ID, USER_ID, {
+      const result = await createApiKeyAction(ORG_ID, {
         name: "My API Key",
         scopes: ["read"],
       });
@@ -32,7 +35,7 @@ describe("api-key actions", () => {
     });
 
     it("stored hash matches when hashing the returned key", async () => {
-      const result = await createApiKeyAction(ORG_ID, USER_ID, {
+      const result = await createApiKeyAction(ORG_ID, {
         name: "Hash Test Key",
         scopes: ["*"],
       });
@@ -51,7 +54,7 @@ describe("api-key actions", () => {
     });
 
     it("emits api_key.created event", async () => {
-      await createApiKeyAction(ORG_ID, USER_ID, {
+      await createApiKeyAction(ORG_ID, {
         name: "Event Key",
         scopes: ["*"],
       });
@@ -68,26 +71,26 @@ describe("api-key actions", () => {
 
     it("rejects invalid input (empty name)", async () => {
       await expect(
-        createApiKeyAction(ORG_ID, USER_ID, { name: "", scopes: ["*"] }),
+        createApiKeyAction(ORG_ID, { name: "", scopes: ["*"] }),
       ).rejects.toThrow();
     });
 
     it("rejects invalid input (name too long)", async () => {
       await expect(
-        createApiKeyAction(ORG_ID, USER_ID, { name: "x".repeat(101), scopes: ["*"] }),
+        createApiKeyAction(ORG_ID, { name: "x".repeat(101), scopes: ["*"] }),
       ).rejects.toThrow();
     });
   });
 
   describe("revokeApiKeyAction", () => {
     it("sets revokedAt on the key", async () => {
-      const result = await createApiKeyAction(ORG_ID, USER_ID, {
+      const result = await createApiKeyAction(ORG_ID, {
         name: "Revoke Me",
         scopes: ["*"],
       });
       vi.clearAllMocks();
 
-      await revokeApiKeyAction(result.id, ORG_ID, USER_ID);
+      await revokeApiKeyAction(result.id, ORG_ID);
 
       const keys = await getApiKeysForOrg(ORG_ID);
       expect(keys).toHaveLength(1);
@@ -95,13 +98,13 @@ describe("api-key actions", () => {
     });
 
     it("emits api_key.revoked event", async () => {
-      const result = await createApiKeyAction(ORG_ID, USER_ID, {
+      const result = await createApiKeyAction(ORG_ID, {
         name: "Revoke Event",
         scopes: ["*"],
       });
       vi.clearAllMocks();
 
-      await revokeApiKeyAction(result.id, ORG_ID, USER_ID);
+      await revokeApiKeyAction(result.id, ORG_ID);
 
       expect(vi.mocked(emitEvent)).toHaveBeenCalledWith(
         "api_key.revoked",
@@ -118,14 +121,15 @@ describe("api-key actions", () => {
 
 describe("api-key queries", () => {
   beforeEach(async () => {
+    vi.mocked(requireRole).mockResolvedValue(fakeRoleGrant(USER_ID, "admin"));
     await testDb.delete(apiKey);
     await seedUser(USER_ID);
     await seedOrg(ORG_ID);
   });
 
   it("getApiKeysForOrg returns keys for an org", async () => {
-    await createApiKeyAction(ORG_ID, USER_ID, { name: "Key 1", scopes: ["*"] });
-    await createApiKeyAction(ORG_ID, USER_ID, { name: "Key 2", scopes: ["*"] });
+    await createApiKeyAction(ORG_ID, { name: "Key 1", scopes: ["*"] });
+    await createApiKeyAction(ORG_ID, { name: "Key 2", scopes: ["*"] });
 
     const keys = await getApiKeysForOrg(ORG_ID);
     expect(keys).toHaveLength(2);
@@ -135,10 +139,10 @@ describe("api-key queries", () => {
   });
 
   it("getActiveApiKeysForOrg excludes revoked keys", async () => {
-    const key1 = await createApiKeyAction(ORG_ID, USER_ID, { name: "Active", scopes: ["*"] });
-    const key2 = await createApiKeyAction(ORG_ID, USER_ID, { name: "Revoked", scopes: ["*"] });
+    const key1 = await createApiKeyAction(ORG_ID, { name: "Active", scopes: ["*"] });
+    const key2 = await createApiKeyAction(ORG_ID, { name: "Revoked", scopes: ["*"] });
 
-    await revokeApiKeyAction(key2.id, ORG_ID, USER_ID);
+    await revokeApiKeyAction(key2.id, ORG_ID);
 
     const activeKeys = await getActiveApiKeysForOrg(ORG_ID);
     expect(activeKeys).toHaveLength(1);

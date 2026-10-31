@@ -1,25 +1,10 @@
 import { NextResponse } from "next/server";
 import { requireApiAuth } from "@/features/auth/api-auth";
-import { getUserOrganizations } from "@/features/auth/organization/queries";
 import { deleteFile } from "@/features/upload/actions";
 import { getFileById } from "@/features/upload/queries";
+import { canAccessUpload } from "@/features/upload/service";
 import { getStorageAdapter } from "@/features/upload/storage/adapter";
-
-async function checkFileOwnership(
-  fileUserId: string,
-  fileOrgId: string | null,
-  sessionUserId: string,
-): Promise<boolean> {
-  if (fileUserId === sessionUserId) return true;
-
-  if (fileOrgId) {
-    const orgs = await getUserOrganizations(sessionUserId);
-    const orgIds = orgs.map(o => o.id);
-    if (orgIds.includes(fileOrgId)) return true;
-  }
-
-  return false;
-}
+import { contentDisposition } from "@/features/upload/validation";
 
 export async function GET(
   _request: Request,
@@ -39,7 +24,7 @@ export async function GET(
       );
     }
 
-    const hasAccess = await checkFileOwnership(file.userId, file.organizationId, auth.session.user.id);
+    const hasAccess = await canAccessUpload(file, auth.session.user.id);
     if (!hasAccess) {
       return NextResponse.json(
         { error: "Forbidden", code: "FORBIDDEN", status: 403 },
@@ -53,8 +38,9 @@ export async function GET(
     return new NextResponse(new Uint8Array(buffer), {
       headers: {
         "Content-Type": file.mimetype,
-        "Content-Disposition": `inline; filename="${file.filename}"`,
+        "Content-Disposition": contentDisposition(file.mimetype, file.filename),
         "Content-Length": String(buffer.length),
+        "X-Content-Type-Options": "nosniff",
       },
     });
   } catch {
@@ -83,7 +69,7 @@ export async function DELETE(
       );
     }
 
-    const hasAccess = await checkFileOwnership(file.userId, file.organizationId, auth.session.user.id);
+    const hasAccess = await canAccessUpload(file, auth.session.user.id);
     if (!hasAccess) {
       return NextResponse.json(
         { error: "Forbidden", code: "FORBIDDEN", status: 403 },

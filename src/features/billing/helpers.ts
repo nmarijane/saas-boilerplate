@@ -1,11 +1,10 @@
-"use server";
-
 import { eq } from "drizzle-orm";
 import { plan, subscription } from "@/models";
 import { db } from "@/shared/lib/DB";
 import { env } from "@/shared/lib/env";
 import { getPlanById } from "./plans";
 import { getStripe } from "./stripe";
+import "server-only";
 
 export async function createCheckoutSession(
   orgId: string,

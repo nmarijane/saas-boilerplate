@@ -65,14 +65,17 @@ src/
 ## Conventions
 
 - **Feature pattern:** Chaque feature dans `features/` a : `actions.ts`, `queries.ts`, `hooks/`, `components/`
-- **Queries:** server-only (`"use server"`), retournent des données depuis Drizzle
-- **Actions:** Server Actions avec validation Zod, wrappées dans `safeAction()` pour les mutations client
+- **Queries:** `import "server-only"`, **jamais** `"use server"`, retournent des données depuis Drizzle. Appelées par des pages, route handlers ou actions qui ont déjà vérifié la session
+- **Actions:** Server Actions avec validation Zod, wrappées dans `safeAction()` pour les mutations client. Chaque fonction exportée commence par une garde (voir Sécurité) et ne renvoie que les champs utiles à l'UI
+- **Opérations internes** (event bus, webhooks, jobs) : `service.ts` en `import "server-only"`, jamais exposées comme action
 - **Composants:** React Server Components par défaut, Client Components quand nécessaire (`"use client"`)
 - **Nommage fichiers:** kebab-case pour les fichiers, PascalCase pour les composants
 - **Imports:** absolus avec prefix `@/` (ex: `@/features/auth/auth`)
 - **Commits:** conventional commits (commitlint)
 - **Ne pas utiliser Clerk** — toujours Better Auth
 - **Proxy:** `src/proxy.ts` (pas `middleware.ts` — convention Next.js 16)
+
+> **Règle :** `queries.ts` = `import "server-only"`, jamais `"use server"` ; `actions.ts` = `"use server"`, avec une garde en première ligne de chaque fonction. Toute fonction exportée d'un module `"use server"` est appelable par n'importe quel navigateur (POST direct, arguments au choix). `tests/unit/server-action-conventions.test.ts` fait échouer la CI sinon.
 
 ## Règles strictes de qualité
 
@@ -96,7 +99,9 @@ src/
 - Toujours vérifier les permissions côté serveur (ne jamais se fier à des vérifications côté client uniquement)
 - Ne jamais exposer de secrets, clés API ou données sensibles côté client
 - Utiliser des headers de sécurité appropriés (CSP, HSTS, etc.)
-- Les server actions admin doivent appeler `requireAdmin()`, les actions org doivent appeler `requireRole()`
+- Gardes (`src/features/auth/guards.ts`), en première ligne de chaque server action : `requireAdmin()` pour l'admin de la plateforme, `requireRole(orgId, minRole)` pour une organisation, `requireAuth()` pour les ressources de l'utilisateur. L'utilisateur vient toujours de la session, jamais d'un `userId` reçu du client ; une ressource se lit ou s'écrit filtrée par son `orgId` ou son `userId`
+- Les pages admin appellent elles-mêmes `requireAdmin()` : le layout ne suffit pas (il n'est pas rejoué à chaque navigation)
+- Une action publique par nature (ex. `joinWaitlist`) est déclarée dans `PUBLIC_ACTIONS` avec sa justification, valide ses entrées avec Zod et appelle `enforceActionRateLimit()`
 
 ### Future-proof
 - Privilégier les API stables et les patterns recommandés par la documentation officielle

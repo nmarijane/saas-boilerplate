@@ -1,9 +1,10 @@
 "use server";
 
 import { randomBytes } from "node:crypto";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { requireRole } from "@/features/auth/guards";
 import { emitEvent } from "@/features/events/emitter";
 import { webhookEndpoint } from "@/models/webhook";
 import { db } from "@/shared/lib/DB";
@@ -14,11 +15,13 @@ const createWebhookSchema = z.object({
   events: z.array(z.string()).min(1),
 });
 
+const endpointIdSchema = z.string().min(1).max(100);
+
 export async function createWebhookEndpointAction(
   orgId: string,
-  userId: string,
   input: z.infer<typeof createWebhookSchema>,
 ) {
+  const { session } = await requireRole(orgId, "admin");
   const parsed = createWebhookSchema.parse(input);
   const id = generateId();
   const secret = `whsec_${randomBytes(24).toString("base64url")}`;
@@ -33,7 +36,7 @@ export async function createWebhookEndpointAction(
 
   await emitEvent("webhook.created", {
     orgId,
-    actorId: userId,
+    actorId: session.user.id,
     resourceType: "webhook_endpoint",
     resourceId: id,
   });
@@ -42,18 +45,28 @@ export async function createWebhookEndpointAction(
   return { id, secret };
 }
 
+// Delete and toggle are scoped to orgId: an admin of one organization
+// cannot touch the endpoints of another.
+
 export async function deleteWebhookEndpointAction(
   endpointId: string,
   orgId: string,
-  userId: string,
 ) {
-  await db.delete(webhookEndpoint).where(eq(webhookEndpoint.id, endpointId));
+  const { session } = await requireRole(orgId, "admin");
+  const id = endpointIdSchema.parse(endpointId);
+
+  const deleted = await db
+    .delete(webhookEndpoint)
+    .where(and(eq(webhookEndpoint.id, id), eq(webhookEndpoint.orgId, orgId)))
+    .returning();
+
+  if (deleted.length === 0) return;
 
   await emitEvent("webhook.deleted", {
     orgId,
-    actorId: userId,
+    actorId: session.user.id,
     resourceType: "webhook_endpoint",
-    resourceId: endpointId,
+    resourceId: id,
   });
 
   revalidatePath("/settings/api");
@@ -61,12 +74,17 @@ export async function deleteWebhookEndpointAction(
 
 export async function toggleWebhookEndpointAction(
   endpointId: string,
+  orgId: string,
   active: boolean,
 ) {
+  await requireRole(orgId, "admin");
+  const id = endpointIdSchema.parse(endpointId);
+  const isActive = z.boolean().parse(active);
+
   await db
     .update(webhookEndpoint)
-    .set({ active })
-    .where(eq(webhookEndpoint.id, endpointId));
+    .set({ active: isActive })
+    .where(and(eq(webhookEndpoint.id, id), eq(webhookEndpoint.orgId, orgId)));
 
   revalidatePath("/settings/api");
 }

@@ -2,7 +2,7 @@
 
 import type {PlanConfig} from "../plans";
 import { use, useCallback, useState } from "react";
-import { getSubscriptionForOrg } from "../helpers";
+import { getSubscriptionAction } from "../actions";
 import { getPlanById  } from "../plans";
 
 interface SubscriptionState {
@@ -17,7 +17,7 @@ export function useSubscription(orgId: string): SubscriptionState {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const data = use(
-    getSubscriptionForOrg(orgId).then((sub) => ({
+    getSubscriptionAction(orgId).then((sub) => ({
       ...sub,
       _key: refreshKey,
     }))

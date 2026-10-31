@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 
 import { AdminOrgsTable } from "@/features/admin/components/admin-orgs-table";
 import { getAdminOrganizations } from "@/features/admin/queries";
+import { requireAdmin } from "@/features/auth/guards";
 import { PageHeader } from "@/shared/components/data/page-header";
 import { generatePageMetadata } from "@/shared/lib/seo";
 
@@ -25,6 +26,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function AdminOrganizationsPage({ params }: Props) {
+  await requireAdmin();
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "admin" });
 

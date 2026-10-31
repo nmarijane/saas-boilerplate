@@ -24,17 +24,15 @@ type ApiKeyRow = Record<string, unknown> & {
 function RevokeButton({
   keyId,
   orgId,
-  userId,
 }: {
   keyId: string;
   orgId: string;
-  userId: string;
 }) {
   const [isPending, startTransition] = useTransition();
 
   function handleRevoke() {
     startTransition(async () => {
-      await revokeApiKeyAction(keyId, orgId, userId);
+      await revokeApiKeyAction(keyId, orgId);
     });
   }
 
@@ -60,10 +58,9 @@ function StatusBadge({ revokedAt }: { revokedAt: Date | null }) {
 interface ApiKeyListProps {
   keys: ApiKeyRow[];
   orgId: string;
-  userId: string;
 }
 
-export function ApiKeyList({ keys, orgId, userId }: ApiKeyListProps) {
+export function ApiKeyList({ keys, orgId }: ApiKeyListProps) {
   const [modalOpen, setModalOpen] = useState(false);
 
   const columns: Column<ApiKeyRow>[] = [
@@ -112,7 +109,7 @@ export function ApiKeyList({ keys, orgId, userId }: ApiKeyListProps) {
       header: "Actions",
       cell: (row) =>
         row.revokedAt ? null : (
-          <RevokeButton keyId={row.id} orgId={orgId} userId={userId} />
+          <RevokeButton keyId={row.id} orgId={orgId} />
         ),
     },
   ];
@@ -136,7 +133,6 @@ export function ApiKeyList({ keys, orgId, userId }: ApiKeyListProps) {
         open={modalOpen}
         onOpenChange={setModalOpen}
         orgId={orgId}
-        userId={userId}
       />
     </div>
   );

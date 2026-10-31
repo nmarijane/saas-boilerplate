@@ -1,8 +1,7 @@
-"use server";
-
 import { eq } from "drizzle-orm";
 import { organization, organizationMember, user } from "@/models";
 import { db } from "@/shared/lib/DB";
+import "server-only";
 
 export async function getOrganization(orgId: string) {
   const [org] = await db

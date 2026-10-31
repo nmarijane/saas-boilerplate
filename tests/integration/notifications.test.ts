@@ -16,7 +16,7 @@ describe("notification actions", () => {
   describe("createNotification", () => {
     it("creates a notification with required fields", async () => {
       const { createNotification } = await import(
-        "@/features/notifications/actions"
+        "@/features/notifications/service"
       );
 
       const result = await createNotification(NOTIF_USER, {
@@ -41,7 +41,7 @@ describe("notification actions", () => {
 
     it("creates a notification with optional type and link", async () => {
       const { createNotification } = await import(
-        "@/features/notifications/actions"
+        "@/features/notifications/service"
       );
 
       await createNotification(NOTIF_USER, {

@@ -221,11 +221,13 @@ Create a new feature module following the pattern:
 
 ```
 src/features/my-feature/
-  actions.ts       # Server Actions (mutations, "use server")
-  queries.ts       # Server queries (reads, "use server")
+  actions.ts       # Server Actions ("use server"), each starting with a guard
+  queries.ts       # Server reads (import "server-only", never "use server")
   components/      # React components
   hooks/           # Client-side hooks
 ```
+
+**Rule:** `queries.ts` uses `import "server-only"`, never `"use server"`. `actions.ts` uses `"use server"`, and every exported function starts with a guard: `requireAuth()`, `requireAdmin()` or `requireRole(orgId, minRole)`, taking the user from the session, never from an id sent by the client. Every function exported from a `"use server"` module can be called by any browser with a direct POST and arguments of its choice. `tests/unit/server-action-conventions.test.ts` fails the CI otherwise.
 
 ## Phase 5: Initialize Database
 

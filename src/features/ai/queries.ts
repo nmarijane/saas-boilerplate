@@ -1,8 +1,7 @@
-"use server";
-
 import { and, desc, eq, sql } from "drizzle-orm";
 import { aiConversation, aiCreditLedger, aiMessage } from "@/models/ai";
 import { db } from "@/shared/lib/DB";
+import "server-only";
 
 export async function getConversations(userId: string, orgId: string) {
   return db

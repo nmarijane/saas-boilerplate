@@ -1,8 +1,7 @@
-"use server";
-
 import { and, count, desc, eq } from "drizzle-orm";
 import { notification } from "@/models/notification";
 import { db } from "@/shared/lib/DB";
+import "server-only";
 
 interface GetNotificationsOptions {
   limit?: number;

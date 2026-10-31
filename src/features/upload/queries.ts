@@ -1,8 +1,7 @@
-"use server";
-
 import { desc, eq } from "drizzle-orm";
 import { upload } from "@/models/upload";
 import { db } from "@/shared/lib/DB";
+import "server-only";
 
 export async function getFilesByOrg(orgId: string) {
   return db

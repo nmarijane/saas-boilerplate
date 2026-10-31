@@ -1,7 +1,9 @@
 import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { requireAuth } from "@/features/auth/guards";
 import { feedback } from "@/models/feedback";
 import { seedFeedback, seedOrg, seedUser } from "../helpers/seed";
+import { fakeSession } from "../helpers/session";
 import { testDb } from "../setup";
 
 const FB_USER = "fb-user-1";
@@ -10,6 +12,8 @@ const FB_ORG = "fb-org-1";
 describe("feedback actions", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
+    // The author is the session user
+    vi.mocked(requireAuth).mockResolvedValue(fakeSession(FB_USER));
     await testDb.delete(feedback);
     await seedUser(FB_USER);
     await seedOrg(FB_ORG);
@@ -22,7 +26,6 @@ describe("feedback actions", () => {
       );
 
       const result = await submitFeedback({
-        userId: FB_USER,
         type: "bug",
         message: "The button is broken",
       });
@@ -47,7 +50,6 @@ describe("feedback actions", () => {
       );
 
       await submitFeedback({
-        userId: FB_USER,
         orgId: FB_ORG,
         type: "feature",
         message: "Add dark mode",
@@ -67,7 +69,6 @@ describe("feedback actions", () => {
       );
 
       await submitFeedback({
-        userId: FB_USER,
         type: "bug",
         message: "It crashes",
         screenshotId: "upload-abc123",
@@ -88,7 +89,6 @@ describe("feedback actions", () => {
       );
 
       await submitFeedback({
-        userId: FB_USER,
         type: "other",
         message: "Just a thought",
       });

@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getOrganizationMembers } from "@/features/auth/organization/queries";
+import { getOrganizationMembersAction } from "@/features/auth/organization/actions";
 
-type Member = Awaited<ReturnType<typeof getOrganizationMembers>>[number];
+type Member = Awaited<ReturnType<typeof getOrganizationMembersAction>>[number];
 
 export function useMembers(orgId: string | undefined) {
   const [members, setMembers] = useState<Member[]>([]);
@@ -17,7 +17,7 @@ export function useMembers(orgId: string | undefined) {
     }
 
     setIsLoading(true);
-    getOrganizationMembers(orgId)
+    getOrganizationMembersAction(orgId)
       .then(setMembers)
       .finally(() => setIsLoading(false));
   }, [orgId]);
@@ -25,7 +25,7 @@ export function useMembers(orgId: string | undefined) {
   const refetch = async () => {
     if (!orgId) return;
     setIsLoading(true);
-    const data = await getOrganizationMembers(orgId);
+    const data = await getOrganizationMembersAction(orgId);
     setMembers(data);
     setIsLoading(false);
   };

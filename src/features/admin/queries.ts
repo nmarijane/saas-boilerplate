@@ -1,18 +1,40 @@
-"use server";
-
 import { count, sql } from "drizzle-orm";
 
 import { organization } from "@/models/organization";
 import { plan, subscription  } from "@/models/subscription";
 import { user } from "@/models/user";
 import { db } from "@/shared/lib/DB";
+import "server-only";
+
+// Admin reads: each admin page calls requireAdmin() before using them.
+// Columns are listed explicitly: the user table holds 2FA secrets.
 
 export async function getAdminUsers(limit = 100, offset = 0) {
-  return db.select().from(user).limit(limit).offset(offset);
+  return db
+    .select({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      emailVerified: user.emailVerified,
+      isAdmin: user.isAdmin,
+      createdAt: user.createdAt,
+    })
+    .from(user)
+    .limit(limit)
+    .offset(offset);
 }
 
 export async function getAdminOrganizations(limit = 100, offset = 0) {
-  return db.select().from(organization).limit(limit).offset(offset);
+  return db
+    .select({
+      id: organization.id,
+      name: organization.name,
+      slug: organization.slug,
+      createdAt: organization.createdAt,
+    })
+    .from(organization)
+    .limit(limit)
+    .offset(offset);
 }
 
 export async function getAdminMetrics() {

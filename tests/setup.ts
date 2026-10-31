@@ -52,6 +52,14 @@ vi.mock("@/features/auth/guards", () => ({
     user: { id: "test-user-1", name: "Test User", email: "test@test.com" },
     session: { id: "test-session-1" },
   }),
+  // Grants every role by default; tests/integration/server-action-guards.test.ts uses the real guards.
+  requireRole: vi.fn().mockResolvedValue({
+    session: {
+      user: { id: "test-user-1", name: "Test User", email: "test@test.com" },
+      session: { id: "test-session-1" },
+    },
+    member: { id: "member-test-user-1", role: "owner" },
+  }),
 }));
 
 vi.mock("@/features/events/emitter", () => ({

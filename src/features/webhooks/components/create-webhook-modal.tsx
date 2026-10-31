@@ -42,14 +42,12 @@ interface CreateWebhookModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   orgId: string;
-  userId: string;
 }
 
 export function CreateWebhookModal({
   open,
   onOpenChange,
   orgId,
-  userId,
 }: CreateWebhookModalProps) {
   const [url, setUrl] = useState("");
   const [events, setEvents] = useState<string[]>([]);
@@ -69,7 +67,7 @@ export function CreateWebhookModal({
     if (!url.trim() || events.length === 0) return;
 
     startTransition(async () => {
-      const result = await createWebhookEndpointAction(orgId, userId, {
+      const result = await createWebhookEndpointAction(orgId, {
         url: url.trim(),
         events,
       });

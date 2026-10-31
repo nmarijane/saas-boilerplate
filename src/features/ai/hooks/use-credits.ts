@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { getCreditBalance } from "@/features/ai/queries";
+import { getCreditBalanceAction } from "@/features/ai/actions";
 
 export function useCredits(orgId: string) {
   const [balance, setBalance] = useState<number | null>(null);
@@ -9,7 +9,7 @@ export function useCredits(orgId: string) {
 
   const refresh = useCallback(async () => {
     try {
-      const result = await getCreditBalance(orgId);
+      const result = await getCreditBalanceAction(orgId);
       setBalance(result);
     } finally {
       setLoading(false);

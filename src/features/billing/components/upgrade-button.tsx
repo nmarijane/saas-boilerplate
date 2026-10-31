@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/shared/components/ui/button";
-import { createCheckoutSession } from "../helpers";
+import { createCheckoutSessionAction } from "../actions";
 
 interface UpgradeButtonProps {
   orgId: string;
@@ -25,7 +25,7 @@ export function UpgradeButton({
     if (!priceId) return;
     setLoading(true);
     try {
-      const session = await createCheckoutSession(orgId, priceId);
+      const session = await createCheckoutSessionAction(orgId, priceId);
       if (session.url) {
         window.location.href = session.url;
       }
