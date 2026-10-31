@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/shared/components/ui/card";
-import { createCheckoutSession, createPortalSession } from "../helpers";
+import { createCheckoutSessionAction, createPortalSessionAction } from "../actions";
 import { getPlanById, LIMIT_LABELS } from "../plans";
 import { PlanBadge } from "./plan-badge";
 
@@ -34,7 +34,7 @@ export function BillingSettings({
   async function handleManageBilling() {
     setLoading("portal");
     try {
-      const session = await createPortalSession(orgId);
+      const session = await createPortalSessionAction(orgId);
       window.location.href = session.url;
     } catch {
       // Will show error in toast via error boundary
@@ -46,7 +46,7 @@ export function BillingSettings({
   async function handleUpgrade(priceId: string) {
     setLoading("upgrade");
     try {
-      const session = await createCheckoutSession(orgId, priceId);
+      const session = await createCheckoutSessionAction(orgId, priceId);
       if (session.url) {
         window.location.href = session.url;
       }

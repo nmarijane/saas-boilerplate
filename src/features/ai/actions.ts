@@ -4,11 +4,14 @@ import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { requireAuth } from "@/features/auth/guards";
-import { aiConversation, aiCreditLedger } from "@/models/ai";
+import { requireAuth, requireRole } from "@/features/auth/guards";
+import { aiConversation } from "@/models/ai";
 import { db } from "@/shared/lib/DB";
 import { safeAction } from "@/shared/lib/safe-action";
 import { generateId } from "@/shared/utils/helpers";
+import { getCreditBalance } from "./queries";
+
+// addCredits lives in ./service: it is an internal operation.
 
 const createConversationSchema = z.object({
   orgId: z.string().min(1),
@@ -20,8 +23,10 @@ export async function createConversation(
   input: z.infer<typeof createConversationSchema>,
 ) {
   return safeAction(async () => {
-    const session = await requireAuth();
+    await requireAuth();
     const parsed = createConversationSchema.parse(input);
+    // Chat usage is billed to this organization: the user must belong to it.
+    const { session } = await requireRole(parsed.orgId, "member");
     const id = generateId();
 
     await db.insert(aiConversation).values({
@@ -87,13 +92,7 @@ export async function updateConversationTitle(
   }, "Failed to update conversation title");
 }
 
-export async function addCredits(orgId: string, amount: number, reason: string, referenceId?: string) {
-  const id = generateId();
-  await db.insert(aiCreditLedger).values({
-    id,
-    organizationId: orgId,
-    amount,
-    reason,
-    referenceId: referenceId ?? null,
-  });
+export async function getCreditBalanceAction(orgId: string) {
+  await requireRole(orgId, "member");
+  return getCreditBalance(orgId);
 }

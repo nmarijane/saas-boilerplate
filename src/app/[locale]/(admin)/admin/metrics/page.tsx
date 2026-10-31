@@ -3,6 +3,7 @@ import { BuildingIcon, DollarSignIcon, UsersIcon } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { getAdminMetrics } from "@/features/admin/queries";
+import { requireAdmin } from "@/features/auth/guards";
 import { PageHeader } from "@/shared/components/data/page-header";
 import { StatCard } from "@/shared/components/data/stat-card";
 import { generatePageMetadata } from "@/shared/lib/seo";
@@ -26,6 +27,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function AdminMetricsPage({ params }: Props) {
+  await requireAdmin();
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "admin" });
 

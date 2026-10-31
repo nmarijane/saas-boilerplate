@@ -1,8 +1,7 @@
-"use server";
-
 import { and, count, eq } from "drizzle-orm";
 import { notification, organizationMember, subscription, upload } from "@/models";
 import { db } from "@/shared/lib/DB";
+import "server-only";
 
 export async function getDashboardStats(orgId: string) {
   const [membersResult] = await db

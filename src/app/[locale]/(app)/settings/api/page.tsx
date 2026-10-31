@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ApiSettingsPage({ params }: Props) {
-  const session = await requireAuth();
+  await requireAuth();
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "settings" });
 
@@ -54,8 +54,8 @@ export default async function ApiSettingsPage({ params }: Props) {
   return (
     <div className="space-y-8">
       <PageHeader title={t("api")} description={t("apiDescription")} />
-      <ApiKeyList keys={apiKeys} orgId={orgId} userId={session.user.id} />
-      <WebhookList endpoints={webhooks} orgId={orgId} userId={session.user.id} />
+      <ApiKeyList keys={apiKeys} orgId={orgId} />
+      <WebhookList endpoints={webhooks} orgId={orgId} />
     </div>
   );
 }

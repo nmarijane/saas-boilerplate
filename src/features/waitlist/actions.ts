@@ -3,20 +3,24 @@
 import { eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { requireAdmin } from "@/features/auth/guards";
 import { waitlistEntry } from "@/models/waitlist";
 import { db } from "@/shared/lib/DB";
+import { enforceActionRateLimit, getClientIp } from "@/shared/lib/rate-limit/action";
 import { safeAction } from "@/shared/lib/safe-action";
 import { generateId } from "@/shared/utils/helpers";
 import { generateReferralCode } from "./lib/referral";
 import { getWaitlistEntryByCode } from "./queries";
 
 const joinSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  referralCode: z.string().optional(),
+  email: z.email("Invalid email address").max(254),
+  referralCode: z.string().max(32).optional(),
 });
 
+// Public by design (anonymous visitors): validated input, rate-limited per IP.
 export async function joinWaitlist(input: { email: string; referralCode?: string }) {
   return safeAction(async () => {
+    await enforceActionRateLimit(`waitlist:${await getClientIp()}`, 10, 60);
     const parsed = joinSchema.parse(input);
 
     // Check if already registered
@@ -63,11 +67,12 @@ export async function joinWaitlist(input: { email: string; referralCode?: string
 }
 
 const inviteSchema = z.object({
-  entryId: z.string().min(1),
+  entryId: z.string().min(1).max(100),
 });
 
 export async function inviteFromWaitlist(input: { entryId: string }) {
   return safeAction(async () => {
+    await requireAdmin();
     const parsed = inviteSchema.parse(input);
 
     await db

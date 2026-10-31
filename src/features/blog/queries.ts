@@ -5,6 +5,7 @@ import path from "node:path";
 import matter from "gray-matter";
 
 import readingTime from "reading-time";
+import "server-only";
 
 const CONTENT_DIR = path.join(process.cwd(), "content/blog");
 const MDX_EXTENSION_RE = /\.mdx$/;

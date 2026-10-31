@@ -40,7 +40,13 @@ vi.mock("@/features/auth/guards", () => ({
     user: { id: "test-user-1", name: "Test User", email: "test@test.com" },
     session: { id: "test-session-1" },
   }),
-  requireRole: vi.fn().mockResolvedValue(undefined),
+  requireRole: vi.fn().mockResolvedValue({
+    session: {
+      user: { id: "test-user-1", name: "Test User", email: "test@test.com" },
+      session: { id: "test-session-1" },
+    },
+    member: { id: "member-test-user-1", role: "owner" },
+  }),
 }));
 
 const ORG_USER = "test-user-1";
@@ -121,9 +127,9 @@ describe("organization actions", () => {
       }
     });
 
-    it("returns error when session is null", async () => {
-      const { getServerSession } = await import("@/features/auth/guards");
-      vi.mocked(getServerSession).mockResolvedValueOnce(null);
+    it("returns error when the auth guard rejects", async () => {
+      const { requireAuth } = await import("@/features/auth/guards");
+      vi.mocked(requireAuth).mockRejectedValueOnce(new Error("Unauthorized"));
 
       const { createOrganization } = await import(
         "@/features/auth/organization/actions"
@@ -373,9 +379,9 @@ describe("organization actions", () => {
       }
     });
 
-    it("returns error when session is null", async () => {
-      const { getServerSession } = await import("@/features/auth/guards");
-      vi.mocked(getServerSession).mockResolvedValueOnce(null);
+    it("returns error when the auth guard rejects", async () => {
+      const { requireAuth } = await import("@/features/auth/guards");
+      vi.mocked(requireAuth).mockRejectedValueOnce(new Error("Unauthorized"));
 
       const { deleteOrganization } = await import(
         "@/features/auth/organization/actions"

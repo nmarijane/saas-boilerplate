@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { requireRole } from "@/features/auth/guards";
 import { emitEvent } from "@/features/events/emitter";
 import {
   createWebhookEndpointAction,
@@ -11,6 +12,7 @@ import {
 } from "@/features/webhooks/queries";
 import { webhookDelivery, webhookEndpoint } from "@/models/webhook";
 import { seedOrg, seedUser } from "../helpers/seed";
+import { fakeRoleGrant } from "../helpers/session";
 import { testDb } from "../setup";
 
 const ORG_ID = "wh-org-1";
@@ -19,6 +21,7 @@ const USER_ID = "wh-user-1";
 describe("webhook actions", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
+    vi.mocked(requireRole).mockResolvedValue(fakeRoleGrant(USER_ID, "admin"));
     await testDb.delete(webhookDelivery);
     await testDb.delete(webhookEndpoint);
     await seedUser(USER_ID);
@@ -27,7 +30,7 @@ describe("webhook actions", () => {
 
   describe("createWebhookEndpointAction", () => {
     it("creates an endpoint and returns the secret", async () => {
-      const result = await createWebhookEndpointAction(ORG_ID, USER_ID, {
+      const result = await createWebhookEndpointAction(ORG_ID, {
         url: "https://example.com/webhook",
         events: ["payment.succeeded"],
       });
@@ -38,7 +41,7 @@ describe("webhook actions", () => {
     });
 
     it("persists the endpoint in the database", async () => {
-      const result = await createWebhookEndpointAction(ORG_ID, USER_ID, {
+      const result = await createWebhookEndpointAction(ORG_ID, {
         url: "https://example.com/webhook",
         events: ["payment.succeeded"],
       });
@@ -51,7 +54,7 @@ describe("webhook actions", () => {
     });
 
     it("emits webhook.created event", async () => {
-      await createWebhookEndpointAction(ORG_ID, USER_ID, {
+      await createWebhookEndpointAction(ORG_ID, {
         url: "https://example.com/hook",
         events: ["member.invited"],
       });
@@ -68,7 +71,7 @@ describe("webhook actions", () => {
 
     it("rejects invalid URL", async () => {
       await expect(
-        createWebhookEndpointAction(ORG_ID, USER_ID, {
+        createWebhookEndpointAction(ORG_ID, {
           url: "not-a-url",
           events: ["payment.succeeded"],
         }),
@@ -77,7 +80,7 @@ describe("webhook actions", () => {
 
     it("rejects empty events array", async () => {
       await expect(
-        createWebhookEndpointAction(ORG_ID, USER_ID, {
+        createWebhookEndpointAction(ORG_ID, {
           url: "https://example.com/hook",
           events: [],
         }),
@@ -87,26 +90,26 @@ describe("webhook actions", () => {
 
   describe("deleteWebhookEndpointAction", () => {
     it("removes the endpoint", async () => {
-      const result = await createWebhookEndpointAction(ORG_ID, USER_ID, {
+      const result = await createWebhookEndpointAction(ORG_ID, {
         url: "https://example.com/delete-me",
         events: ["payment.succeeded"],
       });
       vi.clearAllMocks();
 
-      await deleteWebhookEndpointAction(result.id, ORG_ID, USER_ID);
+      await deleteWebhookEndpointAction(result.id, ORG_ID);
 
       const endpoints = await getWebhookEndpointsForOrg(ORG_ID);
       expect(endpoints).toHaveLength(0);
     });
 
     it("emits webhook.deleted event", async () => {
-      const result = await createWebhookEndpointAction(ORG_ID, USER_ID, {
+      const result = await createWebhookEndpointAction(ORG_ID, {
         url: "https://example.com/delete-event",
         events: ["payment.succeeded"],
       });
       vi.clearAllMocks();
 
-      await deleteWebhookEndpointAction(result.id, ORG_ID, USER_ID);
+      await deleteWebhookEndpointAction(result.id, ORG_ID);
 
       expect(vi.mocked(emitEvent)).toHaveBeenCalledWith(
         "webhook.deleted",
@@ -122,25 +125,25 @@ describe("webhook actions", () => {
 
   describe("toggleWebhookEndpointAction", () => {
     it("toggles active status to false", async () => {
-      const result = await createWebhookEndpointAction(ORG_ID, USER_ID, {
+      const result = await createWebhookEndpointAction(ORG_ID, {
         url: "https://example.com/toggle",
         events: ["payment.succeeded"],
       });
 
-      await toggleWebhookEndpointAction(result.id, false);
+      await toggleWebhookEndpointAction(result.id, ORG_ID, false);
 
       const endpoints = await getWebhookEndpointsForOrg(ORG_ID);
       expect(endpoints[0].active).toBe(false);
     });
 
     it("toggles active status back to true", async () => {
-      const result = await createWebhookEndpointAction(ORG_ID, USER_ID, {
+      const result = await createWebhookEndpointAction(ORG_ID, {
         url: "https://example.com/toggle-back",
         events: ["payment.succeeded"],
       });
 
-      await toggleWebhookEndpointAction(result.id, false);
-      await toggleWebhookEndpointAction(result.id, true);
+      await toggleWebhookEndpointAction(result.id, ORG_ID, false);
+      await toggleWebhookEndpointAction(result.id, ORG_ID, true);
 
       const endpoints = await getWebhookEndpointsForOrg(ORG_ID);
       expect(endpoints[0].active).toBe(true);
@@ -150,6 +153,7 @@ describe("webhook actions", () => {
 
 describe("webhook queries", () => {
   beforeEach(async () => {
+    vi.mocked(requireRole).mockResolvedValue(fakeRoleGrant(USER_ID, "admin"));
     await testDb.delete(webhookDelivery);
     await testDb.delete(webhookEndpoint);
     await seedUser(USER_ID);
@@ -157,11 +161,11 @@ describe("webhook queries", () => {
   });
 
   it("getWebhookEndpointsForOrg returns endpoints for an org", async () => {
-    await createWebhookEndpointAction(ORG_ID, USER_ID, {
+    await createWebhookEndpointAction(ORG_ID, {
       url: "https://example.com/a",
       events: ["payment.succeeded"],
     });
-    await createWebhookEndpointAction(ORG_ID, USER_ID, {
+    await createWebhookEndpointAction(ORG_ID, {
       url: "https://example.com/b",
       events: ["member.invited"],
     });
@@ -171,7 +175,7 @@ describe("webhook queries", () => {
   });
 
   it("getWebhookDeliveries returns deliveries for an endpoint", async () => {
-    const endpoint = await createWebhookEndpointAction(ORG_ID, USER_ID, {
+    const endpoint = await createWebhookEndpointAction(ORG_ID, {
       url: "https://example.com/deliveries",
       events: ["payment.succeeded"],
     });
@@ -197,7 +201,7 @@ describe("webhook queries", () => {
   });
 
   it("getWebhookDeliveries respects limit", async () => {
-    const endpoint = await createWebhookEndpointAction(ORG_ID, USER_ID, {
+    const endpoint = await createWebhookEndpointAction(ORG_ID, {
       url: "https://example.com/limit",
       events: ["payment.succeeded"],
     });

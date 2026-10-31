@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 
 import { AuditLogTable } from "@/features/audit/components/audit-log-table";
 import { getAuditLogs } from "@/features/audit/queries";
+import { requireAdmin } from "@/features/auth/guards";
 import { PageHeader } from "@/shared/components/data/page-header";
 import { generatePageMetadata } from "@/shared/lib/seo";
 
@@ -25,6 +26,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function AuditPage({ params }: Props) {
+  await requireAdmin();
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "admin" });
 

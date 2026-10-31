@@ -1,24 +1,33 @@
-"use server";
-
-import { desc, eq } from "drizzle-orm";
+import type { SQL } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { feedback } from "@/models/feedback";
 import { db } from "@/shared/lib/DB";
+import "server-only";
 
 interface GetFeedbacksOptions {
   status?: string;
   orgId?: string;
+  userId?: string;
 }
 
 export async function getFeedbacks(options: GetFeedbacksOptions = {}) {
-  let query = db.select().from(feedback).orderBy(desc(feedback.createdAt)).$dynamic();
+  const conditions: SQL[] = [];
 
   if (options.status) {
-    query = query.where(eq(feedback.status, options.status));
+    conditions.push(eq(feedback.status, options.status));
   }
 
   if (options.orgId) {
-    query = query.where(eq(feedback.organizationId, options.orgId));
+    conditions.push(eq(feedback.organizationId, options.orgId));
   }
 
-  return query;
+  if (options.userId) {
+    conditions.push(eq(feedback.userId, options.userId));
+  }
+
+  return db
+    .select()
+    .from(feedback)
+    .where(and(...conditions))
+    .orderBy(desc(feedback.createdAt));
 }

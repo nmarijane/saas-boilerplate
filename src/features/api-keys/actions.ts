@@ -1,8 +1,9 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { requireRole } from "@/features/auth/guards";
 import { emitEvent } from "@/features/events/emitter";
 import { apiKey } from "@/models/api-key";
 import { db } from "@/shared/lib/DB";
@@ -15,11 +16,13 @@ const createApiKeySchema = z.object({
   expiresAt: z.date().optional(),
 });
 
+const keyIdSchema = z.string().min(1).max(100);
+
 export async function createApiKeyAction(
   orgId: string,
-  userId: string,
   input: z.infer<typeof createApiKeySchema>,
 ) {
+  const { session } = await requireRole(orgId, "admin");
   const parsed = createApiKeySchema.parse(input);
   const { key, prefix, hash } = generateApiKey();
   const id = generateId();
@@ -27,7 +30,7 @@ export async function createApiKeyAction(
   await db.insert(apiKey).values({
     id,
     orgId,
-    createdBy: userId,
+    createdBy: session.user.id,
     name: parsed.name,
     prefix,
     hash,
@@ -37,7 +40,7 @@ export async function createApiKeyAction(
 
   await emitEvent("api_key.created", {
     orgId,
-    actorId: userId,
+    actorId: session.user.id,
     resourceType: "api_key",
     resourceId: id,
     metadata: { name: parsed.name },
@@ -48,21 +51,24 @@ export async function createApiKeyAction(
   return { id, key, prefix };
 }
 
-export async function revokeApiKeyAction(
-  keyId: string,
-  orgId: string,
-  userId: string,
-) {
-  await db
+export async function revokeApiKeyAction(keyId: string, orgId: string) {
+  const { session } = await requireRole(orgId, "admin");
+  const id = keyIdSchema.parse(keyId);
+
+  // Scoped to orgId: an admin of one organization cannot revoke another's keys.
+  const revoked = await db
     .update(apiKey)
     .set({ revokedAt: new Date() })
-    .where(eq(apiKey.id, keyId));
+    .where(and(eq(apiKey.id, id), eq(apiKey.orgId, orgId)))
+    .returning();
+
+  if (revoked.length === 0) return;
 
   await emitEvent("api_key.revoked", {
     orgId,
-    actorId: userId,
+    actorId: session.user.id,
     resourceType: "api_key",
-    resourceId: keyId,
+    resourceId: id,
   });
 
   revalidatePath("/settings/api");

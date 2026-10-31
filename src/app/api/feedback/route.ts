@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ZodError } from "zod";
 import { requireApiAuth } from "@/features/auth/api-auth";
 import { getUserOrganizations } from "@/features/auth/organization/queries";
 import { submitFeedback, updateFeedbackStatus } from "@/features/feedback/actions";
@@ -20,7 +21,6 @@ export async function POST(request: Request) {
     }
 
     const result = await submitFeedback({
-      userId: auth.session.user.id,
       orgId,
       type,
       message,
@@ -28,7 +28,13 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(result, { status: 201 });
-  } catch {
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return NextResponse.json(
+        { error: "Invalid feedback", code: "INVALID_INPUT", status: 400 },
+        { status: 400 },
+      );
+    }
     return NextResponse.json(
       { error: "Failed to submit feedback", code: "SUBMIT_ERROR", status: 500 },
       { status: 500 },
@@ -56,7 +62,11 @@ export async function GET(request: Request) {
       }
     }
 
-    const feedbacks = await getFeedbacks({ status, orgId });
+    // Without an orgId, a non-admin only sees their own feedback
+    const isAdmin = Boolean((auth.session.user as Record<string, unknown>).isAdmin);
+    const userId = (orgId || isAdmin) ? undefined : auth.session.user.id;
+
+    const feedbacks = await getFeedbacks({ status, orgId, userId });
     return NextResponse.json({ feedbacks });
   } catch {
     return NextResponse.json(

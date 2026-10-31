@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireApiAuth } from "@/features/auth/api-auth";
 import { getActiveOrgId } from "@/features/auth/organization/active-org";
-import { uploadFile } from "@/features/upload/actions";
+import { uploadFile } from "@/features/upload/service";
 
 export async function POST(request: Request) {
   const auth = await requireApiAuth();

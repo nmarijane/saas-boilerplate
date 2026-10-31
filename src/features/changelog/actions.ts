@@ -16,6 +16,8 @@ const changelogSchema = z.object({
   publishedAt: z.date().optional(),
 });
 
+const entryIdSchema = z.string().min(1).max(100);
+
 export async function createChangelogEntry(
   input: z.infer<typeof changelogSchema>,
 ) {
@@ -36,11 +38,13 @@ export async function updateChangelogEntry(
   input: Partial<z.infer<typeof changelogSchema>>,
 ) {
   await requireAdmin();
+  const id = entryIdSchema.parse(entryId);
+  const parsed = changelogSchema.partial().parse(input);
 
   await db
     .update(changelogEntry)
-    .set(input)
-    .where(eq(changelogEntry.id, entryId));
+    .set(parsed)
+    .where(eq(changelogEntry.id, id));
 
   revalidatePath("/admin/changelog");
   revalidatePath("/changelog");
@@ -48,8 +52,9 @@ export async function updateChangelogEntry(
 
 export async function deleteChangelogEntry(entryId: string) {
   await requireAdmin();
+  const id = entryIdSchema.parse(entryId);
 
-  await db.delete(changelogEntry).where(eq(changelogEntry.id, entryId));
+  await db.delete(changelogEntry).where(eq(changelogEntry.id, id));
 
   revalidatePath("/admin/changelog");
   revalidatePath("/changelog");

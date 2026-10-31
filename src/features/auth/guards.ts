@@ -30,20 +30,25 @@ export async function requireAdmin() {
   return session;
 }
 
-export async function requireRole(
-  orgId: string,
-  userId: string,
-  minRole: OrgRole,
-) {
+/**
+ * Session user must belong to `orgId` with at least `minRole`.
+ * The user always comes from the session, never from an argument:
+ * `orgId` usually comes from the client, so membership is checked here.
+ */
+export async function requireRole(orgId: string, minRole: OrgRole) {
   const session = await requireAuth();
 
+  if (typeof orgId !== "string" || orgId.length === 0) {
+    redirect("/dashboard");
+  }
+
   const members = await db
-    .select()
+    .select({ id: organizationMember.id, role: organizationMember.role })
     .from(organizationMember)
     .where(
       and(
         eq(organizationMember.organizationId, orgId),
-        eq(organizationMember.userId, userId),
+        eq(organizationMember.userId, session.user.id),
       ),
     )
     .limit(1);
@@ -54,7 +59,7 @@ export async function requireRole(
     redirect("/dashboard");
   }
 
-  const userRoleLevel = ROLE_HIERARCHY[member.role as OrgRole] ?? 0;
+  const userRoleLevel = ROLE_HIERARCHY[member.role] ?? 0;
   const requiredLevel = ROLE_HIERARCHY[minRole];
 
   if (userRoleLevel < requiredLevel) {

@@ -2,6 +2,7 @@ import { count, desc, eq, lt } from "drizzle-orm";
 import { waitlistEntry } from "@/models/waitlist";
 import { db } from "@/shared/lib/DB";
 import { calculatePosition } from "./lib/referral";
+import "server-only";
 
 export async function getWaitlistEntry(email: string) {
   const entry = await db

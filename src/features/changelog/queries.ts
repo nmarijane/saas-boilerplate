@@ -1,9 +1,8 @@
-"use server";
-
 import { desc } from "drizzle-orm";
 
 import { changelogEntry } from "@/models/changelog";
 import { db } from "@/shared/lib/DB";
+import "server-only";
 
 export async function getChangelogEntries(limit = 50) {
   return db
