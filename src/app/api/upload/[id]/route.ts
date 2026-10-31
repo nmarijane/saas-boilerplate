@@ -4,6 +4,7 @@ import { deleteFile } from "@/features/upload/actions";
 import { getFileById } from "@/features/upload/queries";
 import { canAccessUpload } from "@/features/upload/service";
 import { getStorageAdapter } from "@/features/upload/storage/adapter";
+import { contentDisposition } from "@/features/upload/validation";
 
 export async function GET(
   _request: Request,
@@ -37,8 +38,9 @@ export async function GET(
     return new NextResponse(new Uint8Array(buffer), {
       headers: {
         "Content-Type": file.mimetype,
-        "Content-Disposition": `inline; filename="${file.filename}"`,
+        "Content-Disposition": contentDisposition(file.mimetype, file.filename),
         "Content-Length": String(buffer.length),
+        "X-Content-Type-Options": "nosniff",
       },
     });
   } catch {

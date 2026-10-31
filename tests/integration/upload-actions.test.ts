@@ -15,7 +15,8 @@ vi.mock("@/features/upload/storage/adapter", () => ({
   }),
 }));
 
-vi.mock("@/features/upload/validation", () => ({
+vi.mock("@/features/upload/validation", async importOriginal => ({
+  ...(await importOriginal<typeof import("@/features/upload/validation")>()),
   validateFile: vi.fn().mockReturnValue({ valid: true }),
 }));
 
@@ -61,6 +62,23 @@ describe("upload actions", () => {
       expect(rows[0].filename).toBe("test.png");
       expect(rows[0].mimetype).toBe("image/png");
       expect(rows[0].size).toBe(mockFile.size);
+    });
+
+    it("keeps the storage key inside the organization folder, whatever the file name", async () => {
+      const { uploadFile } = await import("@/features/upload/service");
+
+      const formData = new FormData();
+      formData.set("file", new File(["x"], "../../../../etc/cron.d/evil.png", { type: "image/png" }));
+      formData.set("userId", UPLOAD_USER);
+      formData.set("orgId", UPLOAD_ORG);
+
+      await uploadFile(formData);
+
+      const key = mockPut.mock.calls[0][0] as string;
+      expect(key.startsWith(`${UPLOAD_ORG}/`)).toBe(true);
+      expect(key).not.toContain("..");
+      expect(key.split("/")).toHaveLength(2);
+      expect(key.endsWith("-evil.png")).toBe(true);
     });
 
     it("returns error when file is missing", async () => {
