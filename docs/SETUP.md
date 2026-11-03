@@ -267,6 +267,8 @@ export const myModel = pgTable("my_model", {
 
 Then export it from `src/models/index.ts` and run `npm run db:generate`.
 
+A Better Auth plugin added in `src/features/auth/auth.ts` needs its tables and columns in `src/models` (otherwise Better Auth refuses every request with `SCHEMA_MISMATCH`) and a migration for them, and `tests/integration/auth-schema.test.ts` catches a mismatch.
+
 ### New features
 
 Create a new feature module following the pattern:
@@ -287,10 +289,12 @@ src/features/my-feature/
 # Generate migrations from your schema changes
 npm run db:generate
 
-# Apply migrations
+# Apply migrations to PostgreSQL (needs DATABASE_URL; it cannot reach the PGlite ./local.db)
 npm run db:migrate
 
-# Seed with default plans and admin user
+# Seed with default plans and admin user. It applies pending migrations first: with PGlite this
+# is the command that creates or upgrades ./local.db, and it is safe to re-run. Stop `npm run dev`
+# first: two processes writing ./local.db at once can lose changes.
 npm run db:seed
 ```
 

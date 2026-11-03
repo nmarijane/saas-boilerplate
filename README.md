@@ -15,7 +15,7 @@ Clone this once, and go straight to building what makes your product unique.
 ![License](https://img.shields.io/badge/License-MIT-blue)
 
 **20+ features** -- Auth, Stripe, RBAC, API keys, webhooks, feature flags, admin panel, and more.
-**Zero config** -- `npm install && npm run dev`. PGlite in-memory DB, no setup needed.
+**Zero config** -- `npm install && npm run db:seed && npm run dev`. Local PGlite database, no external service needed.
 **AI-native** -- `CLAUDE.md` + `docs/SETUP.md` included so your agents have full context from day one.
 
 </div>
@@ -54,11 +54,14 @@ cd my-saas
 # Install
 npm install
 
-# Start dev server (PGlite, no DB setup needed)
+# Create the local PGlite database (./local.db) with the dev accounts
+npm run db:seed
+
+# Start the dev server
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). See the full [Setup Guide](docs/SETUP.md) for env vars, feature removal, and deployment.
+Open [http://localhost:3088](http://localhost:3088). See the full [Setup Guide](docs/SETUP.md) for env vars, feature removal, and deployment.
 
 ---
 
@@ -176,9 +179,9 @@ npm run test:e2e         # Playwright E2E tests
 
 # Database
 npm run db:generate      # Generate Drizzle migration
-npm run db:migrate       # Apply migrations
+npm run db:migrate       # Apply migrations to PostgreSQL (DATABASE_URL); PGlite uses db:seed
 npm run db:studio        # Open Drizzle Studio
-npm run db:seed          # Seed database (plans, admin + dev user)
+npm run db:seed          # Apply migrations (PGlite included), then seed plans, admin + dev user; safe to re-run (stop npm run dev first)
 
 # Production
 npm run build            # Production build

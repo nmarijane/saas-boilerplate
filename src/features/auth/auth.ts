@@ -56,6 +56,8 @@ export const auth = betterAuth({
       isAdmin: {
         type: "boolean",
         defaultValue: false,
+        // requireAdmin trusts it: sign-up and update-user must never take it from the request.
+        input: false,
       },
       onboardingCompleted: {
         type: "boolean",
@@ -63,8 +65,23 @@ export const auth = betterAuth({
       },
     },
   },
+  // Organization writes go through organization/actions.ts (validation, requireRole, assertNotOwner);
+  // over HTTP the browser only switches and reads the active organization.
+  disabledPaths: [
+    "/organization/create",
+    "/organization/update",
+    "/organization/delete",
+    "/organization/invite-member",
+    "/organization/cancel-invitation",
+    "/organization/remove-member",
+    "/organization/update-member-role",
+    "/organization/accept-invitation",
+    "/organization/reject-invitation",
+    "/organization/leave",
+  ],
   plugins: [
-    organization(),
+    // The plugin's `member` model lives in the existing organization_member table.
+    organization({ schema: { member: { modelName: "organizationMember" } } }),
     twoFactor(),
   ],
 });

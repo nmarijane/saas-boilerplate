@@ -17,16 +17,6 @@ export const {
   signOut,
   useSession,
   getSession,
+  requestPasswordReset,
   resetPassword,
 } = authClient;
-
-const baseURL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-
-export async function forgetPassword(data: { email: string; redirectTo?: string }) {
-  const res = await fetch(`${baseURL}/api/auth/forget-password`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  return res.json();
-}

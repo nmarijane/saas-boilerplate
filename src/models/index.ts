@@ -7,6 +7,7 @@ export * from "./feedback";
 export * from "./notification";
 export * from "./organization";
 export * from "./subscription";
+export * from "./two-factor";
 export * from "./upload";
 export * from "./user";
 export * from "./waitlist";
