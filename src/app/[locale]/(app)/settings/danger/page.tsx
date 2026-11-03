@@ -4,7 +4,6 @@ import { AlertTriangleIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { toast } from "sonner";
 
 import { deleteAccount } from "@/features/settings/actions";
 import { PageHeader } from "@/shared/components/data/page-header";
@@ -26,6 +25,7 @@ import {
   DialogTrigger,
 } from "@/shared/components/ui/dialog";
 import { Input } from "@/shared/components/ui/input";
+import { toast } from "@/shared/components/ui/sonner";
 
 export default function DangerPage() {
   const t = useTranslations("settings");

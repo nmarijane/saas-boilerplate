@@ -4,9 +4,9 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   resolve: {
     alias: {
-      "@": resolve(__dirname, "./src"),
+      "@": resolve(import.meta.dirname, "./src"),
       // Next.js resolves "server-only" itself (no npm package needed); Vitest gets a no-op stub.
-      "server-only": resolve(__dirname, "./tests/stubs/server-only.ts"),
+      "server-only": resolve(import.meta.dirname, "./tests/stubs/server-only.ts"),
     },
   },
   test: {

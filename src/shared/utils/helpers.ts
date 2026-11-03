@@ -1,14 +1,9 @@
-import type {ClassValue} from "clsx";
-import {  clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+// One cn for the whole app: the one that knows the type scale.
+export { cn } from "./cn";
 
 const DIACRITICS_RE = /[\u0300-\u036F]/g;
 const NON_ALPHANUMERIC_RE = /[^a-z0-9]+/g;
 const LEADING_TRAILING_HYPHEN_RE = /(^-|-$)/g;
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
 
 export function generateId() {
   return crypto.randomUUID();

@@ -58,7 +58,7 @@ src/
     utils/                # Helpers génériques
   models/                 # Schemas Drizzle ORM
   locales/                # Fichiers de traduction (en, fr)
-  styles/                 # CSS global
+  styles/                 # Tokens (theme.css), mapping Tailwind (global.css), polices (fonts.ts)
   proxy.ts                # Proxy (ex-middleware) — rate limiting, i18n, auth guards
 ```
 
@@ -76,6 +76,17 @@ src/
 - **Proxy:** `src/proxy.ts` (pas `middleware.ts` — convention Next.js 16)
 
 > **Règle :** `queries.ts` = `import "server-only"`, jamais `"use server"` ; `actions.ts` = `"use server"`, avec une garde en première ligne de chaque fonction. Toute fonction exportée d'un module `"use server"` est appelable par n'importe quel navigateur (POST direct, arguments au choix). `tests/unit/server-action-conventions.test.ts` fait échouer la CI sinon.
+
+## Interface
+
+L'apparence est un jeu de jetons (le thème neutre Graphite) qu'un projet rebrande dans un seul fichier : `src/styles/theme.css` porte la marque, l'encre, les surfaces, les tons, les rayons, les ombres et les polices (`.dark` pour le mode sombre), `src/styles/global.css` les associe aux utilitaires Tailwind, `src/styles/fonts.ts` charge les polices. Les composants vivent dans `src/shared/components/` ; la plupart ont une story (`npm run storybook`). Le rebranding est décrit dans `docs/SETUP.md` (Phase 4).
+
+- **Des primitives, jamais de couleurs brutes.** Construire avec `src/shared/components/ui` (`Button`, `Badge`, `Card`, `Field`, `ProgressBar`...) et les utilitaires de jetons (`bg-surface`, `text-ink-muted`, `bg-success-bg`, `text-danger-text`). Jamais de couleur de la palette Tailwind (`bg-gray-100`, `text-white`), de hex ni de `font-family` dans un composant : ajouter un jeton. `tests/unit/ui/no-raw-palette.test.ts` échoue sinon. Garder les noms shadcn (`bg-primary`, `text-muted-foreground`) : ils sont associés aux jetons, et les composants ajoutés par `npx shadcn add` prennent le thème.
+- **Un seul bouton principal par zone** (`Button`, variante par défaut). Les autres actions sont des boutons `outline` ou `ghost`, ou vont dans le menu « ⋯ » de `PageHeader` (`moreActions`, qui demande un composant client : ses handlers sont des fonctions).
+- **États vides, d'erreur et de chargement** : ils viennent de `src/shared/components/data` (`EmptyState`, `ErrorState`, les squelettes). Une page faite de squelettes se place dans `LoadingRegion`, qui annonce « Loading » une seule fois.
+- **Textes** : toute chaîne visible va dans `src/locales/en.json` et dans `src/locales/fr.json`.
+- **Cibles et libellés.** Les commandes portent `tap-target` (une zone de clic de 44 px) : les empiler à au moins 12 px d'écart, sinon leurs couches se volent les clics. Un lien au milieu d'une phrase n'a pas de `tap-target` ; un lien seul sur sa ligne l'ajoute (`className="tap-target"`). Garder des libellés de bouton courts : `Button` ne passe pas à la ligne.
+- **Mode sombre et contraste.** Un nouveau jeton de couleur reçoit aussi une valeur dans `.dark`. Lancer `npx vitest run tests/unit/ui/theme-contrast.test.ts` après toute modification de `theme.css` (texte 4,5:1, commandes 3:1, dans les deux modes).
 
 ## Règles strictes de qualité
 

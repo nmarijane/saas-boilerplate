@@ -137,7 +137,7 @@ export function CreateWebhookModal({
 
             <div className="space-y-2">
               <Label>Events</Label>
-              <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto rounded border p-3">
+              <div className="grid grid-cols-2 gap-x-2 gap-y-3 max-h-48 overflow-y-auto rounded border p-3">
                 {AVAILABLE_EVENTS.map((event) => (
                   <label
                     key={event.id}

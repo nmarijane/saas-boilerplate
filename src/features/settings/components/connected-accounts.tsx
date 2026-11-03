@@ -3,12 +3,12 @@
 import { GithubIcon, LoaderCircleIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
 
 import { authClient } from "@/features/auth/auth-client";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import { toast } from "@/shared/components/ui/sonner";
 
 interface Account {
   id: string;

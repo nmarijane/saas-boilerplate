@@ -70,8 +70,11 @@ export default function MarketingLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // The body text of the app is 14 px (global.css). The public pages are read,
+  // not operated: they read at 16 px, set once here. `font-normal` undoes the
+  // semi-bold weight that `text-section` brings.
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col text-section font-normal">
       <MarketingHeader />
       <main className="flex-1">{children}</main>
       <Footer />

@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { z } from "zod";
 
 import { authClient } from "@/features/auth/auth-client";
@@ -15,6 +14,7 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { Label } from "@/shared/components/ui/label";
 import { PasswordInput } from "@/shared/components/ui/password-input";
+import { toast } from "@/shared/components/ui/sonner";
 
 const changePasswordSchema = z
   .object({

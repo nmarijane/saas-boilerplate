@@ -3,7 +3,6 @@
 import { Plus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { toast } from "sonner";
 import { authClient } from "@/features/auth/auth-client";
 import { inviteMember } from "@/features/auth/organization/actions";
 import { Button } from "@/shared/components/ui/button";
@@ -15,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
+import { toast } from "@/shared/components/ui/sonner";
 
 interface InviteEntry {
   email: string;

@@ -1,0 +1,164 @@
+/*
+ * This file is the brand. Change `--brand`, `--brand-2` and the typefaces to rebrand.
+ *
+ * `:root` holds the light theme and `.dark` what changes in dark mode. The
+ * tokens derived from the brand (tint, ring, bar, gradient, primary button
+ * states) sit in their own rules, which also match `[data-brand-scope]`.
+ * global.css maps the colors, corners, shadows and typefaces to Tailwind
+ * utilities. A few tokens have none: `--brand-2` and `--gradient-signature`
+ * (read through `bg-signature`), `--btn-*` (read as `bg-(--btn-primary-hover)`)
+ * and `--side-hover-bg`.
+ */
+
+:root {
+  /* Ink and surfaces */
+  --ink: #101217;
+  --ink-soft: #3B404C;
+  --ink-muted: #5F6676;
+  --surface: #FFFFFF;
+  --surface-sunken: #F5F6F8;
+  --surface-raised: #F9FAFB;
+  --hairline: #E2E5EA;
+  --control-border: #7D8495;
+
+  /* Brand */
+  --brand: #2557F2;
+  /* Darkened from #1FB6D1 (2.16:1): the signature gradient ends against --track, which asks 3:1 */
+  --brand-2: #1991A7;
+  --brand-on: #FFFFFF;
+
+  /* Tones */
+  --success: #1F9D55;
+  --success-text: #157A43;
+  --success-bg: #E4F5EB;
+  --warning-bg: #FFF1D0;
+  --warning-text: #7A4A00;
+  --warning-bar: #B87A00;
+  --danger: #D92D20;
+  --danger-text: #B42318;
+  --danger-on: #FFFFFF;
+
+  /* Quotas */
+  --track: #F0F2F5;
+
+  /* Sidebar */
+  --side-bg: #FFFFFF;
+  --side-active-bg: #E6EBF4;
+  --side-hover-bg: #F2F4F8;
+
+  /* Initial tiles: background, then its ink */
+  --tone-1: #E3EAFD;
+  --tone-2: #DDF2F5;
+  --tone-3: #ECE7FB;
+  --tone-4: #FBE7E2;
+  --tone-1-ink: #1E3FA3;
+  --tone-2-ink: #0F5F6B;
+  --tone-3-ink: #4A2F99;
+  --tone-4-ink: #8C3521;
+
+  /* Primary button */
+  --btn-primary-edge: rgba(8, 18, 52, 0.28);
+  --btn-press: 0px;
+
+  /* Shapes */
+  --corner-xs: 6px;
+  --corner-sm: 8px;
+  --corner-field: 10px;
+  --corner-card: 14px;
+  --corner-dialog: 18px;
+  --elevation-card: 0 1px 2px rgba(16, 18, 23, 0.04);
+  --elevation-pop: 0 18px 40px -20px rgba(16, 18, 23, 0.25);
+
+  /* Overlay behind dialogs and sheets */
+  --scrim: rgba(16, 18, 23, 0.48);
+
+  /* Typefaces. --font-geist-* come from src/styles/fonts.ts; the fallbacks
+     keep each list valid when they are not defined. */
+  --typeface-ui:
+    var(--font-geist-sans, ui-sans-serif), ui-sans-serif, system-ui, sans-serif;
+  --typeface-display:
+    var(--font-geist-sans, ui-sans-serif), ui-sans-serif, system-ui, sans-serif;
+  --typeface-mono:
+    var(--font-geist-mono, ui-monospace), ui-monospace, SFMono-Regular, Menlo,
+    monospace;
+}
+
+/* To rebrand a subtree, set `data-brand-scope` and `--brand` on it. */
+:root,
+[data-brand-scope] {
+  --brand-tint: color-mix(in oklab, var(--brand) 10%, var(--surface));
+  --brand-tint-ink: color-mix(in oklab, var(--brand) 70%, var(--ink));
+  --focus-ring: var(--brand);
+  --bar: var(--brand);
+  --gradient-signature: linear-gradient(135deg, var(--brand), var(--brand-2));
+  --btn-primary-hover: color-mix(in oklab, var(--brand) 90%, #000);
+  --btn-primary-active: color-mix(in oklab, var(--brand) 82%, #000);
+}
+
+.dark {
+  --ink: #EEF1F5;
+  --ink-soft: #C2C7D0;
+  --ink-muted: #9AA1AE;
+  --surface: #14171D;
+  --surface-sunken: #0E1014;
+  --surface-raised: #1A1E25;
+  --hairline: #262B34;
+  --control-border: #6B7385;
+
+  /* Lightened from #5B84FF (4.36:1 on --side-active-bg): a link on a hovered row asks 4.5:1. The hue is kept. */
+  --brand: #6189FF;
+  --brand-2: #3CCBE0;
+  --brand-on: #0A1230;
+
+  --success: #34C77B;
+  --success-text: #5FD69A;
+  --success-bg: #12291D;
+  --warning-bg: #2E2410;
+  --warning-text: #F5C451;
+  /* Lightened from #D9A21B, then from #DEA51C when --brand got lighter, so the "almost out" bar stays 1.5:1 apart from --bar */
+  --warning-bar: #E3A91E;
+  --danger: #F0584A;
+  --danger-text: #FF8A80;
+  --danger-on: #1A0503;
+
+  --track: #232831;
+
+  --side-bg: #11141A;
+  --side-active-bg: #222833;
+  --side-hover-bg: #1A1F27;
+
+  --tone-1: #1C2A55;
+  --tone-2: #12343A;
+  --tone-3: #2A2152;
+  --tone-4: #3A1F19;
+  --tone-1-ink: #AFC3FF;
+  --tone-2-ink: #8FE0EC;
+  --tone-3-ink: #C9B8FF;
+  --tone-4-ink: #FFB4A3;
+
+  --scrim: rgba(0, 0, 0, 0.6);
+
+  /* The light shadows are 4 % and 25 % of a near black: on a dark page they
+     vanish. Black is stronger here. There is no ring in the popover shadow: a
+     popover, dialog, menu or tooltip has its own 1 px hairline border, and a
+     ring of the same color would double it into a 2 px edge. */
+  --elevation-card: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --elevation-pop: 0 18px 40px -16px rgba(0, 0, 0, 0.7);
+}
+
+/*
+ * The same declarations again, on purpose: a derived token is computed where it
+ * is declared, so a `.dark` wrapper that is not <html> (a dark preview in a
+ * light page) must recompute them from its own values, not inherit the light
+ * ones from :root. Only hover and press differ: they lighten the primary button.
+ */
+.dark,
+.dark [data-brand-scope] {
+  --brand-tint: color-mix(in oklab, var(--brand) 10%, var(--surface));
+  --brand-tint-ink: color-mix(in oklab, var(--brand) 70%, var(--ink));
+  --focus-ring: var(--brand);
+  --bar: var(--brand);
+  --gradient-signature: linear-gradient(135deg, var(--brand), var(--brand-2));
+  --btn-primary-hover: color-mix(in oklab, var(--brand) 90%, #fff);
+  --btn-primary-active: color-mix(in oklab, var(--brand) 82%, #fff);
+}

@@ -1,20 +1,16 @@
 import { Badge } from "@/shared/components/ui/badge";
-import { cn } from "@/shared/utils/cn";
 import { capitalize } from "@/shared/utils/helpers";
 
-const planColors: Record<string, string> = {
-  free: "bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300",
-  pro: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900 dark:text-blue-300",
-  enterprise:
-    "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900 dark:text-purple-300",
+// The free plan stays quiet, a paid plan wears the brand, the top one a success
+// tone. A plan a project adds falls back to the quiet one.
+const planTones: Partial<Record<string, "neutral" | "brand" | "success">> = {
+  free: "neutral",
+  pro: "brand",
+  enterprise: "success",
 };
 
 export function PlanBadge({ planId }: { planId: string }) {
-  const label = capitalize(planId);
-
   return (
-    <Badge variant="outline" className={cn(planColors[planId])}>
-      {label}
-    </Badge>
+    <Badge variant={planTones[planId] ?? "neutral"}>{capitalize(planId)}</Badge>
   );
 }

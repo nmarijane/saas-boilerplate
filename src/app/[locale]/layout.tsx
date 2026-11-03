@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { ThemeProvider } from "next-themes";
-import { Toaster } from "sonner";
+import { Toaster } from "@/shared/components/ui/sonner";
 import { routing } from "@/shared/lib/i18n-routing";
+import { cn } from "@/shared/utils/cn";
+import { fontMono, fontSans } from "@/styles/fonts";
 import "@/styles/global.css";
 
 export const metadata: Metadata = {
@@ -29,7 +31,11 @@ export default async function LocaleLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html
+      lang={locale}
+      className={cn(fontSans.variable, fontMono.variable)}
+      suppressHydrationWarning
+    >
       <body>
         <ThemeProvider
           attribute="class"
@@ -39,7 +45,7 @@ export default async function LocaleLayout({
         >
           <NextIntlClientProvider messages={messages}>
             {children}
-            <Toaster richColors position="bottom-right" />
+            <Toaster position="bottom-right" />
           </NextIntlClientProvider>
         </ThemeProvider>
       </body>
