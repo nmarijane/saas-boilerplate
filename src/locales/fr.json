@@ -1,7 +1,7 @@
 {
   "common": {
     "appName": "SaaS Boilerplate",
-    "loading": "Chargement...",
+    "loading": "Chargement…",
     "save": "Enregistrer",
     "cancel": "Annuler",
     "delete": "Supprimer",
@@ -14,9 +14,27 @@
     "search": "Rechercher",
     "noResults": "Aucun résultat trouvé",
     "error": "Une erreur est survenue",
+    "errorTitle": "Une erreur est survenue",
+    "errorDescription": "Réessayez dans un instant.",
+    "retry": "Réessayer",
     "success": "Succès",
     "or": "ou",
-    "and": "et"
+    "and": "et",
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe",
+    "close": "Fermer",
+    "undo": "Annuler",
+    "notifications": "Notifications",
+    "moreActions": "Autres actions",
+    "table": {
+      "searchPlaceholder": "Rechercher…",
+      "results": "{count, plural, one {# résultat} other {# résultats}}",
+      "rows": "Lignes",
+      "firstPage": "Première page",
+      "previousPage": "Page précédente",
+      "nextPage": "Page suivante",
+      "lastPage": "Dernière page"
+    }
   },
   "auth": {
     "signIn": "Se connecter",
@@ -169,7 +187,7 @@
     "feature": "Demande de fonctionnalité",
     "other": "Autre",
     "message": "Message",
-    "placeholder": "Dites-nous ce que vous en pensez...",
+    "placeholder": "Dites-nous ce que vous en pensez…",
     "success": "Merci pour votre feedback !"
   },
   "onboarding": {
@@ -202,7 +220,7 @@
     "newConversation": "Nouvelle conversation",
     "noProviders": "IA non configurée",
     "noProvidersDescription": "Ajoutez une clé API d'un fournisseur IA pour activer le chat IA.",
-    "sendMessage": "Envoyer un message...",
+    "sendMessage": "Envoyer un message…",
     "credits": "crédits",
     "unlimited": "Illimité",
     "insufficientCredits": "Crédits insuffisants",
@@ -218,7 +236,7 @@
     "emailLabel": "Adresse email",
     "emailPlaceholder": "vous@exemple.com",
     "joinButton": "Rejoindre la liste",
-    "joining": "Inscription...",
+    "joining": "Inscription…",
     "error": "Une erreur s'est produite. Veuillez réessayer.",
     "statusTitle": "Vous êtes sur la liste ! 🎉",
     "statusDescription": "{total} personnes attendent",

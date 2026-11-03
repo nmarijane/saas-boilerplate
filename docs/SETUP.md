@@ -125,9 +125,10 @@ Each feature module in `src/features/` is self-contained. To remove a feature:
 2. Delete its model from `src/models/` (if it has one)
 3. Delete its API routes from `src/app/api/`
 4. Delete its pages from `src/app/[locale]/`
-5. Remove imports from `src/models/index.ts`
-6. Run `npm run lint` to find and fix any remaining references
-7. Run `npm run db:generate` to update migrations
+5. Delete the feature's own tests (`grep -rl "features/<name>" tests` lists them). In a test that covers several features, remove only this feature's cases and imports. Keep `tests/unit/ui/no-raw-palette.test.ts`: it only names the folder as a string
+6. Remove imports from `src/models/index.ts`
+7. Run `npm run lint` to find and fix any remaining references
+8. Run `npm run db:generate` to update migrations
 
 ### Feature dependency map
 
@@ -160,6 +161,7 @@ Delete: src/models/subscription.ts
 Delete: src/app/api/stripe/
 Delete: src/app/[locale]/(app)/settings/billing/
 Delete: src/app/[locale]/(marketing)/pricing/
+Delete: the feature's own tests (grep -rl "features/billing" tests); in a test that covers several features, remove only the billing cases and imports. Keep tests/unit/ui/no-raw-palette.test.ts: it only names the folder as a string
 Remove: subscription from src/models/index.ts
 Remove: STRIPE_* from src/shared/lib/env.ts
 ```
@@ -169,6 +171,7 @@ Remove: STRIPE_* from src/shared/lib/env.ts
 Delete: src/features/upload/
 Delete: src/models/upload.ts
 Delete: src/app/api/upload/
+Delete: the feature's own tests (grep -rl "features/upload" tests); in a test that covers several features, remove only the upload cases and imports
 Remove: upload from src/models/index.ts
 Remove: S3_*, STORAGE_ADAPTER, UPLOAD_MAX_SIZE from src/shared/lib/env.ts
 ```
@@ -179,6 +182,7 @@ Delete: src/features/notifications/
 Delete: src/models/notification.ts
 Delete: src/app/api/notifications/
 Delete: src/app/[locale]/(app)/settings/notifications/
+Delete: the feature's own tests (grep -rl "features/notifications" tests); in a test that covers several features, remove only the notifications cases and imports
 Remove: notification from src/models/index.ts
 Remove: notification handler from src/features/events/handlers/
 ```
@@ -191,6 +195,54 @@ Remove: notification handler from src/features/events/handlers/
 - Update `src/app/[locale]/(marketing)/page.tsx` (landing page)
 - Update `src/shared/lib/seo.ts` (site name, description, OG images)
 - Update `src/locales/en.json` and `src/locales/fr.json` (translations)
+
+### Rebrand in one file
+
+`src/styles/theme.css` is the brand. Colors, corners, shadows and typefaces are tokens there, and the shared components read them: none holds a color of its own. The neutral theme is called Graphite. Edit the values in `:root` (light) and their counterparts in `.dark` (dark mode).
+
+| Token | What it sets |
+|-------|--------------|
+| `--brand` | The brand color: primary button, links, focus ring, quota bar |
+| `--brand-2` | The second color of the signature gradient (`bg-signature`, the `signature` progress bar) |
+| `--brand-on` | The ink on `--brand`: the label of the primary button and of a brand badge |
+| `--typeface-ui`, `--typeface-display`, `--typeface-mono` | Body text, headings, code |
+| `--corner-xs` to `--corner-dialog` | The corner radii (`--corner-card` rounds cards, `--corner-field` inputs and buttons) |
+
+The tints, the focus ring, the quota bar, the gradient and the hover and press of the primary button (`--brand-tint`, `--brand-tint-ink`, `--focus-ring`, `--bar`, `--gradient-signature`, `--btn-primary-hover`, `--btn-primary-active`) are derived from the brand in their own rules, so they follow `--brand` with no edit. Only the two button states may need one, for a mid-tone brand (step 3). Ink, surfaces, status tones, shadows and the scrim are neutral and can stay.
+
+1. Set `--brand`, `--brand-2` and `--brand-on` in `:root`. `.dark` has its own copy of the three: a lighter `--brand` and `--brand-2`, and a `--brand-on` that suits the lighter brand (a dark ink, where the light theme has white).
+2. Change the typefaces. `src/styles/fonts.ts` loads them with `next/font` (Geist by default) and exposes the variables `--font-geist-sans` and `--font-geist-mono`, which `--typeface-*` read in `theme.css`. Swap the fonts in `fonts.ts`, and point `--typeface-*` at the new variables, together.
+3. Run `npx vitest run tests/unit/ui/theme-contrast.test.ts`. It measures every text and background pair of the theme, in light and in dark (text 4.5:1, controls 3:1), so a brand color too light for its label fails there before anyone sees it. A mid-tone brand (a red, an orange) often needs a dark `--brand-on` and a hover and a press that lighten the button instead of darkening it. Edit the derived rule itself: in the `:root, [data-brand-scope]` rule, change the `#000` of `--btn-primary-hover` and `--btn-primary-active` to `#fff`. Do not override the two tokens in the first `:root` block: that rule has the same specificity and comes before the derived one, so the derived one wins. (The `.dark` rule already mixes with `#fff`.)
+4. Run `npm run storybook` and open Foundations > Other brand: one container rebranded with inline tokens, with the header, buttons, badges, progress bar, card and segmented control inside. Compare it with the other stories, in light and dark. It is the recipe above, written as an inline style.
+
+Good to know:
+- The contrast test reads colors written as hex (`#2557F2`), `var(--token)` or `color-mix(in oklab, …)`. Keep the brand tokens in those forms: `oklch()`, `hsl()` and `rgb()` stop it with an "Unsupported color" error instead of a measure.
+- `bg-signature`, the gradient from `--brand` to `--brand-2`, is decorative (a bar, an edge, an illustration). Never put text on it: the tests hold its ends to 3:1 as a graphic, not to 4.5:1 under text.
+- A new color token needs a value in `.dark` and a place in the lists of `theme-contrast.test.ts` (`REQUIRED_TOKENS`, and a pair if text sits on it).
+- A hex color or a `font-family` in a component fails `tests/unit/ui/no-raw-palette.test.ts`: write the value in `theme.css` (or `fonts.ts`) and use the token. The few files exempt from it are listed in the test, each with its reason.
+
+To rebrand one subtree (a preview, a section), set `data-brand-scope` and an inline `--brand` on its root:
+
+```tsx
+<div data-brand-scope style={{ "--brand": tenant.color } as React.CSSProperties}>
+  {children}
+</div>
+```
+
+A derived token is computed where it is declared, so a `--brand` set lower in the tree does not reach the tints, the ring, the bar, the gradient or the button states computed on `:root`. `data-brand-scope` makes `theme.css` declare them again on that element, from its own `--brand`. Without it, the primary button takes the new color and keeps the old hover, ring and bar. The corners, the typefaces and `--brand-2` can be set inline the same way.
+
+`data-brand-scope` covers its own DOM only. The layers that Radix renders in a portal under `document.body` (DropdownMenu, Select, Popover, Tooltip, Dialog, Sheet) sit outside the element, so they keep the brand of the page. So does the toaster, which is mounted once at the root of the layout. Choose the scope that fits:
+
+- **An app-wide or per-tenant brand:** set the tokens on `<html>`, as a `:root` override after `theme.css` or inline (the `style` of `<html>` in the layout). The derived tokens recompute there and no attribute is needed. The color then applies in light and in dark alike. A `:root` override can give dark its own value: write a `.dark` rule after it. An inline `style` on `<html>` beats any `.dark` rule, so a different dark value has to be set from script each time the `dark` class of `<html>` changes. Or skip the inline style and emit a `<style>` element with a `:root` rule and a `.dark` rule instead (the layout can write one from the tenant's colors).
+- **A true subtree:** also render its portals into the scoped element, with the `container` prop of the Radix `Portal`. The wrappers in `src/shared/components/ui/` render a bare `Portal` today: add the prop where you need it.
+
+### Dark mode
+
+`next-themes` puts the `dark` class on `<html>`. It follows the system, and `ThemeToggle` (in the headers) overrides it. `.dark` in `theme.css` holds the tokens that change: ink, surfaces, brand, tones, shadows, scrim. The corners and the typefaces are shared. For a new color token, write the dark value next to the light one and run the contrast test, which checks both modes. In Storybook, the Theme toolbar flips the class and the Language toolbar switches between en and fr.
+
+### Add a component with shadcn
+
+`npx shadcn add <name>` writes the component to `src/shared/components/ui/` and it takes the theme with no further work: `components.json` points at `src/styles/global.css`, which maps every shadcn color name (`bg-primary`, `text-muted-foreground`, `border-input`, `bg-popover`...) to a token of `theme.css`. Run `npm run test` afterwards: `tests/unit/ui/no-raw-palette.test.ts` lists any raw Tailwind color or hex the generated code brings (`text-white`, `bg-red-500`, `fill="#fff"`), to swap for a token (`text-primary-foreground`, `bg-danger`).
 
 ### Database models
 

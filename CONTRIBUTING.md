@@ -54,6 +54,8 @@ npm run test:watch    # Watch mode
 npm run storybook     # http://localhost:6006
 ```
 
+The Theme toolbar flips dark mode and the Language toolbar switches between en and fr (the Backgrounds tool is off: the theme sets the page color). The component stories carry `tags: ["autodocs"]` (the Foundations stories do not). The tag does nothing until a project installs `@storybook/addon-docs`, which then gives each tagged component a docs page: leave it in place.
+
 ---
 
 ## Project Structure
@@ -110,6 +112,20 @@ npm run check:types   # TypeScript
 npm run format        # Prettier
 npm run check:deps    # Unused dependencies (Knip)
 ```
+
+### User Interface
+
+The look is a set of tokens in `src/styles/theme.css` and the components in `src/shared/components/`, which you can browse in Storybook. `docs/SETUP.md` ("Rebrand in one file") tells how a project changes the brand.
+
+- **Use the primitives** of `src/shared/components/ui` (`Button`, `Badge`, `Card`, `Field`, `ProgressBar`...) and the token utilities (`bg-surface`, `text-ink-muted`, `bg-success-bg`, `text-danger-text`). Never a raw Tailwind palette color (`bg-gray-100`, `text-white`): `tests/unit/ui/no-raw-palette.test.ts` fails on it, in `src/shared/components` and `src/features/billing/components`. Add the folders of your own components to that test.
+- **One primary button per zone.** The other actions are `outline` or `ghost` buttons, or go in the « ⋯ » menu of `PageHeader` (`moreActions`).
+- **Empty, error and loading states** come from `src/shared/components/data` (`EmptyState`, `ErrorState`, the skeletons), not from markup of your own.
+- **Strings** go in both `src/locales/en.json` and `src/locales/fr.json` (see Internationalization below).
+- **Targets are 44 px.** `Button`, `Checkbox`, `Switch`, `Select` and `SegmentedControl` carry `tap-target`, which grows the hit area without moving the layout. Stack controls that carry it at least 12 px apart (`gap-3`), or their 44 px layers overlap and steal clicks.
+- **Keep button labels short.** `Button` does not wrap, and French runs longer than English: check the French label in Storybook.
+- **Links.** A link inside a sentence has no `tap-target`, so that it keeps the height of its words. A link on a line of its own adds it: `<TextLink className="tap-target">`.
+- **`moreActions` holds handlers**, which are functions: a header that has them must be rendered from a client component.
+- **`LoadingRegion`** announces "Loading" once for a page made of skeletons: put the skeletons of a `loading.tsx` inside it. A skeleton nested deeper, in a wrapper of yours, takes `announce={false}`.
 
 ### Internationalization
 

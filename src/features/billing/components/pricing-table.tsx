@@ -27,7 +27,7 @@ interface PricingTableProps {
 function CheckIcon() {
   return (
     <svg
-      className="size-4 shrink-0 text-green-600 dark:text-green-400"
+      className="size-4 shrink-0 text-success"
       fill="none"
       viewBox="0 0 24 24"
       strokeWidth={2.5}

@@ -9,7 +9,8 @@ import {
   ChevronsLeftIcon,
   ChevronsRightIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useTranslations } from "next-intl";
+import { useId, useState } from "react";
 
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
@@ -49,19 +50,46 @@ interface DataTableProps<T> {
 
 type SortDirection = "asc" | "desc" | null;
 
+/** What assistive technology is told of a sortable column: its arrow is hidden from it. */
+export function ariaSort(direction: SortDirection) {
+  if (direction === "asc") {
+    return "ascending";
+  }
+  return direction === "desc" ? "descending" : "none";
+}
+
+function SortIcon({ direction }: { direction: SortDirection }) {
+  if (direction === null) {
+    return <ArrowUpDownIcon aria-hidden="true" className="size-3.5" />;
+  }
+  const Icon = direction === "asc" ? ArrowUpIcon : ArrowDownIcon;
+  return <Icon aria-hidden="true" className="size-3.5" />;
+}
+
+// For a handful of items, cards or a List read better than a table: it earns
+// its place from about a dozen rows, or when columns are there to compare.
 export function DataTable<T extends Record<string, unknown>>({
   columns,
   data,
   searchKey,
-  searchPlaceholder = "Search...",
+  searchPlaceholder,
   pageSize: initialPageSize = 10,
   className,
 }: DataTableProps<T>) {
+  const t = useTranslations("common");
+  const rowsLabelId = useId();
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<SortDirection>(null);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(initialPageSize);
+
+  const placeholder = searchPlaceholder ?? t("table.searchPlaceholder");
+  // The size the caller starts with (5, 25...) is one of the choices: without
+  // it, the select would show none.
+  const pageSizes = [...new Set([initialPageSize, 10, 20, 50, 100])].sort(
+    (a, b) => a - b,
+  );
 
   // Filter
   const filtered = searchKey
@@ -101,17 +129,12 @@ export function DataTable<T extends Record<string, unknown>>({
     setPage(0);
   };
 
-  const SortIcon = ({ columnKey }: { columnKey: string }) => {
-    if (sortKey !== columnKey) return <ArrowUpDownIcon className="size-3.5" />;
-    if (sortDir === "asc") return <ArrowUpIcon className="size-3.5" />;
-    return <ArrowDownIcon className="size-3.5" />;
-  };
-
   return (
-    <div className={cn("space-y-4", className)}>
+    <div data-slot="data-table" className={cn("space-y-4", className)}>
       {searchKey && (
         <Input
-          placeholder={searchPlaceholder}
+          placeholder={placeholder}
+          aria-label={placeholder}
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
@@ -121,48 +144,67 @@ export function DataTable<T extends Record<string, unknown>>({
         />
       )}
 
-      <div className="rounded-md border">
-        <Table>
+      <div
+        data-slot="data-table-surface"
+        className="overflow-hidden rounded-lg border border-hairline bg-card shadow-card"
+      >
+        <Table className="text-body">
           <TableHeader>
-            <TableRow>
-              {columns.map((col) => (
-                <TableHead key={col.key} className={col.className}>
-                  {col.sortable ? (
-                    <button
-                      type="button"
-                      className="flex items-center gap-1 hover:text-foreground"
-                      onClick={() => handleSort(col.key)}
-                    >
-                      {col.header}
-                      <SortIcon columnKey={col.key} />
-                    </button>
-                  ) : (
-                    col.header
-                  )}
-                </TableHead>
-              ))}
+            <TableRow className="hover:bg-transparent">
+              {columns.map((col) => {
+                const direction = sortKey === col.key ? sortDir : null;
+                return (
+                  <TableHead
+                    key={col.key}
+                    aria-sort={col.sortable ? ariaSort(direction) : undefined}
+                    className={cn("h-11 px-4 text-meta text-ink-muted", col.className)}
+                  >
+                    {col.sortable ? (
+                      <button
+                        type="button"
+                        className="tap-target inline-flex items-center gap-1 rounded-xs transition-colors duration-150 ease-expo hover:text-ink focus-visible:focus-ring"
+                        onClick={() => handleSort(col.key)}
+                      >
+                        {col.header}
+                        <SortIcon direction={direction} />
+                      </button>
+                    ) : (
+                      col.header
+                    )}
+                  </TableHead>
+                );
+              })}
             </TableRow>
           </TableHeader>
           <TableBody>
             {paginated.length === 0 ? (
-              <TableRow>
+              <TableRow className="hover:bg-transparent">
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center text-muted-foreground"
+                  className="h-24 text-center text-ink-muted"
                 >
-                  No results.
+                  {t("noResults")}
                 </TableCell>
               </TableRow>
             ) : (
               paginated.map((row, i) => (
-                <TableRow key={i}>
-                  {columns.map((col) => (
-                    <TableCell key={col.key} className={col.className}>
-                      {col.cell
-                        ? col.cell(row)
-                        : String(row[col.key] ?? "")}
-                    </TableCell>
-                  ))}
+                <TableRow key={i} className="hover:bg-accent">
+                  {columns.map((col) => {
+                    const value = row[col.key];
+                    return (
+                      <TableCell
+                        key={col.key}
+                        // Figures keep their width, so that a column lines up.
+                        className={cn(
+                          "px-4 py-3",
+                          !col.cell && typeof value === "number" && "font-mono tabular-nums",
+                          col.className,
+                        )}
+                      >
+                        {col.cell ? col.cell(row) : String(value ?? "")}
+                      </TableCell>
+                    );
+                  })}
                 </TableRow>
               ))
             )}
@@ -171,13 +213,18 @@ export function DataTable<T extends Record<string, unknown>>({
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          {sorted.length} result{sorted.length !== 1 ? "s" : ""}
+      <div
+        data-slot="data-table-footer"
+        className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3"
+      >
+        <p className="text-meta text-ink-muted tabular-nums">
+          {t("table.results", { count: sorted.length })}
         </p>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Rows</span>
+            <span id={rowsLabelId} className="text-meta text-ink-muted">
+              {t("table.rows")}
+            </span>
             <Select
               value={String(pageSize)}
               onValueChange={(v) => {
@@ -185,11 +232,17 @@ export function DataTable<T extends Record<string, unknown>>({
                 setPage(0);
               }}
             >
-              <SelectTrigger className="h-8 w-16">
-                <SelectValue />
+              {/* No fixed width: padding, gap and chevron take 50 px, and "100" needs 28 px more at 16 px. */}
+              <SelectTrigger
+                size="sm"
+                className="min-w-20"
+                aria-labelledby={rowsLabelId}
+              >
+                {/* Written out, so that the server draws it too: the list of choices only fills in once it has mounted. */}
+                <SelectValue>{pageSize}</SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {[10, 20, 50, 100].map((n) => (
+                {pageSizes.map((n) => (
                   <SelectItem key={n} value={String(n)}>
                     {n}
                   </SelectItem>
@@ -197,45 +250,46 @@ export function DataTable<T extends Record<string, unknown>>({
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center gap-1">
+          {/* 36 px buttons, 8 px apart: their 44 px targets touch and do not overlap. */}
+          <div data-slot="data-table-pages" className="flex items-center gap-2">
             <Button
               variant="outline"
-              size="icon"
-              className="size-8"
+              size="icon-sm"
+              aria-label={t("table.firstPage")}
               disabled={page === 0}
               onClick={() => setPage(0)}
             >
-              <ChevronsLeftIcon className="size-4" />
+              <ChevronsLeftIcon />
             </Button>
             <Button
               variant="outline"
-              size="icon"
-              className="size-8"
+              size="icon-sm"
+              aria-label={t("table.previousPage")}
               disabled={page === 0}
               onClick={() => setPage(page - 1)}
             >
-              <ChevronLeftIcon className="size-4" />
+              <ChevronLeftIcon />
             </Button>
-            <span className="px-2 text-sm">
-              {page + 1} / {totalPages}
+            <span className="px-2 font-mono text-meta tabular-nums text-ink">
+              {`${page + 1} / ${totalPages}`}
             </span>
             <Button
               variant="outline"
-              size="icon"
-              className="size-8"
+              size="icon-sm"
+              aria-label={t("table.nextPage")}
               disabled={page >= totalPages - 1}
               onClick={() => setPage(page + 1)}
             >
-              <ChevronRightIcon className="size-4" />
+              <ChevronRightIcon />
             </Button>
             <Button
               variant="outline"
-              size="icon"
-              className="size-8"
+              size="icon-sm"
+              aria-label={t("table.lastPage")}
               disabled={page >= totalPages - 1}
               onClick={() => setPage(totalPages - 1)}
             >
-              <ChevronsRightIcon className="size-4" />
+              <ChevronsRightIcon />
             </Button>
           </div>
         </div>

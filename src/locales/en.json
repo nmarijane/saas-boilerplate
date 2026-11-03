@@ -1,7 +1,7 @@
 {
   "common": {
     "appName": "SaaS Boilerplate",
-    "loading": "Loading...",
+    "loading": "Loading…",
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",
@@ -14,9 +14,27 @@
     "search": "Search",
     "noResults": "No results found",
     "error": "An error occurred",
+    "errorTitle": "Something went wrong",
+    "errorDescription": "Please try again in a moment.",
+    "retry": "Try again",
     "success": "Success",
     "or": "or",
-    "and": "and"
+    "and": "and",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "close": "Close",
+    "undo": "Undo",
+    "notifications": "Notifications",
+    "moreActions": "More actions",
+    "table": {
+      "searchPlaceholder": "Search…",
+      "results": "{count, plural, one {# result} other {# results}}",
+      "rows": "Rows",
+      "firstPage": "First page",
+      "previousPage": "Previous page",
+      "nextPage": "Next page",
+      "lastPage": "Last page"
+    }
   },
   "auth": {
     "signIn": "Sign In",
@@ -169,7 +187,7 @@
     "feature": "Feature Request",
     "other": "Other",
     "message": "Message",
-    "placeholder": "Tell us what you think...",
+    "placeholder": "Tell us what you think…",
     "success": "Thank you for your feedback!"
   },
   "onboarding": {
@@ -202,7 +220,7 @@
     "newConversation": "New conversation",
     "noProviders": "AI not configured",
     "noProvidersDescription": "Add an AI provider API key to enable AI chat.",
-    "sendMessage": "Send a message...",
+    "sendMessage": "Send a message…",
     "credits": "credits",
     "unlimited": "Unlimited",
     "insufficientCredits": "Insufficient credits",
@@ -218,7 +236,7 @@
     "emailLabel": "Email address",
     "emailPlaceholder": "you@example.com",
     "joinButton": "Join Waitlist",
-    "joining": "Joining...",
+    "joining": "Joining…",
     "error": "Something went wrong. Please try again.",
     "statusTitle": "You're on the list! 🎉",
     "statusDescription": "{total} people are waiting",

@@ -1,10 +1,39 @@
 "use client";
 
+import type { VariantProps } from "class-variance-authority";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { cva } from "class-variance-authority";
 import { XIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import * as React from "react";
 
+import { Button } from "@/shared/components/ui/button";
+import { ignoringToasts } from "@/shared/components/ui/sonner";
 import { cn } from "@/shared/utils/cn";
+
+// The same floating surface as a menu (see popover-styles.ts), with the dialog
+// radius. Narrow screens keep a 16 px margin, and a dialog taller than the
+// viewport scrolls inside it.
+const dialogContentVariants = cva(
+  [
+    "fixed top-1/2 left-1/2 z-50 -translate-x-1/2 -translate-y-1/2",
+    "flex max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] flex-col gap-5 overflow-y-auto",
+    "rounded-xl border bg-popover p-6 text-popover-foreground shadow-pop duration-200",
+    "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+  ],
+  {
+    variants: {
+      size: {
+        sm: "max-w-[420px]",
+        md: "max-w-[560px]",
+        lg: "max-w-[1080px]",
+      },
+    },
+    defaultVariants: {
+      size: "md",
+    },
+  },
+);
 
 function Dialog(props: React.ComponentProps<typeof DialogPrimitive.Root>) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />;
@@ -36,7 +65,7 @@ function DialogOverlay({
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/50",
+        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-scrim",
         className
       )}
       {...props}
@@ -44,27 +73,53 @@ function DialogOverlay({
   );
 }
 
+/** The icon button in the corner of a dialog, named in the language of the page. */
+function DialogCloseButton({
+  className,
+  ...props
+}: React.ComponentProps<typeof Button>) {
+  const t = useTranslations("common");
+
+  return (
+    <DialogPrimitive.Close asChild>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        aria-label={t("close")}
+        className={cn("absolute top-5 right-4 text-ink-muted hover:text-ink", className)}
+        {...props}
+      >
+        <XIcon />
+      </Button>
+    </DialogPrimitive.Close>
+  );
+}
+
+// A click on a toast is not a click outside the dialog it reports on: the toast
+// closes, the dialog stays. The `onInteractOutside` of the caller still runs.
 function DialogContent({
   className,
   children,
+  size,
+  showCloseButton = true,
+  onInteractOutside,
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Content>) {
+}: React.ComponentProps<typeof DialogPrimitive.Content> &
+  VariantProps<typeof dialogContentVariants> & {
+    /** The corner button: a dialog with buttons of its own (ConfirmDialog) hides it. */
+    showCloseButton?: boolean;
+  }) {
   return (
     <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Content
         data-slot="dialog-content"
-        className={cn(
-          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-1/2 left-1/2 z-50 grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg border p-6 shadow-lg duration-200",
-          className
-        )}
+        className={cn(dialogContentVariants({ size }), className)}
+        onInteractOutside={ignoringToasts(onInteractOutside)}
         {...props}
       >
         {children}
-        <DialogPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
-          <XIcon />
-          <span className="sr-only">Close</span>
-        </DialogPrimitive.Close>
+        {showCloseButton ? <DialogCloseButton /> : null}
       </DialogPrimitive.Content>
     </DialogPortal>
   );
@@ -74,18 +129,33 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-header"
-      className={cn("flex flex-col gap-2 text-center sm:text-left", className)}
+      className={cn("flex flex-col gap-1.5 pr-8 text-left", className)}
       {...props}
     />
   );
 }
 
+/** The content between the header and the footer. */
+function DialogBody({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="dialog-body"
+      className={cn("flex flex-col gap-4 text-body", className)}
+      {...props}
+    />
+  );
+}
+
+// At the right, the main action last. On a phone the buttons stack, and the
+// main one (the last child) comes first. Wider, a row that is too short for
+// long labels wraps instead of cutting a button, again with the main action
+// on top.
 function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-footer"
       className={cn(
-        "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
+        "flex flex-col-reverse gap-3 sm:flex-row sm:flex-wrap-reverse sm:justify-end",
         className
       )}
       {...props}
@@ -100,7 +170,7 @@ function DialogTitle({
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn("text-lg font-semibold leading-none", className)}
+      className={cn("text-panel font-semibold text-ink", className)}
       {...props}
     />
   );
@@ -113,7 +183,7 @@ function DialogDescription({
   return (
     <DialogPrimitive.Description
       data-slot="dialog-description"
-      className={cn("text-muted-foreground text-sm", className)}
+      className={cn("text-body text-ink-muted", className)}
       {...props}
     />
   );
@@ -121,8 +191,11 @@ function DialogDescription({
 
 export {
   Dialog,
+  DialogBody,
   DialogClose,
+  DialogCloseButton,
   DialogContent,
+  dialogContentVariants,
   DialogDescription,
   DialogFooter,
   DialogHeader,

@@ -4,8 +4,11 @@ import type {VariantProps} from "class-variance-authority";
 import * as SheetPrimitive from "@radix-ui/react-dialog";
 import { cva  } from "class-variance-authority";
 import { XIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import * as React from "react";
 
+import { Button } from "@/shared/components/ui/button";
+import { ignoringToasts } from "@/shared/components/ui/sonner";
 import { cn } from "@/shared/utils/cn";
 
 function Sheet(props: React.ComponentProps<typeof SheetPrimitive.Root>) {
@@ -36,7 +39,7 @@ function SheetOverlay({
     <SheetPrimitive.Overlay
       data-slot="sheet-overlay"
       className={cn(
-        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/50",
+        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-scrim",
         className
       )}
       {...props}
@@ -63,10 +66,35 @@ const sheetVariants = cva(
   }
 );
 
+/**
+ * The icon button in the corner of a sheet, named in the language of the page.
+ * The same button as the one of a dialog (44 px target, system focus ring, muted
+ * ink), 8 px from the corner of the sheet so that its 6 px ring has room.
+ */
+function SheetCloseButton() {
+  const t = useTranslations("common");
+
+  return (
+    <SheetPrimitive.Close asChild>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        aria-label={t("close")}
+        className="absolute top-2 right-2 text-ink-muted hover:text-ink"
+      >
+        <XIcon />
+      </Button>
+    </SheetPrimitive.Close>
+  );
+}
+
+// A click on a toast is not a click outside the sheet it reports on: the toast
+// closes, the sheet stays. The `onInteractOutside` of the caller still runs.
 function SheetContent({
   className,
   children,
   side = "right",
+  onInteractOutside,
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Content> &
   VariantProps<typeof sheetVariants>) {
@@ -76,13 +104,11 @@ function SheetContent({
       <SheetPrimitive.Content
         data-slot="sheet-content"
         className={cn(sheetVariants({ side }), className)}
+        onInteractOutside={ignoringToasts(onInteractOutside)}
         {...props}
       >
         {children}
-        <SheetPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-secondary absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none">
-          <XIcon className="size-4" />
-          <span className="sr-only">Close</span>
-        </SheetPrimitive.Close>
+        <SheetCloseButton />
       </SheetPrimitive.Content>
     </SheetPortal>
   );
@@ -137,6 +163,7 @@ function SheetDescription({
 export {
   Sheet,
   SheetClose,
+  SheetCloseButton,
   SheetContent,
   SheetDescription,
   SheetFooter,

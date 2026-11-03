@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { z } from "zod";
 import { inviteMember } from "@/features/auth/organization/actions";
 import { Button } from "@/shared/components/ui/button";
@@ -24,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
+import { toast } from "@/shared/components/ui/sonner";
 
 const inviteFormSchema = z.object({
   email: z.string().email(),

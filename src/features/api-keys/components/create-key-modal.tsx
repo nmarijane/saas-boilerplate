@@ -124,7 +124,7 @@ export function CreateKeyModal({
 
             <div className="space-y-2">
               <Label>Scopes</Label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-x-2 gap-y-3">
                 {AVAILABLE_SCOPES.map((scope) => (
                   <label
                     key={scope.id}
