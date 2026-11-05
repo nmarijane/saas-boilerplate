@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { getSessionCookie } from "better-auth/cookies";
 import createMiddleware from "next-intl/middleware";
 import { NextResponse } from "next/server";
 import { routing } from "@/shared/lib/i18n-routing";
@@ -36,9 +37,10 @@ export async function proxy(request: NextRequest) {
   // 2. i18n (handles locale detection and redirection)
   const response = intlMiddleware(request);
 
-  // 3. Auth guards — protect (app) and (admin) routes
-  const sessionToken =
-    request.cookies.get("better-auth.session_token")?.value;
+  // 3. Auth guards — protect (app) and (admin) routes. On https, Better Auth
+  // names its cookie `__Secure-better-auth.session_token`; its helper reads
+  // that name and the plain one.
+  const sessionToken = getSessionCookie(request);
   const localeMatch = pathname.match(LOCALE_PREFIX_RE);
   const pathWithoutLocale = localeMatch
     ? pathname.slice(localeMatch[0].length)

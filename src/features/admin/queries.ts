@@ -7,7 +7,7 @@ import { db } from "@/shared/lib/DB";
 import "server-only";
 
 // Admin reads: each admin page calls requireAdmin() before using them.
-// Columns are listed explicitly: the user table holds 2FA secrets.
+// Columns are listed explicitly, so a sensitive column added to a table later is never exposed.
 
 export async function getAdminUsers(limit = 100, offset = 0) {
   return db

@@ -162,9 +162,9 @@ npm run test:e2e         # Playwright E2E
 
 # Base de données
 npm run db:generate      # Générer migration Drizzle
-npm run db:migrate       # Appliquer migrations
+npm run db:migrate       # Appliquer migrations à PostgreSQL (DATABASE_URL) ; PGlite : db:seed
 npm run db:studio        # Drizzle Studio
-npm run db:seed          # Seed DB (plans, admin, dev user)
+npm run db:seed          # Applique les migrations (PGlite compris) puis seed (plans, admin, dev user) ; relançable (arrêter npm run dev avant)
 
 # Production
 npm run build            # Build production

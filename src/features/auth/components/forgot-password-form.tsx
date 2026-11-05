@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { forgetPassword } from "@/features/auth/auth-client";
+import { requestPasswordReset } from "@/features/auth/auth-client";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
@@ -33,7 +33,7 @@ export function ForgotPasswordForm() {
 
   const onSubmit = async (data: ForgotPasswordValues) => {
     setIsLoading(true);
-    const result = await forgetPassword({
+    const result = await requestPasswordReset({
       email: data.email,
       redirectTo: "/sign-in",
     });
