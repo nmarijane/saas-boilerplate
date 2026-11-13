@@ -9,10 +9,12 @@ out/
 build/
 dist/
 
-# env files
-.env
-.env.local
-.env.*.local
+# env files: all of them but the example
+.env*
+!.env.example
+
+# written by `next dev` when it finds an agent
+AGENTS.md
 
 # debug
 npm-debug.log*
@@ -41,6 +43,10 @@ coverage/
 # playwright
 test-results/
 playwright-report/
+.screenshots/
+.e2e/
+# a PGlite directory of its own, for a second process (docs/SETUP.md, Phase 5)
+.scratch/
 
 # storybook
 storybook-static/

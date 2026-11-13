@@ -16,10 +16,11 @@ const inline = parseBlock(
   "@theme inline",
 );
 
-// The hover and press colors of the destructive button and the danger badge
-// are mixed in their class lists, so theme-contrast.test.ts does not see them.
-// --ink is dark in light mode and light in dark mode: the mix always moves away
-// from the on-danger color.
+// The danger badge mixes its hover color in its class list, so
+// theme-contrast.test.ts does not see it. The destructive button reads the same
+// two mixes from --btn-danger-hover and --btn-danger-active, which that file
+// measures too. --ink is dark in light mode and light in dark mode: the mix
+// always moves away from the on-danger color.
 const DANGER_HOVER = "color-mix(in oklab, var(--danger) 90%, var(--ink))";
 const DANGER_PRESS = "color-mix(in oklab, var(--danger) 82%, var(--ink))";
 

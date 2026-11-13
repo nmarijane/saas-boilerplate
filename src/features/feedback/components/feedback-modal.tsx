@@ -1,128 +1,110 @@
 "use client";
 
-import { useState } from "react";
-import { UploadButton } from "@/features/upload/components/upload-button";
-import { useUpload } from "@/features/upload/hooks/use-upload";
-import { Button } from "@/shared/components/ui/button";
+import { useTranslations } from "next-intl";
+import { useState } from "react"; // upload
+import { UploadButton } from "@/features/upload/components/upload-button"; // upload
+import { useUpload } from "@/features/upload/hooks/use-upload"; // upload
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/shared/components/ui/dialog";
-import { Label } from "@/shared/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/components/ui/select";
-import { Textarea } from "@/shared/components/ui/textarea";
+import { Label } from "@/shared/components/ui/label"; // upload
+import { PageAlert } from "@/shared/components/ui/page-alert"; // upload
+import { toast } from "@/shared/components/ui/sonner";
 import { submitFeedback } from "../actions";
+import { useFeedbackForm } from "../feedback-form-state";
+import { FeedbackForm } from "./feedback-form";
 
 interface FeedbackModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  userId?: string;
+  /**
+   * Called when the dialog has closed, to say where the focus goes. Radix gives
+   * it back to the `Trigger` of a dialog, and this one has none (it is opened by
+   * a button outside it, in the sidebar or in a header): left to Radix the focus
+   * is dropped on the page body (WCAG 2.4.3). The handler gets the event Radix
+   * waits on, and calls `preventDefault` on it.
+   */
+  onCloseAutoFocus?: (event: Event) => void;
+  userId?: string; // upload
   orgId?: string;
 }
 
+// The feedback dialog, opened by the feedback button of the shell. Its author is
+// the person in the session, which the server action reads. It stays mounted
+// when it is closed, so that a message that was written is still there when it
+// opens again, and so is the error of a send that was refused: the form
+// (feedback-form-state.ts) keeps the message when the server refuses, tells the
+// person, and thanks them when it takes the feedback.
 export function FeedbackModal({
   open,
   onOpenChange,
-  userId = "",
+  onCloseAutoFocus,
+  userId = "", // upload
   orgId = "",
 }: FeedbackModalProps) {
-  const [type, setType] = useState("bug");
-  const [message, setMessage] = useState("");
-  const [screenshotId, setScreenshotId] = useState<string | null>(null);
-  const [screenshotName, setScreenshotName] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const t = useTranslations("feedback");
+  const [screenshot, setScreenshot] = useState<{ id: string; filename: string } | null>(null); // upload
 
-  const { upload, uploading } = useUpload({
-    userId,
-    orgId,
-    onSuccess: (result) => {
-      setScreenshotId(result.id);
-      setScreenshotName(result.filename);
+  const { upload, uploading, error: uploadError, reset: resetUpload } = useUpload({ userId, orgId, onSuccess: setScreenshot }); // upload
+
+  const { form, setType, setMessage, send } = useFeedbackForm({
+    submit: ({ type, message }) =>
+      submitFeedback({
+        orgId: orgId || undefined,
+        type,
+        message,
+        screenshotId: screenshot?.id, // upload
+      }),
+    onSent: () => {
+      setScreenshot(null); // upload
+      resetUpload(); // upload
+      toast.success(t("success"));
+      onOpenChange(false);
     },
   });
 
-  const handleSubmit = async () => {
-    if (!message.trim()) return;
-
-    setSubmitting(true);
-    await submitFeedback({
-      orgId: orgId || undefined,
-      type,
-      message,
-      screenshotId: screenshotId ?? undefined,
-    });
-
-    setMessage("");
-    setType("bug");
-    setScreenshotId(null);
-    setScreenshotName(null);
-    setSubmitting(false);
-    onOpenChange(false);
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      {/* The title and the labels of the fields say what the dialog is: there is no description to give it. */}
+      <DialogContent
+        aria-describedby={undefined}
+        onCloseAutoFocus={onCloseAutoFocus}
+      >
         <DialogHeader>
-          <DialogTitle>Send Feedback</DialogTitle>
+          <DialogTitle>{t("title")}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
+        <FeedbackForm
+          form={form}
+          onTypeChange={setType}
+          onMessageChange={setMessage}
+          onSend={() => void send()}
+        >
+          {/* upload:start */}
+          {/* The screenshot is the upload feature's: a project without it takes out this block and the lines that end with `// upload` (docs/SETUP.md, Phase 3). */}
           <div className="space-y-2">
-            <Label htmlFor="feedback-type">Type</Label>
-            <Select value={type} onValueChange={setType}>
-              <SelectTrigger id="feedback-type">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="bug">Bug Report</SelectItem>
-                <SelectItem value="feature">Feature Request</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="feedback-message">Message</Label>
-            <Textarea
-              id="feedback-message"
-              placeholder="Describe your feedback..."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              rows={4}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Screenshot (optional)</Label>
+            <Label>{t("screenshot")}</Label>
             <div className="flex items-center gap-2">
               <UploadButton
                 accept="image/*"
                 disabled={uploading}
                 onFileSelect={(file) => upload(file)}
               >
-                {uploading ? "Uploading..." : "Attach Screenshot"}
+                {uploading ? t("uploading") : t("attach")}
               </UploadButton>
-              {screenshotName && (
+              {screenshot && (
                 <span className="text-sm text-muted-foreground">
-                  {screenshotName}
+                  {screenshot.filename}
                 </span>
               )}
             </div>
+            {/* A screenshot that is refused says why, in the language of the page, where the dialog says its other errors */}
+            {uploadError ? <PageAlert tone="danger">{uploadError}</PageAlert> : null}
           </div>
-          <Button
-            onClick={handleSubmit}
-            disabled={submitting || !message.trim()}
-            className="w-full"
-          >
-            {submitting ? "Sending..." : "Send Feedback"}
-          </Button>
-        </div>
+          {/* upload:end */}
+        </FeedbackForm>
       </DialogContent>
     </Dialog>
   );

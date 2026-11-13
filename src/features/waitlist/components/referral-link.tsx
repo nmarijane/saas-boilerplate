@@ -32,7 +32,7 @@ export function ReferralLink({ referralCode }: ReferralLinkProps) {
         <Input value={referralUrl} readOnly className="flex-1 font-mono text-sm" />
         <Button variant="outline" size="icon" onClick={handleCopy}>
           {copied ? (
-            <Check className="size-4 text-green-600" />
+            <Check className="size-4 text-success-text" />
           ) : (
             <Copy className="size-4" />
           )}

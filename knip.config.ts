@@ -3,7 +3,6 @@ import type { KnipConfig } from "knip";
 const config: KnipConfig = {
   entry: [
     "src/app/**/*.{ts,tsx}",
-    "src/middleware.ts",
     "scripts/*.ts",
   ],
   project: ["src/**/*.{ts,tsx}"],
@@ -11,9 +10,9 @@ const config: KnipConfig = {
   ignoreDependencies: [
     "@commitlint/config-conventional",
     "@tailwindcss/postcss",
-    "cross-env",
     "dotenv-cli",
-    "rimraf",
+    // The screenshots (tests/screenshots/save-png.ts) are outside the project knip reads
+    "sharp",
   ],
   next: {
     entry: [

@@ -1,3 +1,4 @@
+import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
 import { organization, organizationMember, user } from "@/models";
 import {
@@ -138,6 +139,62 @@ describe("organization queries", () => {
       expect(result).toHaveLength(1);
       expect(result[0].userImage).toBe("https://example.com/bob.png");
     });
+
+    it("returns display fields only, never the user record", async () => {
+      await seedOrgMember(ORG_USER_1, ORG_1, "owner");
+
+      const { getOrganizationMembers } = await import(
+        "@/features/auth/organization/queries"
+      );
+
+      const [first] = await getOrganizationMembers(ORG_1);
+
+      expect(Object.keys(first ?? {}).sort()).toEqual(
+        ["id", "role", "userEmail", "userId", "userImage", "userName"],
+      );
+    });
+
+    it("gives the id of the membership, which is not the id of the person", async () => {
+      const membership = await seedOrgMember(ORG_USER_2, ORG_1, "member");
+
+      const { getOrganizationMembers } = await import(
+        "@/features/auth/organization/queries"
+      );
+
+      const [first] = await getOrganizationMembers(ORG_1);
+
+      expect(first?.id).toBe(membership.id);
+      expect(first?.userId).toBe(ORG_USER_2);
+      expect(first?.id).not.toBe(first?.userId);
+    });
+
+    it("lists the oldest membership first, then by id, whatever the order the rows were written in", async () => {
+      // Carol is written first, then Bob, who joined at the very same moment:
+      // the ids tell them apart (Bob's comes first). Alice joined after both.
+      await seedUser("oq-user-3", { name: "Carol", email: "carol-oq@test.com" });
+      const carol = await seedOrgMember("oq-user-3", ORG_1, "member");
+      const bob = await seedOrgMember(ORG_USER_2, ORG_1, "admin");
+      const alice = await seedOrgMember(ORG_USER_1, ORG_1, "owner");
+      const joined = new Date("2026-01-01T00:00:00Z");
+      for (const [id, createdAt] of [
+        [carol.id, joined],
+        [bob.id, joined],
+        [alice.id, new Date("2026-02-01T00:00:00Z")],
+      ] as const) {
+        await testDb.update(organizationMember).set({ createdAt }).where(eq(organizationMember.id, id));
+      }
+
+      const { getOrganizationMembers } = await import(
+        "@/features/auth/organization/queries"
+      );
+
+      const first = await getOrganizationMembers(ORG_1);
+      const second = await getOrganizationMembers(ORG_1);
+
+      expect(bob.id < carol.id).toBe(true);
+      expect(first.map((m) => m.id)).toEqual([bob.id, carol.id, alice.id]);
+      expect(second.map((m) => m.id)).toEqual(first.map((m) => m.id));
+    });
   });
 
   describe("getUserOrganizations", () => {
@@ -165,6 +222,28 @@ describe("organization queries", () => {
       const orgIds = result.map((o) => o.id);
       expect(orgIds).toContain(ORG_1);
       expect(orgIds).toContain(ORG_2);
+    });
+
+    it("lists the organizations from the oldest membership to the newest", async () => {
+      // ORG_1 was joined first by insertion, but ORG_2 is the older membership.
+      const newer = await seedOrgMember(ORG_USER_1, ORG_1, "owner");
+      const older = await seedOrgMember(ORG_USER_1, ORG_2, "member");
+      await testDb
+        .update(organizationMember)
+        .set({ createdAt: new Date("2026-02-01T00:00:00Z") })
+        .where(eq(organizationMember.id, newer.id));
+      await testDb
+        .update(organizationMember)
+        .set({ createdAt: new Date("2026-01-01T00:00:00Z") })
+        .where(eq(organizationMember.id, older.id));
+
+      const { getUserOrganizations } = await import(
+        "@/features/auth/organization/queries"
+      );
+
+      const result = await getUserOrganizations(ORG_USER_1);
+
+      expect(result.map((o) => o.id)).toEqual([ORG_2, ORG_1]);
     });
 
     it("includes the user role in each organization", async () => {

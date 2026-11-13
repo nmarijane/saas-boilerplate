@@ -16,6 +16,14 @@ export default defineConfig({
     setupFiles: ["./tests/setup.ts"],
     testTimeout: 15000,
     hookTimeout: 30000,
+    server: {
+      deps: {
+        // next-intl's navigation imports `next/navigation` with no extension, which Node cannot
+        // resolve from a package it loads by itself: inlined, Vite resolves it, and a test runs
+        // the real localized `redirect` (and so sees the real address, `/fr/sign-in`)
+        inline: ["next-intl"],
+      },
+    },
     sequence: {
       concurrent: false,
     },

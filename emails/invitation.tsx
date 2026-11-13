@@ -5,7 +5,7 @@ export default function InvitationPreview() {
     <InvitationEmail
       inviterName="Jane Smith"
       organizationName="Acme Inc"
-      inviteUrl="http://localhost:3000/en/invite?token=abc123"
+      inviteUrl="http://localhost:3088/en/invite?token=abc123"
     />
   );
 }

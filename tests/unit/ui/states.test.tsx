@@ -1,8 +1,10 @@
 import type { ComponentProps, ReactNode } from "react";
+import type { Accepts } from "../../helpers/types";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { FolderIcon } from "lucide-react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createRef } from "react";
+import { beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 import en from "@/locales/en.json";
 import fr from "@/locales/fr.json";
 import { EmptyState } from "@/shared/components/data/empty-state";
@@ -15,16 +17,17 @@ import {
   TableSkeleton,
 } from "@/shared/components/data/skeletons";
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import { tabStripStyles } from "@/shared/components/ui/tab-strip";
+import { buttonProps, forgetButtons } from "../../helpers/button-spy";
 import {
   contrastRatio,
   parseBlock,
   parseThemeBlocks,
 } from "../../helpers/color";
-import { attribute, classesOf, startTags } from "../../helpers/html";
+import { attribute, classesOf, decodedClassesOf, startTags, tokens } from "../../helpers/html";
 import { renderWithIntl } from "../../helpers/intl";
 
-// The locale-aware Link of next-intl cannot be imported in Node: its ESM build
-// resolves `next/navigation` without an extension. A plain anchor stands in.
+// The locale-aware Link of next-intl is replaced: no Next router runs in a test. A plain anchor stands in.
 vi.mock("@/shared/lib/i18n-navigation", async () => {
   const { createElement } = await import("react");
   return {
@@ -34,28 +37,15 @@ vi.mock("@/shared/lib/i18n-navigation", async () => {
 });
 
 // The click of a button cannot be made in static markup, so the handler is read
-// where it is handed over: this keeps the props of every Button the states draw,
-// in order, and still draws the real one.
-const buttonProps = vi.hoisted(
-  () => [] as (ComponentProps<"button"> & { asChild?: boolean })[],
-);
-
+// where it is handed over (tests/helpers/button-spy.ts).
 vi.mock("@/shared/components/ui/button", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("@/shared/components/ui/button")>();
-  const { createElement } = await import("react");
-  return {
-    ...actual,
-    Button: (props: ComponentProps<typeof actual.Button>) => {
-      buttonProps.push(props);
-      return createElement(actual.Button, props);
-    },
-  };
+  const { spyOnButton } = await import("../../helpers/button-spy");
+  return spyOnButton(
+    await importOriginal<typeof import("@/shared/components/ui/button")>(),
+  );
 });
 
-beforeEach(() => {
-  buttonProps.length = 0;
-});
+beforeEach(forgetButtons);
 
 const srcDir = resolve(import.meta.dirname, "../../../src");
 const stylesDir = resolve(srcDir, "styles");
@@ -322,20 +312,20 @@ describe("empty state", () => {
   });
 
   it("asks at compile time for an icon or an illustration, and for a handler or a link, never both", () => {
-    // @ts-expect-error a picture is required: an icon in a tile, or an illustration
-    const bare = <EmptyState title="Title" description="Sentence." />;
-    const both = (
-      <EmptyState
-        icon={FolderIcon}
-        title="Title"
-        description="Sentence."
-        // @ts-expect-error an action runs a handler or follows a link, never both
-        action={{ label: "Go", onClick: vi.fn(), href: "/go" }}
-      />
-    );
+    type Props = ComponentProps<typeof EmptyState>;
+    interface Text { title: string; description: string }
+    type Handler = () => void;
 
-    expect(bare).toBeDefined();
-    expect(both).toBeDefined();
+    // A picture is required: an icon in a tile, or an illustration
+    expectTypeOf<Accepts<Props, Text>>().toEqualTypeOf<false>();
+    expectTypeOf<Accepts<Props, Text & { icon: typeof FolderIcon }>>().toEqualTypeOf<true>();
+    expectTypeOf<Accepts<Props, Text & { illustration: ReactNode & {} }>>().toEqualTypeOf<true>();
+    // An action runs a handler or follows a link, never both
+    expectTypeOf<Accepts<Props, Text & { icon: typeof FolderIcon; action: { label: string; onClick: Handler } }>>().toEqualTypeOf<true>();
+    expectTypeOf<Accepts<Props, Text & { icon: typeof FolderIcon; action: { label: string; href: string } }>>().toEqualTypeOf<true>();
+    expectTypeOf<
+      Accepts<Props, Text & { icon: typeof FolderIcon; action: { label: string; onClick: Handler; href: string } }>
+    >().toEqualTypeOf<false>();
   });
 
   it("still renders as the dashboard and the notifications page use it", () => {
@@ -402,6 +392,26 @@ describe("error state", () => {
 
     expect(attribute(slotTag(html, "error-state"), "role")).toBe("alert");
     expect(startTags(html, "button")).toHaveLength(0);
+  });
+
+  it("leaves the title as plain text for the keyboard, unless it is given a ref", () => {
+    const tag = startTags(renderWithIntl(<ErrorState headingLevel={1} />), "h1")[0];
+
+    expect(attribute(tag, "tabindex")).toBeUndefined();
+    expect(classesOf(tag)).not.toContain("focus:outline-hidden");
+  });
+
+  // A route's error state is handed the focus by the client component that holds
+  // it (RouteError): the title must take it, and it is no control, so it is never
+  // a tab stop and draws no ring.
+  it("makes the title a target of the focus, never a tab stop, and draws no ring on it, when it is given a ref", () => {
+    const tag = startTags(
+      renderWithIntl(<ErrorState headingLevel={1} titleRef={createRef()} />),
+      "h1",
+    )[0];
+
+    expect(attribute(tag, "tabindex")).toBe("-1");
+    expect(classesOf(tag)).toContain("focus:outline-hidden");
   });
 
   it.each(["en", "fr"] as const)(
@@ -647,8 +657,8 @@ describe("page skeletons", () => {
       expect(classes).not.toContain("gap-4");
     });
 
-    it("lays itself out as the header does, a column that becomes a row", () => {
-      expect(classesOf(slotTag(html, "page-header-skeleton"))).toEqual(
+    it("lays its row out as the header does, a column that becomes a row", () => {
+      expect(classesOf(slotTag(html, "page-header-skeleton-row"))).toEqual(
         expect.arrayContaining([
           "flex",
           "flex-col",
@@ -657,6 +667,82 @@ describe("page skeletons", () => {
           "sm:justify-between",
         ]),
       );
+    });
+  });
+
+  describe("page header with tabs", () => {
+    const withTabs = renderWithIntl(<PageHeaderSkeleton tabs={5} />);
+    const strip = () => classesOf(slotTag(withTabs, "page-header-skeleton-tabs"));
+
+    it("draws no strip of tabs unless it is told how many", () => {
+      for (const html of [
+        renderWithIntl(<PageHeaderSkeleton />),
+        renderWithIntl(<PageHeaderSkeleton tabs={0} />),
+      ]) {
+        expect(slotTags(html, "page-header-skeleton-tabs")).toHaveLength(0);
+        expect(slotTags(html, "page-header-skeleton-tab")).toHaveLength(0);
+      }
+    });
+
+    it("draws as many tabs as it is told, each the label of a tab as one skeleton block", () => {
+      expect(slotTags(withTabs, "page-header-skeleton-tab")).toHaveLength(5);
+      // The tile, the title, the context line and the action of the header, then the five labels
+      expect(blocks(withTabs)).toHaveLength(4 + 5);
+    });
+
+    it("stands the strip under the row of the header, in the column the header is", () => {
+      expect(classesOf(slotTag(withTabs, "page-header-skeleton"))).toEqual(
+        expect.arrayContaining(["flex", "flex-col", "gap-4"]),
+      );
+      expect(withTabs.indexOf('data-slot="page-header-skeleton-row"')).toBeGreaterThan(-1);
+      expect(withTabs.indexOf('data-slot="page-header-skeleton-row"')).toBeLessThan(
+        withTabs.indexOf('data-slot="page-header-skeleton-tabs"'),
+      );
+    });
+
+    // The real tabs share their strip (ui/tab-strip.ts): the skeleton takes its
+    // styles from there, so that the hairline and the gaps cannot drift from it.
+    // What it does not take is the scrolling, which the next test looks at.
+    it("draws the strip with the styles of the real one, 44 px high", () => {
+      const real = tokens(tabStripStyles).filter((name) => name !== "overflow-x-auto");
+
+      expect(real.length, "the styles of the real strip").toBeGreaterThan(0);
+      expect(decodedClassesOf(slotTag(withTabs, "page-header-skeleton-tabs"))).toEqual(
+        expect.arrayContaining([...real, "h-11"]),
+      );
+      for (const tab of slotTags(withTabs, "page-header-skeleton-tab")) {
+        expect(classesOf(tab)).toEqual(expect.arrayContaining(["h-11", "px-3"]));
+      }
+    });
+
+    // A strip that scrolls is a region a keyboard stops at: a placeholder is not one
+    it("does not scroll sideways, as the tabs it stands for do", () => {
+      expect(strip()).toContain("overflow-hidden");
+      expect(strip()).not.toContain("overflow-x-auto");
+    });
+
+    it("gives the labels a few widths, so that the tabs do not look stamped", () => {
+      const widths = blocks(withTabs)
+        .slice(4)
+        .map((classes) => classes.find((name) => /^w-\d+$/.test(name)));
+
+      expect(new Set(widths).size).toBeGreaterThan(1);
+    });
+
+    it("still says it is loading once, and nothing on the tabs", () => {
+      expect(screenReaderTexts(withTabs)).toEqual([en.common.loading]);
+      expect(textOf(withTabs)).toBe(en.common.loading);
+    });
+
+    it("keeps quiet inside a loading region, tabs included", () => {
+      const html = renderWithIntl(
+        <LoadingRegion>
+          <PageHeaderSkeleton tabs={3} />
+        </LoadingRegion>,
+      );
+
+      expect(slotTags(html, "page-header-skeleton-tab")).toHaveLength(3);
+      expect(screenReaderTexts(html)).toEqual([en.common.loading]);
     });
   });
 
@@ -720,6 +806,61 @@ describe("page skeletons", () => {
 
       expect(tile).toHaveLength(1);
       expect(tile[0]).toContain("rounded-md");
+    });
+
+    // The variant of the quotas of the home: the card of `QuotaCard`, which is
+    // taller than a stat card (156 px against 92 px, once its tile, its figure
+    // and its bar are drawn), so that the page does not move when it arrives.
+    describe("of quotas", () => {
+      const html = renderWithIntl(<CardsRowSkeleton variant="quota" count={4} />);
+      /** How many elements carry all of these classes. */
+      const carrying = (markup: string, ...names: string[]) =>
+        [...markup.matchAll(/class="([^"]*)"/g)].filter(([, list]) => names.every((name) => tokens(list).includes(name))).length;
+
+      it("draws the card of a quota, as many as it is told: a tile and a name, a figure and a bar", () => {
+        expect(slotTags(html, "card")).toHaveLength(4);
+        expect(blocks(html)).toHaveLength(4 * 4);
+      });
+
+      it("leads with the tile of 40 px, as a quota card does, where a stat card ends with it", () => {
+        const [first] = blocks(html);
+
+        expect(first).toEqual(expect.arrayContaining(["size-10", "rounded-md"]));
+        expect(carrying(html, "size-10")).toBe(4);
+      });
+
+      // `text-section` is a line of 24 px and `text-page` one of 34 px: a line
+      // stands in a box as tall as the line it stands for, and the bar is 8 px
+      it("stands the name and the figure in boxes as tall as their lines, and draws the bar 8 px high", () => {
+        expect(carrying(html, "flex", "h-6")).toBe(4);
+        expect(carrying(html, "flex", "h-8.5")).toBe(4);
+        expect(carrying(html, "h-2")).toBe(4);
+      });
+
+      // Four across, from xl, the longest name of the quotas (the credits of the
+      // assistant) no longer fits on a line: the real card has two, and is 8 px
+      // taller than it is in a wider cell. The box of the name does the same.
+      it("gives the name two lines from xl, where the four cards sit across and the longest name wraps", () => {
+        expect(carrying(html, "flex", "xl:h-12")).toBe(4);
+      });
+
+      it("stacks a card as the quota card does, 16 px between its lines, and fills the cell it is in", () => {
+        expect(classesOf(slotTag(html, "card"))).toContain("h-full");
+        expect(classesOf(slotTag(html, "card-content"))).toEqual(
+          expect.arrayContaining(["flex", "flex-col", "gap-4"]),
+        );
+      });
+
+      it("says it is loading once, as the other rows do", () => {
+        expect(screenReaderTexts(html)).toEqual([en.common.loading]);
+      });
+
+      it("is not the default: a row with no variant still draws stat cards", () => {
+        const stat = renderWithIntl(<CardsRowSkeleton count={4} />);
+
+        expect(blocks(stat)).toHaveLength(4 * 3);
+        expect(carrying(stat, "flex", "h-8.5")).toBe(0);
+      });
     });
   });
 

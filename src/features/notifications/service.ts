@@ -7,10 +7,13 @@ import "server-only";
 // Never a server action: the caller is trusted to pass the right userId.
 
 interface CreateNotificationInput {
+  /** Its words, as they are shown: for a type that has no message (`notifications.events.<type>`). */
   title: string;
   body: string;
   type?: string;
   link?: string;
+  /** The workspace it is about, whose pages its link opens: following it opens that workspace first. */
+  organizationId?: string;
 }
 
 export async function createNotification(
@@ -26,6 +29,7 @@ export async function createNotification(
     body: input.body,
     type: input.type ?? "info",
     link: input.link ?? null,
+    organizationId: input.organizationId ?? null,
   });
 
   return { id };

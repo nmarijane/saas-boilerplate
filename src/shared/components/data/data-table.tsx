@@ -46,6 +46,21 @@ interface DataTableProps<T> {
   searchPlaceholder?: string;
   pageSize?: number;
   className?: string;
+  /**
+   * A line in the card, above the table, for what the rows are not: the newest
+   * 100 of more, the latest 50 of a log with no end. Search and sort only cover
+   * the rows the table is given, so a search that finds nothing is not a list
+   * with nothing in it. The table is described by it.
+   */
+  note?: string;
+  /**
+   * The id of a row. Rows are keyed by it, so that what a row holds (a
+   * confirmation, a flag of its own) stays with the row when others above it are
+   * removed; without it rows are keyed by position, and what they hold stays with
+   * the position. A table whose rows hold state gives it: the changelog's does,
+   * and so must any table that asks before it deletes.
+   */
+  getRowId?: (row: T) => string;
 }
 
 type SortDirection = "asc" | "desc" | null;
@@ -56,6 +71,56 @@ export function ariaSort(direction: SortDirection) {
     return "ascending";
   }
   return direction === "desc" ? "descending" : "none";
+}
+
+/** A cell with nothing to sort by: no value, an empty text, a date or a number that is not one. */
+function isEmpty(value: unknown): boolean {
+  if (value === null || value === undefined || value === "") {
+    return true;
+  }
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime());
+  }
+  return typeof value === "number" && Number.isNaN(value);
+}
+
+/**
+ * Two cells of a column, by what they are: dates by their time, numbers by
+ * their value (text would put -10 after -5), anything else as text, with its
+ * numbers read as numbers ("item 2" before "item 10").
+ */
+function compareCells(a: unknown, b: unknown): number {
+  if (a instanceof Date && b instanceof Date) {
+    return Math.sign(a.getTime() - b.getTime());
+  }
+  if (typeof a === "number" && typeof b === "number") {
+    return Math.sign(a - b);
+  }
+  return String(a).localeCompare(String(b), undefined, { numeric: true });
+}
+
+/**
+ * The rows in the order of a column. A row with nothing in it comes last,
+ * whichever way the column is sorted; rows that are equal keep the order they
+ * came in. The rows given are left as they are.
+ */
+export function sortRows<T extends Record<string, unknown>>(
+  rows: T[],
+  key: string,
+  direction: Exclude<SortDirection, null>,
+): T[] {
+  return [...rows].sort((a, b) => {
+    const left = a[key];
+    const right = b[key];
+    const leftEmpty = isEmpty(left);
+    const rightEmpty = isEmpty(right);
+    if (leftEmpty || rightEmpty) {
+      return Number(leftEmpty) - Number(rightEmpty);
+    }
+
+    const order = compareCells(left, right);
+    return direction === "desc" ? -order : order;
+  });
 }
 
 function SortIcon({ direction }: { direction: SortDirection }) {
@@ -75,9 +140,12 @@ export function DataTable<T extends Record<string, unknown>>({
   searchPlaceholder,
   pageSize: initialPageSize = 10,
   className,
+  note,
+  getRowId,
 }: DataTableProps<T>) {
   const t = useTranslations("common");
   const rowsLabelId = useId();
+  const noteId = useId();
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<SortDirection>(null);
@@ -102,14 +170,7 @@ export function DataTable<T extends Record<string, unknown>>({
     : data;
 
   // Sort
-  const sorted = sortKey
-    ? [...filtered].sort((a, b) => {
-        const aVal = a[sortKey];
-        const bVal = b[sortKey];
-        const cmp = String(aVal ?? "").localeCompare(String(bVal ?? ""), undefined, { numeric: true });
-        return sortDir === "desc" ? -cmp : cmp;
-      })
-    : filtered;
+  const sorted = sortKey && sortDir ? sortRows(filtered, sortKey, sortDir) : filtered;
 
   // Paginate
   const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
@@ -148,16 +209,26 @@ export function DataTable<T extends Record<string, unknown>>({
         data-slot="data-table-surface"
         className="overflow-hidden rounded-lg border border-hairline bg-card shadow-card"
       >
-        <Table className="text-body">
+        {note ? (
+          <p
+            id={noteId}
+            data-slot="data-table-note"
+            className="border-b border-hairline px-4 py-3 text-meta text-ink-muted"
+          >
+            {note}
+          </p>
+        ) : null}
+        {/* The look of a table (text, headers, rows, rules, highlight) is the primitive's: this adds what is the data table's own. */}
+        <Table aria-describedby={note ? noteId : undefined}>
           <TableHeader>
-            <TableRow className="hover:bg-transparent">
+            <TableRow>
               {columns.map((col) => {
                 const direction = sortKey === col.key ? sortDir : null;
                 return (
                   <TableHead
                     key={col.key}
                     aria-sort={col.sortable ? ariaSort(direction) : undefined}
-                    className={cn("h-11 px-4 text-meta text-ink-muted", col.className)}
+                    className={col.className}
                   >
                     {col.sortable ? (
                       <button
@@ -188,16 +259,15 @@ export function DataTable<T extends Record<string, unknown>>({
               </TableRow>
             ) : (
               paginated.map((row, i) => (
-                <TableRow key={i} className="hover:bg-accent">
+                <TableRow key={getRowId ? getRowId(row) : i}>
                   {columns.map((col) => {
                     const value = row[col.key];
                     return (
                       <TableCell
                         key={col.key}
-                        // Figures keep their width, so that a column lines up.
+                        // A number is set in a monospace face; the figures keep their width because the table does.
                         className={cn(
-                          "px-4 py-3",
-                          !col.cell && typeof value === "number" && "font-mono tabular-nums",
+                          !col.cell && typeof value === "number" && "font-mono",
                           col.className,
                         )}
                       >

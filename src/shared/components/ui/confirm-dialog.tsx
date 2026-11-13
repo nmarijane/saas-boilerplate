@@ -1,8 +1,9 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import * as React from "react";
+import { unstable_rethrow } from "next/navigation";
 
+import * as React from "react";
 import { Button } from "@/shared/components/ui/button";
 import {
   Dialog,
@@ -13,7 +14,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/components/ui/dialog";
+import { Field } from "@/shared/components/ui/field";
+import { Input } from "@/shared/components/ui/input";
 import { toast } from "@/shared/components/ui/sonner";
+import { reportHandledError } from "@/shared/utils/report-error";
 
 type ConfirmTone = "danger" | "neutral";
 
@@ -52,11 +56,9 @@ async function confirmThenClose(
     await onConfirm();
     close();
   } catch (error) {
+    unstable_rethrow(error);
     toast.error(errorMessage);
-    // Not defined where there is no window (a test run in Node).
-    if (typeof reportError === "function") {
-      reportError(error);
-    }
+    reportHandledError(error);
   } finally {
     setPending(false);
   }
@@ -78,6 +80,16 @@ function whileConfirming(
   };
 }
 
+/**
+ * Whether what was typed unlocks the confirmation. Nothing to type (no text, or
+ * an empty one) is always ready. Otherwise the text has to match as it was
+ * written: case counts and a space is not dropped, as a name does not forgive
+ * a slip.
+ */
+function confirmationReady(typed: string, requireText?: string): boolean {
+  return !requireText || typed === requireText;
+}
+
 interface ConfirmDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -90,12 +102,27 @@ interface ConfirmDialogProps {
   /** `danger` turns the confirm button red. */
   tone?: ConfirmTone;
   /**
+   * A text the user has to type before they can confirm: `DELETE`, or the name
+   * of what is deleted. The confirm button stays disabled until the field holds
+   * exactly this text. Keep it for what cannot be undone, and for what is costly
+   * to get wrong.
+   */
+  requireText?: string;
+  /**
    * Runs when the user confirms. While a returned promise is pending the
    * button shows it and the dialog cannot be dismissed; the dialog closes once
    * the promise is fulfilled. If it rejects, the dialog stays open and an error
    * toast says so: handle a failure you can explain yourself before it gets there.
    */
   onConfirm: () => void | Promise<void>;
+  /**
+   * Called when the dialog has closed, to say where the focus goes. Radix gives
+   * it back to the `Trigger` of a dialog, and this one has none (it is
+   * controlled, and what opens it is a button of the page): left to Radix the
+   * focus is dropped on the page body (WCAG 2.4.3). The handler gets the event
+   * Radix waits on, and calls `preventDefault` on it, then focuses the opener.
+   */
+  onCloseAutoFocus?: (event: Event) => void;
 }
 
 function ConfirmDialog({
@@ -106,7 +133,9 @@ function ConfirmDialog({
   confirmLabel,
   cancelLabel,
   tone = "neutral",
+  requireText,
   onConfirm,
+  onCloseAutoFocus,
 }: ConfirmDialogProps) {
   const t = useTranslations("common");
   const [pending, setPending] = React.useState(false);
@@ -117,41 +146,104 @@ function ConfirmDialog({
         size="sm"
         role={confirmRole(tone)}
         showCloseButton={false}
+        onCloseAutoFocus={onCloseAutoFocus}
         // Without a description, tells Radix there is none on purpose.
         {...(description ? {} : { "aria-describedby": undefined })}
       >
-        <DialogHeader className="pr-0">
-          <DialogTitle>{title}</DialogTitle>
-          {description ? (
-            <DialogDescription>{description}</DialogDescription>
-          ) : null}
-        </DialogHeader>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline" disabled={pending}>
-              {cancelLabel ?? t("cancel")}
-            </Button>
-          </DialogClose>
-          <Button
-            variant={confirmVariant(tone)}
-            loading={pending}
-            onClick={() =>
-              void confirmThenClose(onConfirm, {
-                setPending,
-                close: () => onOpenChange(false),
-                errorMessage: t("error"),
-              })
-            }
-          >
-            {confirmLabel}
-          </Button>
-        </DialogFooter>
+        <ConfirmContent
+          title={title}
+          description={description}
+          confirmLabel={confirmLabel}
+          cancelLabel={cancelLabel ?? t("cancel")}
+          tone={tone}
+          requireText={requireText}
+          pending={pending}
+          onConfirm={() =>
+            void confirmThenClose(onConfirm, {
+              setPending,
+              close: () => onOpenChange(false),
+              errorMessage: t("error"),
+            })
+          }
+        />
       </DialogContent>
     </Dialog>
   );
 }
 
+interface ConfirmContentProps extends Pick<
+  ConfirmDialogProps,
+  "title" | "description" | "confirmLabel" | "tone" | "requireText"
+> {
+  cancelLabel: string;
+  pending: boolean;
+  onConfirm: () => void;
+}
+
+// What is in the dialog. What the user has typed lives here, with the content,
+// which Radix unmounts when the dialog closes: a dialog that opens again starts
+// with an empty field, however it was closed (Cancel, Escape, the page). The
+// field takes none of the guesses of a keyboard (correct, capitalize, complete):
+// the text is typed as it is written.
+function ConfirmContent({
+  title,
+  description,
+  confirmLabel,
+  cancelLabel,
+  tone,
+  requireText,
+  pending,
+  onConfirm,
+}: ConfirmContentProps) {
+  const t = useTranslations("common");
+  const fieldId = React.useId();
+  const [typed, setTyped] = React.useState("");
+
+  return (
+    <>
+      <DialogHeader className="pr-0">
+        <DialogTitle>{title}</DialogTitle>
+        {description ? (
+          <DialogDescription>{description}</DialogDescription>
+        ) : null}
+      </DialogHeader>
+      {requireText ? (
+        <Field
+          label={t("typeToConfirm", { text: requireText })}
+          htmlFor={fieldId}
+        >
+          <Input
+            value={typed}
+            onChange={(event) => setTyped(event.target.value)}
+            disabled={pending}
+            autoComplete="off"
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck={false}
+          />
+        </Field>
+      ) : null}
+      <DialogFooter>
+        <DialogClose asChild>
+          <Button variant="outline" disabled={pending}>
+            {cancelLabel}
+          </Button>
+        </DialogClose>
+        <Button
+          variant={confirmVariant(tone)}
+          loading={pending}
+          disabled={!confirmationReady(typed, requireText)}
+          onClick={onConfirm}
+        >
+          {confirmLabel}
+        </Button>
+      </DialogFooter>
+    </>
+  );
+}
+
 export {
+  confirmationReady,
   ConfirmDialog,
   confirmRole,
   confirmThenClose,

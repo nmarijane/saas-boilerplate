@@ -119,6 +119,12 @@ function Toaster({ icons: callerIcons, toastOptions, ...props }: ToasterProps) {
       // Whatever is neither an error nor an undo stays as long as a success.
       duration={TOAST_DURATION.success}
       containerAriaLabel={t("notifications")}
+      // On a phone the shell has a tab bar, stuck to the bottom of the screen, which a toast
+      // must not sit over: an error stays until it is closed, and would hide the tabs for as
+      // long. The toaster is outside the shell, so it reads the height of the bar from the
+      // token that the page carries (global.css), which is 0 where there is no bar: a rem
+      // clear of it, as sonner leaves a rem round the screen.
+      mobileOffset={{ bottom: "calc(var(--tab-bar-height, 0px) + 1rem)" }}
       {...props}
       icons={{ ...icons, ...callerIcons }}
       toastOptions={{

@@ -47,6 +47,16 @@ export const OverTheLimit: Story = {
   args: { value: 120 },
 };
 
+/** A screen reader reads `valueText` in place of the percentage: "12 of 50 used". It is read from the markup, not seen. */
+export const WithValueText: Story = {
+  args: {
+    label: "Projects",
+    value: 12,
+    max: 50,
+    valueText: "12 of 50 used",
+  },
+};
+
 /** The brand gradient, whatever the value: for progress that is not a quota. */
 export const Signature: Story = {
   args: { value: 64, tone: "signature", label: "Setup progress" },
@@ -83,14 +93,21 @@ function Quota({
           {max < 0 ? "Unlimited" : `${value} / ${max}`}
         </span>
       </div>
-      <ProgressBar label={unit} value={value} max={max} />
+      <ProgressBar
+        label={unit}
+        value={value}
+        max={max}
+        valueText={`${value} of ${max} used`}
+      />
     </div>
   );
 }
 
 /**
- * How a bar is used: the label names the unit for assistive technology, and
- * the figures beside the bar say it to everyone else.
+ * How a bar is used: the label names the unit for assistive technology, the
+ * value text reads the value as a sentence ("8 of 10 used", where a bare 8 says
+ * nothing of what it is out of), and the figures beside the bar say it to
+ * everyone else.
  */
 export const InContext: Story = {
   render: () => (

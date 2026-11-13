@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { PlusIcon, RefreshCwIcon } from "lucide-react";
+import { expect, fn, userEvent, within } from "storybook/test";
 
 import { Button } from "./button";
 
@@ -120,8 +121,23 @@ export const Sizes: Story = {
   ),
 };
 
+/**
+ * A loading button shows a spinner and holds its clicks, but it is not disabled:
+ * it keeps its focus (press Tab to reach it) and says `aria-disabled` and
+ * `data-loading`. Click it, or press Enter on it: the handler does not run, and
+ * a submit button sends no form.
+ */
 export const Loading: Story = {
-  args: { children: "Save", loading: true },
+  args: { children: "Save", loading: true, onClick: fn() },
+  play: async ({ args, canvasElement }) => {
+    const button = within(canvasElement).getByRole("button");
+
+    await userEvent.click(button);
+
+    await expect(button).toHaveAttribute("aria-disabled", "true");
+    await expect(button).not.toBeDisabled();
+    await expect(args.onClick).not.toHaveBeenCalled();
+  },
 };
 
 export const LoadingWithText: Story = {

@@ -31,6 +31,7 @@ const colorGroups = [
     "--warning-bar",
     "--danger",
     "--danger-text",
+    "--danger-bg",
     "--danger-on",
   ],
   ["--track", "--bar"],
@@ -45,7 +46,13 @@ const colorGroups = [
     "--tone-3-ink",
     "--tone-4-ink",
   ],
-  ["--btn-primary-hover", "--btn-primary-active", "--btn-primary-edge"],
+  [
+    "--btn-primary-hover",
+    "--btn-primary-active",
+    "--btn-primary-edge",
+    "--btn-danger-hover",
+    "--btn-danger-active",
+  ],
   ["--scrim"],
 ] as const;
 
@@ -56,6 +63,7 @@ const typeScale = [
   "text-body",
   "text-section",
   "text-panel",
+  "text-entity",
   "text-page",
   "text-key",
 ] as const;

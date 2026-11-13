@@ -53,22 +53,22 @@ export const Activity: Story = {
       <CardContent>
         <List>
           <ListRow
-            leading={<IconTile icon={UserPlusIcon} size="sm" tone={4} />}
+            leading={<IconTile icon={UserPlusIcon} size="sm" tone="t4" />}
             title="Léa Martin joined the team"
             trailing="1 h ago"
           />
           <ListRow
-            leading={<IconTile icon={ReceiptIcon} size="sm" tone={2} />}
+            leading={<IconTile icon={ReceiptIcon} size="sm" tone="t2" />}
             title="November invoice paid"
             trailing={<span className="font-mono tabular-nums">$29.00</span>}
           />
           <ListRow
-            leading={<IconTile icon={SendIcon} size="sm" tone={3} />}
+            leading={<IconTile icon={SendIcon} size="sm" tone="t3" />}
             title="Project Orbit published"
             trailing="Yesterday"
           />
           <ListRow
-            leading={<IconTile icon={KeyRoundIcon} size="sm" tone={1} />}
+            leading={<IconTile icon={KeyRoundIcon} size="sm" tone="t1" />}
             title="API key Production created"
             trailing="Mon"
           />
@@ -90,7 +90,7 @@ export const Linked: Story = {
         <List>
           <ListRow
             href="/projects/atlas"
-            leading={<IconTile icon={FolderIcon} tone={1} />}
+            leading={<IconTile icon={FolderIcon} tone="t1" />}
             title="Atlas"
             meta={<StatusDot tone="success" label="Online" />}
             trailing={
@@ -99,7 +99,7 @@ export const Linked: Story = {
           />
           <ListRow
             href="/projects/orbit"
-            leading={<IconTile icon={FolderIcon} tone={2} />}
+            leading={<IconTile icon={FolderIcon} tone="t2" />}
             title="Orbit"
             meta={<StatusDot tone="success" label="Online" />}
             trailing={
@@ -108,7 +108,7 @@ export const Linked: Story = {
           />
           <ListRow
             href="/projects/relay"
-            leading={<IconTile icon={FolderIcon} tone={4} />}
+            leading={<IconTile icon={FolderIcon} tone="t4" />}
             title="Relay"
             meta={<StatusDot tone="neutral" label="Draft" />}
             trailing={
@@ -170,13 +170,13 @@ export const LongText: Story = {
       <CardContent>
         <List>
           <ListRow
-            leading={<IconTile icon={ReceiptIcon} size="sm" tone={2} />}
+            leading={<IconTile icon={ReceiptIcon} size="sm" tone="t2" />}
             title="La facture de novembre de votre studio a été réglée"
             meta="Par carte bancaire, le 1er novembre"
             trailing={<span className="font-mono tabular-nums">29,00 $</span>}
           />
           <ListRow
-            leading={<IconTile icon={UserPlusIcon} size="sm" tone={4} />}
+            leading={<IconTile icon={UserPlusIcon} size="sm" tone="t4" />}
             title="lea.martin.studio-nord@example.com"
             trailing="Il y a 1 h"
           />

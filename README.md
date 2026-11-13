@@ -9,16 +9,89 @@ Clone this once, and go straight to building what makes your product unique.
 
 [![CI](https://github.com/nmarijane/saas-boilerplate/actions/workflows/ci.yml/badge.svg)](https://github.com/nmarijane/saas-boilerplate/actions/workflows/ci.yml)
 ![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/nmarijane/saas-boilerplate/badges/coverage.json)
-![Node.js](https://img.shields.io/badge/Node.js-22-339933?logo=nodedotjs&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-22.13%2B-339933?logo=nodedotjs&logoColor=white)
 ![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-blue)
 
 **20+ features** -- Auth, Stripe, RBAC, API keys, webhooks, feature flags, admin panel, and more.
 **Zero config** -- `npm install && npm run db:seed && npm run dev`. Local PGlite database, no external service needed.
 **AI-native** -- `CLAUDE.md` + `docs/SETUP.md` included so your agents have full context from day one.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/home-desktop-dark.png">
+  <img src="docs/screenshots/home-desktop-light.png" alt="The home of a workspace: a greeting, usage cards for projects, members, storage and AI credits, the latest projects, the first steps to take and the recent activity of the team." width="900">
+</picture>
+
 </div>
+
+---
+
+## Workspace
+
+Projects are the example entity: a list, a page for each project, and its settings. Replace them with your own.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/projects-desktop-dark.png">
+  <img src="docs/screenshots/projects-desktop-light.png" alt="The projects of a workspace as a grid of cards, each with its status and when it last changed." width="100%">
+</picture>
+
+## Mobile navigation
+
+Under 480 px the sidebar becomes a tab bar: up to four pages, then More, which opens the rest in a drawer.
+
+<p>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/home-mobile-dark.png">
+    <img src="docs/screenshots/home-mobile-light.png" alt="The home on a phone: the usage cards in one column, and a tab bar at the bottom with Home, Projects, Assistant and More." width="300">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/menu-mobile-dark.png">
+    <img src="docs/screenshots/menu-mobile-light.png" alt="The More drawer on a phone: the workspace switcher, the pages, Settings, Help and the account menu." width="300">
+  </picture>
+</p>
+
+## Replaceable design system
+
+The look is a set of tokens in `src/styles/theme.css`, and no component holds a color of its own. Four of them set a brand. The default theme is on the left, another brand on the right:
+
+```css
+--brand: #E5484D;
+--brand-2: #F76B15;
+--corner-card: 4px;
+--typeface-display: Georgia, serif;
+```
+
+A mid-tone brand like this red also needs a dark ink on it (`--brand-on`) and lighter hover and press colors, which the picture on the right sets too: see [Rebrand in one file](docs/SETUP.md#rebrand-in-one-file).
+
+<p>
+  <img src="docs/screenshots/home-desktop-light.png" alt="The home with the default theme: blue buttons and bars, rounded cards and a sans-serif title." width="49%">
+  <img src="docs/screenshots/rebrand-desktop-light.png" alt="The same home rebranded: red buttons, bars and links, squarer cards and serif titles." width="49%">
+</p>
+
+## Organizations
+
+Workspaces with owner, admin and member roles. Switch between them from the sidebar, invite people, and manage the team from the settings.
+
+<p>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/switcher-desktop-dark.png">
+    <img src="docs/screenshots/switcher-desktop-light.png" alt="The workspace switcher open in the sidebar, listing Acme on the Pro plan and Northwind on the Free plan." width="49%">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/team-desktop-dark.png">
+    <img src="docs/screenshots/team-desktop-light.png" alt="The team page: three members with the roles of owner, admin and member, and a button to invite another one." width="49%">
+  </picture>
+</p>
+
+## AI assistant
+
+A chat that works with OpenAI, Anthropic, Google or Groq, and a monthly credit balance for each workspace, tied to its plan (a new workspace starts with none: the flow that sells a plan, which the boilerplate does not have yet, is where its credits are allocated). Ollama is wired as a provider, but no model of the list runs on it yet: to use it, add one to the model list (`src/features/ai/config/models.ts`).
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/assistant-desktop-dark.png">
+  <img src="docs/screenshots/assistant-desktop-light.png" alt="The AI assistant: a conversation that drafts a launch email, a model picker and the credit balance of the workspace." width="100%">
+</picture>
 
 ---
 
@@ -51,7 +124,7 @@ Clone this once, and go straight to building what makes your product unique.
 git clone https://github.com/nmarijane/saas-boilerplate.git my-saas
 cd my-saas
 
-# Install
+# Install (Node 22.13 or later: `.nvmrc` says 22)
 npm install
 
 # Create the local PGlite database (./local.db) with the dev accounts
@@ -108,9 +181,9 @@ Open [http://localhost:3088](http://localhost:3088). See the full [Setup Guide](
 
 **Core** -- Authentication (email, Google, GitHub, MFA), multi-tenancy (orgs, RBAC), Stripe billing (checkout, portal, webhooks), onboarding wizard
 
-**Platform** -- Dashboard with real-time stats, admin panel (users, orgs, audit log, feature flags, changelog, metrics), settings (profile, team, billing, API keys, webhooks), in-app notifications
+**Platform** -- A connected app shell (sidebar, workspace switcher, account menu, tab bar on phones), a workspace home (quotas against the plan, first steps, latest activity), admin panel (users, orgs, audit log, feature flags, changelog, waitlist, metrics), settings in five groups (account, team, billing, developers with API keys and webhooks, notifications), in-app notifications
 
-**Developer** -- API keys (SHA-256 hashed, scoped), webhooks (HMAC-SHA256 signed, delivery log), feature flags (plan/org gating), event bus (17 types), audit log, file upload (local + S3), rate limiting (memory/Redis/Upstash), feedback widget, email templates, health check
+**Developer** -- API keys (SHA-256 hashed, scoped), webhooks (HMAC-SHA256 signed, delivery log), feature flags (plan/org gating), an event bus, audit log, file upload (local + S3), rate limiting (memory/Redis/Upstash), feedback widget, email templates, health check
 
 **Security** -- Security headers (CSP, HSTS, X-Frame-Options), Zod validation, session-based API auth, role-based access control, `safeAction` error wrapper
 
@@ -124,35 +197,47 @@ Open [http://localhost:3088](http://localhost:3088). See the full [Setup Guide](
 src/
   app/                    # Next.js routes (App Router)
     [locale]/             # i18n routing (en, fr)
-      (marketing)/        # Public pages (landing, pricing, about)
-      (auth)/             # Sign-in, sign-up, verify, forgot password
-      (app)/              # Protected app (dashboard, settings)
-      (admin)/            # Admin panel
+      (marketing)/        # Public pages (landing, pricing, about, blog, changelog, legal, waitlist)
+      (auth)/             # Sign-in, sign-up, verify-email, forgot-password, reset-password
+      (app)/              # Signed-in app
+        (shell)/          # Pages inside the app shell (dashboard, projects, ai, settings, admin)
+        onboarding/       # Welcome steps, without the shell
     api/                  # API routes
-  features/               # 18 feature modules (isolated)
+  features/               # Feature modules (isolated)
+    registry.ts           # The features installed, one line each
+    app-shell.ts          # Data of the app shell, titles of the pages
     admin/                # Admin panel (users, orgs, metrics)
+    ai/                   # AI assistant (chat, credits)
     api-keys/             # API key management (SHA-256)
     audit/                # Audit log with retention
     auth/                 # Better Auth, organizations, RBAC
     billing/              # Stripe, plans, webhooks
+    blog/                 # Blog (MDX articles in content/blog)
     changelog/            # Product changelog
-    dashboard/            # Dashboard with real-time stats
+    dashboard/            # Workspace home (activity, first steps)
     email/                # React Email templates
-    events/               # Event bus (17 types)
+    events/               # Event bus
     feature-flags/        # Feature flags (plan/org gating)
     feedback/             # Feedback widget + admin review
     jobs/                 # Background jobs (Inngest)
     notifications/        # In-app notifications
     onboarding/           # 3-step wizard
+    projects/             # Example entity (list, page, settings)
     settings/             # User & org settings
     upload/               # File upload (local + S3)
+    waitlist/             # Waitlist
     webhooks/             # Webhook delivery + HMAC signatures
   shared/                 # Shared code
-    components/           # shadcn/ui + reusable components
+    components/           # shadcn/ui, app shell, foundations stories and reusable components
+    config/               # App name, help link, protected paths
     hooks/                # React hooks
     lib/                  # DB, env, logger, i18n, SEO, rate-limit
+    shell/                # FeatureShell contract and shell view
+    types/                # Global types
+    utils/                # Generic helpers
   models/                 # Drizzle ORM schemas
   locales/                # Translation files (en.json, fr.json)
+  styles/                 # Theme tokens (theme.css), Tailwind mapping (global.css), fonts
   proxy.ts                # Rate limiting, i18n, auth guards
 ```
 
@@ -175,13 +260,13 @@ npm run format           # Prettier
 # Testing
 npm run test             # Vitest (unit + integration)
 npm run test:watch       # Vitest in watch mode
-npm run test:e2e         # Playwright E2E tests
+npm run test:e2e         # Playwright E2E tests: builds the app and serves it on port 3090 over a throwaway database
 
 # Database
 npm run db:generate      # Generate Drizzle migration
-npm run db:migrate       # Apply migrations to PostgreSQL (DATABASE_URL); PGlite uses db:seed
+npm run db:migrate       # Apply migrations to PostgreSQL (DATABASE_URL, from .env.local like the app); PGlite uses db:seed
 npm run db:studio        # Open Drizzle Studio
-npm run db:seed          # Apply migrations (PGlite included), then seed plans, admin + dev user; safe to re-run (stop npm run dev first)
+npm run db:seed          # Apply migrations (PGlite included), seed the plans, then the admin, dev and demo accounts (password admin123): not in production, and only on a local database (SEED_DEMO=1 for any other); prints the database it targets; safe to re-run (stop npm run dev first)
 
 # Production
 npm run build            # Production build
@@ -204,7 +289,7 @@ STRIPE_SECRET_KEY=         # Stripe secret key
 STRIPE_WEBHOOK_SECRET=     # Stripe webhook signing secret
 
 # Optional
-NEXT_PUBLIC_APP_URL=       # App URL (default: http://localhost:3000)
+NEXT_PUBLIC_APP_URL=       # App URL (default: http://localhost:3088)
 GOOGLE_CLIENT_ID=          # Google OAuth
 GOOGLE_CLIENT_SECRET=
 GITHUB_CLIENT_ID=          # GitHub OAuth
@@ -215,13 +300,17 @@ SMTP_USER=
 SMTP_PASS=
 EMAIL_FROM=
 SENTRY_DSN=                # Sentry error tracking
+OPENAI_API_KEY=            # AI assistant: it is on as soon as one provider has a key
+ANTHROPIC_API_KEY=         #   (OLLAMA_BASE_URL is wired too, but no model of the list runs on it yet)
+GOOGLE_GENERATIVE_AI_API_KEY=
+GROQ_API_KEY=
 S3_BUCKET=                 # S3 file storage (optional, local by default)
 S3_REGION=
 S3_ACCESS_KEY=
 S3_SECRET_KEY=
 ```
 
-> For local development, no environment variables are needed. The app uses PGlite (in-memory DB) and falls back to sensible defaults.
+> For local development, no environment variables are needed. The app uses PGlite, a database kept in `./local.db` (`PGLITE_DATA_DIR` moves it), and falls back to sensible defaults.
 
 ---
 
@@ -244,14 +333,14 @@ npm run docker:up
 
 ## What is saas-boilerplate?
 
-saas-boilerplate is a production-ready Next.js 16 starter kit for building SaaS applications in 2026. It includes authentication (Better Auth), Stripe billing, multi-tenancy with RBAC, API keys, webhooks, feature flags, an admin panel, and 20+ pre-built features — all wired together and tested. Clone it, run `npm install && npm run dev`, and start building your product logic immediately. No configuration required.
+saas-boilerplate is a production-ready Next.js 16 starter kit for building SaaS applications in 2026. It includes authentication (Better Auth), Stripe billing, multi-tenancy with RBAC, API keys, webhooks, feature flags, an admin panel, and 20+ pre-built features — all wired together and tested. Clone it, run `npm install && npm run db:seed && npm run dev`, and start building your product logic immediately. No configuration required.
 
 ---
 
 ## Why saas-boilerplate?
 
 - **Better Auth, not Clerk or Supabase Auth** — self-hosted auth with organizations, RBAC, MFA, and no per-seat pricing. Stop paying $25/mo per team member just for login.
-- **Zero-setup local dev** — PGlite in-memory database means no Docker, no Postgres setup. Just `npm run dev`.
+- **Zero-setup local dev** — PGlite, a database kept in a local folder (`./local.db`), means no Docker and no Postgres setup. Run `npm run db:seed`, then `npm run dev`.
 - **AI-native from day one** — `CLAUDE.md` and structured docs are included so Claude Code and other coding agents have full project context immediately. Your agents don't waste tokens rediscovering your stack.
 - **20+ features, production-tested** — auth, billing, multi-tenancy, audit log, webhooks, feature flags, admin panel, file upload, rate limiting. Not stubs — working implementations.
 - **Claude Code AI reviewer on every PR** — automated code review for security, quality, and convention adherence, built into CI.
@@ -287,7 +376,7 @@ Clerk charges per monthly active user (~$0.02/MAU after free tier). At 10,000 us
 Yes. See the [Deployment](#deployment) section. Connect your repo, set env vars, done.
 
 **What database does this use?**
-PostgreSQL in production via Drizzle ORM. PGlite (in-memory) for local development — no Docker required.
+PostgreSQL in production via Drizzle ORM. PGlite (a local folder, `./local.db`) for local development — no Docker required.
 
 **Is there a version with Supabase or Prisma?**
 No. This stack is opinionated: Drizzle + Better Auth + Next.js App Router. If you want Prisma or Supabase Auth, this is not the right template.

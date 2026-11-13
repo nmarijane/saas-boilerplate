@@ -91,7 +91,8 @@ export const WithDisabledTab: Story = {
 /**
  * French labels run longer. The tabs never shrink: in a container too narrow
  * for them, as here and on a phone, the strip scrolls sideways, and the line
- * stays under the active tab.
+ * stays under the active tab. The page opens on the second tab, which the strip
+ * brings into view.
  */
 export const LongLabels: Story = {
   args: { defaultValue: "facturation" },
@@ -118,6 +119,48 @@ export const LongLabels: Story = {
       <TabsContent value="membres">
         <p className="text-ink-soft">Qui peut voir et modifier le projet.</p>
       </TabsContent>
+    </Tabs>
+  ),
+};
+
+const sections = [
+  ["overview", "Overview"],
+  ["activity", "Activity"],
+  ["members", "Members"],
+  ["billing", "Billing"],
+  ["developers", "Developers"],
+  ["notifications", "Notifications"],
+] as const;
+
+/**
+ * More tabs than a phone holds, and the page opens on one of the last: the
+ * strip scrolls it into view when it loads (without an animation) and each time
+ * the selection changes, with a glide that reduced motion turns off. Click the
+ * first tab, or move with the arrow keys, and the strip follows.
+ */
+export const ActiveTabOutOfSight: Story = {
+  args: { defaultValue: "notifications" },
+  decorators: [
+    (Story) => (
+      <div className="w-80 max-w-full">
+        <Story />
+      </div>
+    ),
+  ],
+  render: (args) => (
+    <Tabs {...args}>
+      <TabsList aria-label="Account sections">
+        {sections.map(([value, label]) => (
+          <TabsTrigger key={value} value={value}>
+            {label}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+      {sections.map(([value, label]) => (
+        <TabsContent key={value} value={value}>
+          <p className="text-ink-soft">{label}</p>
+        </TabsContent>
+      ))}
     </Tabs>
   ),
 };

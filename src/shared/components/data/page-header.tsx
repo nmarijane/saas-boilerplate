@@ -1,26 +1,8 @@
 import type { LucideIcon } from "lucide-react";
-import { EllipsisIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { Button } from "@/shared/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
+import type { PageHeaderAction } from "@/shared/components/data/more-actions";
+import { MoreActions } from "@/shared/components/data/more-actions";
 import { IconTile } from "@/shared/components/ui/icon-tile";
 import { cn } from "@/shared/utils/cn";
-
-interface PageHeaderAction {
-  label: string;
-  /** Called with nothing: the event of the menu is not its business. */
-  onSelect: () => void;
-  /** Drawn before the label. */
-  icon?: LucideIcon;
-  /** For an action that deletes or cannot be undone: it goes last, after a separator, in the danger color. */
-  destructive?: boolean;
-}
 
 interface PageHeaderProps {
   /** The one `h1` of the page. */
@@ -48,56 +30,6 @@ interface PageHeaderProps {
   /** Under the alert: the `TabsList` of the page, or its links. */
   tabs?: React.ReactNode;
   className?: string;
-  /** The name `context` had: an alias, for the pages written before it. */
-  description?: string;
-  /** The slot the actions had: drawn where `primaryAction` goes, when there is none. */
-  actions?: React.ReactNode;
-}
-
-// A destructive action goes last, after a separator, wherever it was given: it
-// never sits against the others, where a slip of the finger would reach it.
-function MoreActions({ actions }: { actions: PageHeaderAction[] }) {
-  const t = useTranslations("common");
-  const regular = actions.filter((action) => !action.destructive);
-  const destructive = actions.filter((action) => action.destructive);
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" aria-label={t("moreActions")}>
-          <EllipsisIcon />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" collisionPadding={8} className="w-56">
-        {regular.map((action) => (
-          <ActionRow key={action.label} {...action} />
-        ))}
-        {regular.length > 0 && destructive.length > 0 ? (
-          <DropdownMenuSeparator />
-        ) : null}
-        {destructive.map((action) => (
-          <ActionRow key={action.label} {...action} />
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
-function ActionRow({
-  label,
-  onSelect,
-  icon: Icon,
-  destructive,
-}: PageHeaderAction) {
-  return (
-    <DropdownMenuItem
-      variant={destructive ? "destructive" : "default"}
-      onSelect={() => onSelect()}
-    >
-      {Icon ? <Icon /> : null}
-      {label}
-    </DropdownMenuItem>
-  );
 }
 
 // The header of a page: a tile, the title and its context line, then the
@@ -118,12 +50,7 @@ export function PageHeader({
   alert,
   tabs,
   className,
-  description,
-  actions,
 }: PageHeaderProps) {
-  const contextLine = context ?? description;
-  const primary = primaryAction ?? actions;
-
   let picture: React.ReactNode = null;
   if (illustration) {
     picture = (
@@ -161,22 +88,22 @@ export function PageHeader({
             <h1 className="font-display text-page max-[30rem]:text-panel font-semibold tracking-tight text-balance wrap-break-word text-ink">
               {title}
             </h1>
-            {contextLine ? (
+            {context ? (
               <div
                 data-slot="page-header-context"
                 className="text-meta wrap-break-word text-ink-muted"
               >
-                {contextLine}
+                {context}
               </div>
             ) : null}
           </div>
         </div>
-        {primary || moreActions.length > 0 ? (
+        {primaryAction || moreActions.length > 0 ? (
           <div
             data-slot="page-header-actions"
             className="flex flex-wrap items-center gap-x-2 gap-y-3"
           >
-            {primary}
+            {primaryAction}
             {moreActions.length > 0 ? (
               <MoreActions actions={moreActions} />
             ) : null}

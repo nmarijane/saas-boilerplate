@@ -46,6 +46,24 @@ export const Simple: Story = {
   ),
 };
 
+/** A card that is a section of the page takes the heading it needs with `as`, here a level 2: the look does not change, the structure does. The default stays a div, for a card that is only a block. */
+export const TitleAsHeading: Story = {
+  decorators: narrow,
+  render: () => (
+    <Card>
+      <CardHeader>
+        <CardTitle as="h2">Profile</CardTitle>
+        <CardDescription>
+          Shown to the people of your workspace.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <p className="text-body">Camille Laurent</p>
+      </CardContent>
+    </Card>
+  ),
+};
+
 /** One main button per zone: the other action stays quiet. */
 export const WithFooter: Story = {
   decorators: narrow,
@@ -102,9 +120,9 @@ export const CustomEdge: Story = {
 };
 
 const usage = [
-  { icon: FolderIcon, tone: 1, name: "Projects", figure: "12 of 50" },
-  { icon: UsersIcon, tone: 3, name: "Members", figure: "4 of 10" },
-  { icon: ZapIcon, tone: 2, name: "AI credits", figure: "4,120 of 5,000" },
+  { icon: FolderIcon, tone: "t1", name: "Projects", figure: "12 of 50" },
+  { icon: UsersIcon, tone: "t3", name: "Members", figure: "4 of 10" },
+  { icon: ZapIcon, tone: "t2", name: "AI credits", figure: "4,120 of 5,000" },
 ] as const;
 
 /** A handful of items reads better as cards than as a table. */

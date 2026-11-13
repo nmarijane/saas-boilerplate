@@ -1,26 +1,28 @@
 "use client";
 
-import { GithubIcon, LoaderCircleIcon } from "lucide-react";
+import type {
+  AccountRecord,
+  AccountsClient,
+  ProviderId,
+} from "../account-flows";
+import { GithubIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
-
 import { authClient } from "@/features/auth/auth-client";
+import { ListSkeleton } from "@/shared/components/data/skeletons";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
-import { Skeleton } from "@/shared/components/ui/skeleton";
+import { IconTile } from "@/shared/components/ui/icon-tile";
+import { List, ListRow } from "@/shared/components/ui/list";
+import { PageAlert } from "@/shared/components/ui/page-alert";
 import { toast } from "@/shared/components/ui/sonner";
-
-interface Account {
-  id: string;
-  providerId: string;
-}
+import { reportHandledError } from "@/shared/utils/report-error";
+import { linkProviderFlow, unlinkAccountFlow } from "../account-flows";
 
 const PROVIDERS = [
   { id: "google", label: "Google" },
   { id: "github", label: "GitHub" },
-] as const;
-
-type ProviderId = (typeof PROVIDERS)[number]["id"];
+] as const satisfies readonly { id: ProviderId; label: string }[];
 
 function GoogleIcon() {
   return (
@@ -45,135 +47,217 @@ function GoogleIcon() {
   );
 }
 
-function ProviderIcon({ provider }: { provider: string }) {
-  switch (provider) {
-    case "google":
-      return <GoogleIcon />;
-    case "github":
-      return <GithubIcon className="size-4" />;
-    default:
-      return null;
-  }
+function ProviderIcon({ provider }: { provider: ProviderId }) {
+  return provider === "google" ? <GoogleIcon /> : <GithubIcon />;
 }
 
-export function ConnectedAccounts() {
+type AccountsStatus = "loading" | "failed" | "ready";
+
+interface ConnectedAccountsViewProps {
+  status: AccountsStatus;
+  accounts: AccountRecord[];
+  /** The provider whose button is working: its button loads, and the others wait. */
+  busy: ProviderId | null;
+  onConnect: (provider: ProviderId) => void;
+  onDisconnect: (provider: ProviderId) => void;
+  onRetry: () => void;
+  /** The id of the title of the card, which names the list: a screen reader says "Connected accounts, list, 2 items". */
+  labelledBy: string;
+}
+
+// The providers the person can sign in with, one row each: a tile with its mark,
+// its name, "Connected" when it is linked (a quiet badge) and the button that
+// links or unlinks it. The accounts are read when the card mounts, so the card
+// is drawn as a skeleton first, and says so when they could not be read, with a
+// way to try again. A button says whom it acts on, for those who hear it: two
+// rows would otherwise both read "Connect". The last way to sign in cannot be
+// unlinked: that button is disabled, and says why. A button that works loads and
+// keeps its place and its focus, and the other waits. The list is named by the
+// title of its card.
+export function ConnectedAccountsView({
+  status,
+  accounts,
+  busy,
+  onConnect,
+  onDisconnect,
+  onRetry,
+  labelledBy,
+}: ConnectedAccountsViewProps) {
   const t = useTranslations("settings");
   const tCommon = useTranslations("common");
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
-
-  const fetchAccounts = useCallback(async () => {
-    const { data, error } = await authClient.listAccounts();
-    if (error) {
-      toast.error(error.message ?? tCommon("error"));
-      setLoading(false);
-      return;
-    }
-    setAccounts(data ?? []);
-    setLoading(false);
-  }, [tCommon]);
-
-  useEffect(() => {
-    void fetchAccounts();
-  }, [fetchAccounts]);
-
-  const hasCredentialAccount = accounts.some(
-    (account) => account.providerId === "credential",
-  );
   const canDisconnect = accounts.length > 1;
 
-  async function handleConnect(provider: ProviderId) {
-    setActionLoading(provider);
-    await authClient.linkSocial({
-      provider,
-      callbackURL: "/settings/profile",
-    });
-    setActionLoading(null);
+  if (status === "loading") {
+    return <ListSkeleton rows={PROVIDERS.length} />;
   }
 
-  async function handleDisconnect(providerId: string) {
-    if (!canDisconnect && !hasCredentialAccount) {
-      toast.error(t("cannotDisconnect"));
-      return;
-    }
-
-    const account = accounts.find((a) => a.providerId === providerId);
-    if (!account) return;
-
-    setActionLoading(providerId);
-    // Better Auth 1.7 unlinks by account record id, no longer by provider
-    const { error } = await authClient.unlinkAccount({ accountId: account.id });
-
-    if (error) {
-      toast.error(error.message ?? tCommon("error"));
-      setActionLoading(null);
-      return;
-    }
-
-    setAccounts((prev) => prev.filter((a) => a.providerId !== providerId));
-    setActionLoading(null);
-  }
-
-  if (loading) {
+  if (status === "failed") {
     return (
-      <div className="space-y-3">
-        <Skeleton className="h-14 w-full" />
-        <Skeleton className="h-14 w-full" />
-      </div>
+      <PageAlert
+        tone="danger"
+        action={
+          <Button type="button" variant="outline" size="sm" onClick={() => onRetry()}>
+            {tCommon("retry")}
+          </Button>
+        }
+      >
+        {t("connectedAccountsFailed")}
+      </PageAlert>
     );
   }
 
   return (
-    <div className="space-y-3">
-      {PROVIDERS.map((provider) => {
-        const linked = accounts.find((a) => a.providerId === provider.id);
-        const isActionInProgress = actionLoading === provider.id;
+    <List aria-labelledby={labelledBy}>
+      {PROVIDERS.map(({ id, label }) => {
+        const linked = accounts.some((account) => account.providerId === id);
 
         return (
-          <div
-            key={provider.id}
-            className="flex items-center justify-between rounded-lg border p-4"
-          >
-            <div className="flex items-center gap-3">
-              <ProviderIcon provider={provider.id} />
-              <span className="text-sm font-medium">{provider.label}</span>
-              {linked && (
-                <Badge variant="secondary">{t("connected")}</Badge>
-              )}
-            </div>
-
-            {linked ? (
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={!canDisconnect || isActionInProgress}
-                onClick={() => handleDisconnect(provider.id)}
-                title={!canDisconnect ? t("cannotDisconnect") : undefined}
-              >
-                {isActionInProgress ? (
-                  <LoaderCircleIcon className="size-4 animate-spin" />
-                ) : (
-                  t("disconnect")
-                )}
-              </Button>
-            ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={isActionInProgress}
-                onClick={() => handleConnect(provider.id)}
-              >
-                {isActionInProgress ? (
-                  <LoaderCircleIcon className="size-4 animate-spin" />
-                ) : (
-                  t("connect")
-                )}
-              </Button>
-            )}
-          </div>
+          <ListRow
+            key={id}
+            leading={
+              <IconTile tone="neutral" size="sm">
+                <ProviderIcon provider={id} />
+              </IconTile>
+            }
+            title={
+              <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                {label}
+                {linked ? <Badge variant="neutral">{t("connected")}</Badge> : null}
+              </span>
+            }
+            trailing={
+              linked ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  loading={busy === id}
+                  disabled={!canDisconnect || (busy !== null && busy !== id)}
+                  disabledReason={!canDisconnect ? t("cannotDisconnect") : undefined}
+                  aria-label={t("disconnectProvider", { provider: label })}
+                  onClick={() => onDisconnect(id)}
+                >
+                  {t("disconnect")}
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  loading={busy === id}
+                  disabled={busy !== null && busy !== id}
+                  aria-label={t("connectProvider", { provider: label })}
+                  onClick={() => onConnect(id)}
+                >
+                  {t("connect")}
+                </Button>
+              )
+            }
+          />
         );
       })}
-    </div>
+    </List>
+  );
+}
+
+interface ConnectedAccountsProps {
+  /** The id of the title of the card, which names the list. */
+  labelledBy: string;
+  /** The auth client: the page gives none (it is the app's own), and a story gives one that answers what it is told to. */
+  client?: AccountsClient;
+}
+
+// Linking leaves the app for the provider and comes back to the account page.
+// When the server takes it the browser has started to leave, and the button
+// keeps loading until it has gone: let go at once, it could be pressed again, and
+// a second press would start a second link. It is let go again only when the
+// server refuses (or does not answer), and when the browser brings the page back
+// from its cache (the back button, from the provider), which is as it was left.
+// An account is unlinked by its own id, as Better Auth 1.7 asks; that stays on the page.
+export function ConnectedAccounts({
+  labelledBy,
+  client = authClient,
+}: ConnectedAccountsProps) {
+  const tCommon = useTranslations("common");
+  const [accounts, setAccounts] = useState<AccountRecord[]>([]);
+  const [status, setStatus] = useState<AccountsStatus>("loading");
+  const [busy, setBusy] = useState<ProviderId | null>(null);
+
+  const load = useCallback(async () => {
+    try {
+      const { data, error } = await client.listAccounts();
+      if (error) {
+        reportHandledError(error);
+        setStatus("failed");
+        return;
+      }
+      setAccounts(data ?? []);
+      setStatus("ready");
+    } catch (error) {
+      // Handled with the alert, not hidden: the error reporter of the app still hears it.
+      reportHandledError(error);
+      setStatus("failed");
+    }
+  }, [client]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  useEffect(() => {
+    const comeBack = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        setBusy(null);
+      }
+    };
+    window.addEventListener("pageshow", comeBack);
+
+    return () => window.removeEventListener("pageshow", comeBack);
+  }, []);
+
+  const retry = () => {
+    setStatus("loading");
+    void load();
+  };
+
+  const connect = async (provider: ProviderId) => {
+    if (busy !== null) {
+      return;
+    }
+
+    setBusy(provider);
+    if (await linkProviderFlow(client, provider)) {
+      // The browser is leaving for the provider: the button keeps loading, see above.
+      return;
+    }
+    toast.error(tCommon("error"));
+    setBusy(null);
+  };
+
+  const disconnect = async (provider: ProviderId) => {
+    const account = accounts.find(({ providerId }) => providerId === provider);
+    if (!account || accounts.length < 2 || busy !== null) {
+      return;
+    }
+
+    setBusy(provider);
+    if (await unlinkAccountFlow(client, account.id)) {
+      setAccounts((all) => all.filter(({ id }) => id !== account.id));
+    } else {
+      toast.error(tCommon("error"));
+    }
+    setBusy(null);
+  };
+
+  return (
+    <ConnectedAccountsView
+      status={status}
+      accounts={accounts}
+      busy={busy}
+      onConnect={(provider) => void connect(provider)}
+      onDisconnect={(provider) => void disconnect(provider)}
+      onRetry={retry}
+      labelledBy={labelledBy}
+    />
   );
 }

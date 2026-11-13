@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import en from "@/locales/en.json";
 import fr from "@/locales/fr.json";
 import {
+  confirmationReady,
   ConfirmDialog,
   confirmRole,
   confirmThenClose,
@@ -46,6 +47,14 @@ import {
 } from "@/shared/components/ui/sheet";
 import { ignoringToasts, keepToastClicks } from "@/shared/components/ui/sonner";
 import {
+  activeLink,
+  activeTab,
+  revealInStrip,
+  tabStripStyles,
+  tabStyles,
+  watchActiveTab,
+} from "@/shared/components/ui/tab-strip";
+import {
   Tabs,
   TabsContent,
   TabsList,
@@ -54,6 +63,7 @@ import {
 import { TooltipContent } from "@/shared/components/ui/tooltip";
 import { attribute, classesOf, startTags, tokens } from "../../helpers/html";
 import { renderWithIntl } from "../../helpers/intl";
+import { FRAMEWORK_ERRORS, outcomeOf } from "../../helpers/next-errors";
 
 // A failed confirmation shows an error toast: it is observed where it is handed
 // to sonner.
@@ -424,6 +434,22 @@ describe("floating layers", () => {
     expect(classNamesOf(insidePortal(DropdownMenuContent({})))).toContain("p-1");
   });
 
+  // Radix tells each layer the height the screen leaves it. A submenu that
+  // clipped instead of scrolling, with a long list in it, made the rows below
+  // the fold unreachable on a short screen.
+  it.each([
+    ["a menu", insidePortal(DropdownMenuContent({}))],
+    ["a submenu", DropdownMenuSubContent({})],
+  ])("keeps %s within the height the screen leaves it, and scrolls inside it", (_name, element) => {
+    const classes = classNamesOf(element);
+
+    expect(classes).toContain("max-h-(--radix-dropdown-menu-content-available-height)");
+    expect(classes).toContain("overflow-y-auto");
+    expect(classes).toContain("overflow-x-hidden");
+    // `overflow-hidden` would clip the rows that do not fit, on both axes.
+    expect(classes).not.toContain("overflow-hidden");
+  });
+
   it("writes a menu label in muted 13 px text, like the label of a select", () => {
     const classes = classNamesOf(DropdownMenuLabel({}));
 
@@ -655,6 +681,24 @@ describe("tabs", () => {
     expect(classesOf(list)).toContain("[scrollbar-width:none]");
   });
 
+  it("draws its list and its tabs from the strip it shares with the route tabs, so that the two look alike", () => {
+    // Static markup writes `&`, `>` and `'` of a class as entities.
+    const decoded = (classes: string[]) =>
+      classes.map((name) =>
+        name
+          .replaceAll("&amp;", "&")
+          .replaceAll("&gt;", ">")
+          .replaceAll("&#x27;", "'"),
+      );
+
+    expect(decoded(classesOf(list))).toEqual(
+      expect.arrayContaining(tokens(tabStripStyles)),
+    );
+    expect(decoded(classesOf(triggers[0] ?? ""))).toEqual(
+      expect.arrayContaining(tokens(tabStyles)),
+    );
+  });
+
   it("has dropped the pill look", () => {
     for (const old of ["bg-muted", "h-9", "p-1", "rounded-lg"]) {
       expect(classesOf(list)).not.toContain(old);
@@ -738,6 +782,20 @@ describe("confirm dialog", () => {
       );
     });
 
+    // `redirect()` and `notFound()` throw errors that Next catches higher up, to send the person elsewhere (the session is
+    // gone, the role is too low): a dialog that stayed open with "something went wrong" would hold a person who is on
+    // their way to sign in, and the error reporter would hear of it.
+    it.each(FRAMEWORK_ERRORS)("hands on %s: the dialog does not stay open with an error toast, nothing is reported, and the wait ends", async (_, framework) => {
+      const report = vi.fn();
+      vi.stubGlobal("reportError", report);
+      const { events, done } = run(() => Promise.reject(framework));
+
+      expect(await outcomeOf(done)).toBe(framework);
+      expect(events).toEqual(["pending:true", "pending:false"]);
+      expect(sonnerToast.error).not.toHaveBeenCalled();
+      expect(report).not.toHaveBeenCalled();
+    });
+
     it("does the same when the callback throws", async () => {
       const { events, done } = run(() => {
         throw new Error("Boom");
@@ -792,6 +850,379 @@ describe("confirm dialog", () => {
       expect(changes(true, true)).toEqual([true]);
       expect(changes(false, true)).toEqual([true]);
     });
+  });
+
+  describe("confirmationReady", () => {
+    it("is ready at once when no text is required", () => {
+      expect(confirmationReady("", undefined)).toBe(true);
+      expect(confirmationReady("anything", undefined)).toBe(true);
+    });
+
+    it("takes an empty required text for none: there is nothing to type", () => {
+      expect(confirmationReady("", "")).toBe(true);
+    });
+
+    it("is ready once the field holds the required text, and not before", () => {
+      expect(confirmationReady("", "DELETE")).toBe(false);
+      expect(confirmationReady("DELET", "DELETE")).toBe(false);
+      expect(confirmationReady("DELETE", "DELETE")).toBe(true);
+    });
+
+    it("compares the text as it was typed: case counts, and a space is not dropped", () => {
+      expect(confirmationReady("delete", "DELETE")).toBe(false);
+      expect(confirmationReady("DELETE ", "DELETE")).toBe(false);
+      expect(confirmationReady(" DELETE", "DELETE")).toBe(false);
+    });
+
+    it("reads a name with spaces and accents as it is written", () => {
+      expect(confirmationReady("Studio Nord", "Studio Nord")).toBe(true);
+      expect(confirmationReady("Studio  Nord", "Studio Nord")).toBe(false);
+      expect(confirmationReady("Équipe", "Équipe")).toBe(true);
+      expect(confirmationReady("Equipe", "Équipe")).toBe(false);
+    });
+  });
+
+  describe("typed confirmation", () => {
+    /**
+     * What the dialog hands to its DialogContent, drawn inside a dialog so that
+     * the parts of Radix find their context. The content sits in a portal,
+     * which static markup never reaches: this is where it can be read.
+     */
+    function drawn(
+      props: Partial<React.ComponentProps<typeof ConfirmDialog>> = {},
+      locale: "en" | "fr" = "en",
+    ) {
+      vi.mocked(DialogContent).mockClear();
+      renderWithIntl(
+        <ConfirmDialog
+          open
+          onOpenChange={() => undefined}
+          title="Delete your account?"
+          confirmLabel="Delete account"
+          onConfirm={() => undefined}
+          {...props}
+        />,
+        locale,
+      );
+      const passed = vi.mocked(DialogContent).mock.calls[0]?.[0];
+
+      return renderWithIntl(<Dialog open>{passed?.children}</Dialog>, locale);
+    }
+
+    /** The start tag of the button that carries this label. */
+    function buttonLabelled(html: string, label: string): string {
+      return (
+        new RegExp(`<button[^>]*>${label}</button>`).exec(html)?.[0] ?? ""
+      );
+    }
+
+    it("waits for the typed confirmation", () => {
+      const html = drawn({ requireText: "DELETE" });
+      const label = /<label[^>]*\sfor="([^"]+)"[^>]*>([^<]*)<\/label>/.exec(html);
+      const input = startTags(html, "input")[0] ?? "";
+
+      expect(label?.[2]).toBe("Type DELETE to confirm");
+      expect(attribute(input, "id")).toBe(label?.[1]);
+      expect(attribute(input, "value")).toBe("");
+      expect(attribute(buttonLabelled(html, "Delete account"), "disabled")).toBe(
+        "",
+      );
+    });
+
+    it("asks nothing without a required text: no field, and a button that is ready", () => {
+      const html = drawn();
+
+      expect(startTags(html, "input")).toHaveLength(0);
+      expect(html).not.toContain("<label");
+      expect(
+        attribute(buttonLabelled(html, "Delete account"), "disabled"),
+      ).toBeUndefined();
+    });
+
+    it("takes an empty required text for none", () => {
+      const html = drawn({ requireText: "" });
+
+      expect(startTags(html, "input")).toHaveLength(0);
+      expect(
+        attribute(buttonLabelled(html, "Delete account"), "disabled"),
+      ).toBeUndefined();
+    });
+
+    it("words the field in the language of the page, with the text to type", () => {
+      const html = drawn({ requireText: "DELETE" }, "fr");
+
+      expect(html).toContain(">Saisissez DELETE pour confirmer</label>");
+    });
+
+    it("asks for a name as it is written, whatever it holds", () => {
+      const html = drawn({ requireText: "Studio {Nord} & Co" });
+
+      expect(html).toContain(">Type Studio {Nord} &amp; Co to confirm</label>");
+    });
+
+    it("leaves the keyboard's guesses off the field: there is nothing to correct, capitalize or complete", () => {
+      const input = startTags(drawn({ requireText: "DELETE" }), "input")[0] ?? "";
+
+      // Static markup keeps the camel case of the props: a browser reads
+      // attribute names without regard to case.
+      expect(attribute(input, "autoComplete")).toBe("off");
+      expect(attribute(input, "autoCapitalize")).toBe("off");
+      expect(attribute(input, "autoCorrect")).toBe("off");
+      expect(attribute(input, "spellCheck")).toBe("false");
+    });
+
+    it("keeps Cancel within reach while the confirmation waits", () => {
+      const html = drawn({ requireText: "DELETE" });
+
+      expect(
+        attribute(buttonLabelled(html, en.common.cancel), "disabled"),
+      ).toBeUndefined();
+    });
+
+    it("keeps the red of a danger on the button that waits", () => {
+      const html = drawn({ requireText: "DELETE", tone: "danger" });
+      const tag = buttonLabelled(html, "Delete account");
+
+      expect(classesOf(tag)).toContain("bg-destructive");
+      expect(attribute(tag, "disabled")).toBe("");
+    });
+  });
+});
+
+describe("tab strip", () => {
+  /** An element that is `left` to `right` on the screen. */
+  function boxAt(left: number, right: number) {
+    return {
+      getBoundingClientRect: () => ({ left, right, width: right - left }),
+    };
+  }
+
+  /** A strip that is 0 to 300 on the screen, and records how it is scrolled. */
+  function strip(items: unknown[] = []) {
+    const scrollBy = vi.fn();
+    const querySelector = vi.fn();
+    for (const item of items) {
+      querySelector.mockReturnValueOnce(item);
+    }
+    return Object.assign(boxAt(0, 300), { scrollBy, querySelector });
+  }
+
+  describe("revealInStrip", () => {
+    const reveal = (
+      item: ReturnType<typeof boxAt>,
+      behavior?: ScrollBehavior,
+    ) => {
+      const box = strip();
+      revealInStrip(
+        box as unknown as HTMLElement,
+        item as unknown as HTMLElement,
+        behavior,
+      );
+      return box.scrollBy;
+    };
+
+    it("leaves the strip alone when the tab shows in full", () => {
+      expect(reveal(boxAt(20, 120))).not.toHaveBeenCalled();
+      expect(reveal(boxAt(0, 300))).not.toHaveBeenCalled();
+    });
+
+    it("scrolls back by what a tab cut off at the start hides", () => {
+      expect(reveal(boxAt(-40, 60))).toHaveBeenCalledWith({
+        left: -40,
+        behavior: "auto",
+      });
+    });
+
+    it("scrolls on by what a tab cut off at the end hides", () => {
+      expect(reveal(boxAt(240, 340))).toHaveBeenCalledWith({
+        left: 40,
+        behavior: "auto",
+      });
+    });
+
+    it("scrolls sideways only: the page and the strip's other ancestors stay where they are", () => {
+      const calls = reveal(boxAt(240, 340)).mock.calls;
+
+      expect(Object.keys(calls[0]?.[0] as object).sort()).toEqual([
+        "behavior",
+        "left",
+      ]);
+    });
+
+    it("takes the behavior it is given", () => {
+      expect(reveal(boxAt(240, 340), "smooth")).toHaveBeenCalledWith({
+        left: 40,
+        behavior: "smooth",
+      });
+    });
+
+    it("lines up the start of a tab wider than the strip, and never hides it", () => {
+      expect(reveal(boxAt(20, 420))).toHaveBeenCalledWith({
+        left: 20,
+        behavior: "auto",
+      });
+      expect(reveal(boxAt(-20, 420))).toHaveBeenCalledWith({
+        left: -20,
+        behavior: "auto",
+      });
+    });
+
+    it("moves on the screen's own left and right, so that a right-to-left page works the same", () => {
+      // The strip is at 100 to 400: the tab is cut off at its physical left.
+      const box = Object.assign(boxAt(100, 400), { scrollBy: vi.fn() });
+      revealInStrip(
+        box as unknown as HTMLElement,
+        boxAt(60, 160) as unknown as HTMLElement,
+      );
+
+      expect(box.scrollBy).toHaveBeenCalledWith({ left: -40, behavior: "auto" });
+    });
+  });
+
+  describe("watchActiveTab", () => {
+    const observers: {
+      callback: MutationCallback;
+      observe: ReturnType<typeof vi.fn>;
+      disconnect: ReturnType<typeof vi.fn>;
+    }[] = [];
+
+    class FakeObserver {
+      observe = vi.fn();
+      disconnect = vi.fn();
+      constructor(public callback: MutationCallback) {
+        observers.push(this);
+      }
+    }
+
+    beforeEach(() => {
+      observers.length = 0;
+      vi.stubGlobal("MutationObserver", FakeObserver);
+      vi.stubGlobal("matchMedia", () => ({ matches: false }));
+    });
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    const watch = (
+      box: ReturnType<typeof strip>,
+      active: Parameters<typeof watchActiveTab>[1] = activeTab,
+    ) => watchActiveTab(box as unknown as HTMLElement, active);
+
+    it("names what marks the active tab of a list, and the active link of a nav", () => {
+      expect(activeTab).toEqual({
+        attribute: "data-state",
+        selector: '[data-state="active"]',
+      });
+      expect(activeLink).toEqual({
+        attribute: "aria-current",
+        selector: '[aria-current="page"]',
+      });
+    });
+
+    it("brings the active tab into view when it starts, without an animation", () => {
+      const box = strip([boxAt(240, 340)]);
+
+      watch(box);
+
+      expect(box.querySelector).toHaveBeenCalledWith('[data-state="active"]');
+      expect(box.scrollBy).toHaveBeenCalledTimes(1);
+      expect(box.scrollBy).toHaveBeenCalledWith({ left: 40, behavior: "auto" });
+    });
+
+    it("brings the tab into view again each time the active one changes, with a glide", () => {
+      const box = strip([boxAt(20, 120), boxAt(-60, 40)]);
+
+      watch(box);
+      expect(box.scrollBy).not.toHaveBeenCalled();
+
+      observers[0]?.callback([], observers[0] as unknown as MutationObserver);
+
+      expect(box.scrollBy).toHaveBeenCalledTimes(1);
+      expect(box.scrollBy).toHaveBeenCalledWith({
+        left: -60,
+        behavior: "smooth",
+      });
+    });
+
+    it("does not glide for someone who asks for less motion", () => {
+      vi.stubGlobal("matchMedia", (query: string) => ({
+        matches: query === "(prefers-reduced-motion: reduce)",
+      }));
+      const box = strip([boxAt(20, 120), boxAt(240, 340)]);
+
+      watch(box);
+      observers[0]?.callback([], observers[0] as unknown as MutationObserver);
+
+      expect(box.scrollBy).toHaveBeenCalledWith({ left: 40, behavior: "auto" });
+    });
+
+    it("watches the whole strip for a change of the mark, and nothing else", () => {
+      const box = strip();
+
+      watch(box);
+
+      expect(observers).toHaveLength(1);
+      expect(observers[0]?.observe).toHaveBeenCalledWith(box, {
+        attributes: true,
+        attributeFilter: ["data-state"],
+        subtree: true,
+      });
+    });
+
+    it("watches the mark it is told, as the route tabs mark theirs", () => {
+      const box = strip();
+
+      watch(box, activeLink);
+
+      expect(box.querySelector).toHaveBeenCalledWith('[aria-current="page"]');
+      expect(observers[0]?.observe).toHaveBeenCalledWith(box, {
+        attributes: true,
+        attributeFilter: ["aria-current"],
+        subtree: true,
+      });
+    });
+
+    it("does nothing while no tab is active", () => {
+      const box = strip([null, null]);
+
+      watch(box);
+      observers[0]?.callback([], observers[0] as unknown as MutationObserver);
+
+      expect(box.scrollBy).not.toHaveBeenCalled();
+    });
+
+    it("stops watching when it is told to, as the strip goes away", () => {
+      const stop = watch(strip());
+
+      expect(observers[0]?.disconnect).not.toHaveBeenCalled();
+      stop();
+      expect(observers[0]?.disconnect).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("the sources", () => {
+    const read = (file: string) =>
+      readFileSync(
+        resolve(import.meta.dirname, "../../../src/shared/components/ui", file),
+        "utf-8",
+      );
+
+    it.each(["tabs.tsx", "tab-links.tsx"])(
+      "%s watches its active tab with the watcher of tab-strip.ts",
+      (file) => {
+        const source = read(file);
+
+        expect(source).toContain('from "@/shared/components/ui/tab-strip"');
+        expect(source).toContain("watchActiveTab(");
+      },
+    );
+
+    it.each(["tabs.tsx", "tab-links.tsx"])(
+      "%s is a client component, as it reaches into the DOM",
+      (file) => {
+        expect(read(file).startsWith('"use client"')).toBe(true);
+      },
+    );
   });
 });
 
@@ -952,6 +1383,26 @@ describe("toasts over a modal", () => {
       expect(inside.preventDefault).toHaveBeenCalledTimes(1);
       expect(outside.preventDefault).not.toHaveBeenCalled();
     });
+
+    // It has no Radix Trigger to give the focus back to, so the page that opened
+    // it does, from the handler it passes: left to Radix, the focus is dropped
+    // on the page body when the dialog closes.
+    it("hands onCloseAutoFocus to the content, so that the page that opened it takes the focus back", () => {
+      const onCloseAutoFocus = vi.fn();
+      vi.mocked(DialogContent).mockClear();
+      renderWithIntl(
+        <ConfirmDialog
+          open
+          onOpenChange={() => undefined}
+          title="Delete project?"
+          confirmLabel="Delete"
+          onConfirm={() => undefined}
+          onCloseAutoFocus={onCloseAutoFocus}
+        />,
+      );
+
+      expect(vi.mocked(DialogContent).mock.calls[0]?.[0].onCloseAutoFocus).toBe(onCloseAutoFocus);
+    });
   });
 });
 
@@ -961,5 +1412,16 @@ describe("overlay strings", () => {
       expect(locale.common.close.length).toBeGreaterThan(0);
       expect(locale.common.cancel.length).toBeGreaterThan(0);
     }
+  });
+
+  it("asks for the typed confirmation with the text to type as an argument, in both languages", () => {
+    for (const locale of [en, fr]) {
+      expect(locale.common.typeToConfirm).toContain("{text}");
+    }
+    expect(fr.common.typeToConfirm).not.toBe(en.common.typeToConfirm);
+  });
+
+  it("addresses the reader of the French confirmation as « vous »", () => {
+    expect(fr.common.typeToConfirm).toMatch(/^Saisissez /);
   });
 });

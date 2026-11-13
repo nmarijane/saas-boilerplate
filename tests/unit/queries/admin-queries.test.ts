@@ -65,6 +65,52 @@ describe("admin queries", () => {
     });
   });
 
+  // The lists stop at 100: the people the page leaves out must be the oldest ones, in an
+  // order that does not change between two reads, since `offset` pages through it.
+  describe("the order of getAdminUsers", () => {
+    const DAY = 24 * 60 * 60 * 1000;
+
+    it("lists the newest first", async () => {
+      const now = Date.now();
+      await seedUser("user-old", { createdAt: new Date(now - 3 * DAY), email: "old@test.com" });
+      await seedUser("user-new", { createdAt: new Date(now), email: "new@test.com" });
+      await seedUser("user-mid", { createdAt: new Date(now - DAY), email: "mid@test.com" });
+      const { getAdminUsers } = await import("@/features/admin/queries");
+
+      expect((await getAdminUsers()).map((u) => u.id)).toEqual(["user-new", "user-mid", "user-old"]);
+    });
+
+    it("lists users that share their createdAt by id, descending", async () => {
+      const at = new Date("2026-11-04T10:00:00Z");
+      for (const id of ["user-b", "user-c", "user-a"]) {
+        await seedUser(id, { createdAt: at, email: `${id}@test.com` });
+      }
+      const { getAdminUsers } = await import("@/features/admin/queries");
+
+      expect((await getAdminUsers()).map((u) => u.id)).toEqual(["user-c", "user-b", "user-a"]);
+    });
+
+    it("pages through rows that share their createdAt without repeating or skipping one", async () => {
+      const at = new Date("2026-11-04T10:00:00Z");
+      await testDb.insert(user).values(
+        Array.from({ length: 7 }, (_, index) => ({
+          id: `user-${index}`,
+          name: `User ${index}`,
+          email: `user-${index}@test.com`,
+          emailVerified: true,
+          createdAt: at,
+          updatedAt: at,
+        })),
+      );
+      const { getAdminUsers } = await import("@/features/admin/queries");
+
+      const pages = [await getAdminUsers(3, 0), await getAdminUsers(3, 3), await getAdminUsers(3, 6)];
+      const ids = pages.flat().map((u) => u.id);
+
+      expect(ids).toEqual(["user-6", "user-5", "user-4", "user-3", "user-2", "user-1", "user-0"]);
+    });
+  });
+
   describe("getAdminOrganizations", () => {
     it("returns an empty array when no organizations exist", async () => {
       const { getAdminOrganizations } = await import(
@@ -122,7 +168,134 @@ describe("admin queries", () => {
     });
   });
 
+  describe("the order of getAdminOrganizations", () => {
+    const DAY = 24 * 60 * 60 * 1000;
+
+    it("lists the newest first", async () => {
+      const now = Date.now();
+      await seedOrg("org-old", { slug: "old", createdAt: new Date(now - 3 * DAY) });
+      await seedOrg("org-new", { slug: "new", createdAt: new Date(now) });
+      await seedOrg("org-mid", { slug: "mid", createdAt: new Date(now - DAY) });
+      const { getAdminOrganizations } = await import("@/features/admin/queries");
+
+      expect((await getAdminOrganizations()).map((o) => o.id)).toEqual(["org-new", "org-mid", "org-old"]);
+    });
+
+    it("lists organizations that share their createdAt by id, descending", async () => {
+      const at = new Date("2026-11-04T10:00:00Z");
+      for (const id of ["org-b", "org-c", "org-a"]) {
+        await seedOrg(id, { slug: id, createdAt: at });
+      }
+      const { getAdminOrganizations } = await import("@/features/admin/queries");
+
+      expect((await getAdminOrganizations()).map((o) => o.id)).toEqual(["org-c", "org-b", "org-a"]);
+    });
+
+    it("pages through rows that share their createdAt without repeating or skipping one", async () => {
+      const at = new Date("2026-11-04T10:00:00Z");
+      await testDb.insert(organization).values(
+        Array.from({ length: 7 }, (_, index) => ({
+          id: `org-${index}`,
+          name: `Org ${index}`,
+          slug: `org-${index}`,
+          createdAt: at,
+          updatedAt: at,
+        })),
+      );
+      const { getAdminOrganizations } = await import("@/features/admin/queries");
+
+      const pages = [
+        await getAdminOrganizations(3, 0),
+        await getAdminOrganizations(3, 3),
+        await getAdminOrganizations(3, 6),
+      ];
+
+      expect(pages.flat().map((o) => o.id)).toEqual(["org-6", "org-5", "org-4", "org-3", "org-2", "org-1", "org-0"]);
+    });
+  });
+
+  // The header of a page counts what there is, not what its table lists: the
+  // lists stop at 100, so each count is a query of its own.
+  describe("countUsers", () => {
+    it("is zero when no users exist", async () => {
+      const { countUsers } = await import("@/features/admin/queries");
+
+      expect(await countUsers()).toBe(0);
+    });
+
+    it("counts every user, past the 100 the list stops at", async () => {
+      const now = new Date();
+      await testDb.insert(user).values(
+        Array.from({ length: 101 }, (_, index) => ({
+          id: `user-${index}`,
+          name: `User ${index}`,
+          email: `user-${index}@test.com`,
+          emailVerified: true,
+          createdAt: now,
+          updatedAt: now,
+        })),
+      );
+      const { countUsers, getAdminUsers } = await import(
+        "@/features/admin/queries"
+      );
+
+      expect(await countUsers()).toBe(101);
+      expect(await getAdminUsers()).toHaveLength(100);
+    });
+  });
+
+  describe("countOrganizations", () => {
+    it("is zero when no organizations exist", async () => {
+      const { countOrganizations } = await import("@/features/admin/queries");
+
+      expect(await countOrganizations()).toBe(0);
+    });
+
+    it("counts every organization, past the 100 the list stops at", async () => {
+      const now = new Date();
+      await testDb.insert(organization).values(
+        Array.from({ length: 101 }, (_, index) => ({
+          id: `org-${index}`,
+          name: `Org ${index}`,
+          slug: `org-${index}`,
+          createdAt: now,
+          updatedAt: now,
+        })),
+      );
+      const { countOrganizations, getAdminOrganizations } = await import(
+        "@/features/admin/queries"
+      );
+
+      expect(await countOrganizations()).toBe(101);
+      expect(await getAdminOrganizations()).toHaveLength(100);
+    });
+  });
+
   describe("getAdminMetrics", () => {
+    it("reads the totals of the two counts, whatever the limit of the lists", async () => {
+      const now = new Date();
+      await testDb.insert(user).values(
+        Array.from({ length: 101 }, (_, index) => ({
+          id: `user-${index}`,
+          name: `User ${index}`,
+          email: `user-${index}@test.com`,
+          emailVerified: true,
+          createdAt: now,
+          updatedAt: now,
+        })),
+      );
+      await seedOrg("org-1", { slug: "s-1" });
+      const { countOrganizations, countUsers, getAdminMetrics } = await import(
+        "@/features/admin/queries"
+      );
+
+      const result = await getAdminMetrics();
+
+      expect(result.totalUsers).toBe(await countUsers());
+      expect(result.totalUsers).toBe(101);
+      expect(result.totalOrganizations).toBe(await countOrganizations());
+    });
+
     it("returns zeroes when database is empty", async () => {
       const { getAdminMetrics } = await import("@/features/admin/queries");
 

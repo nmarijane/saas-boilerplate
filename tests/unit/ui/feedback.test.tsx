@@ -136,6 +136,24 @@ describe("progress bar", () => {
     expect(attribute(tag, "aria-label")).toBe("AI credits this month");
   });
 
+  it("speaks the value text, which a screen reader reads in place of the figure", () => {
+    const tag = track({
+      label: "Projects",
+      value: 12,
+      max: 50,
+      valueText: "12 of 50 used",
+    });
+
+    expect(attribute(tag, "aria-valuetext")).toBe("12 of 50 used");
+    // The figures stay for the tools that read them: the text only adds to them.
+    expect(attribute(tag, "aria-valuenow")).toBe("12");
+    expect(attribute(tag, "aria-valuemax")).toBe("50");
+  });
+
+  it("says no value text unless it is given one", () => {
+    expect(attribute(track({ value: 12 }), "aria-valuetext")).toBeUndefined();
+  });
+
   it("turns a quota that is 82 of 100 into the warning color", () => {
     const html = render({ value: 82, tone: "quota" });
 
@@ -534,8 +552,15 @@ describe("toast", () => {
     vi.clearAllMocks();
   });
 
-  it("keeps a success for 6 seconds and an undo for 10", () => {
-    expect(TOAST_DURATION).toEqual({ success: 6000, undo: 10000 });
+  it("leaves more time for an undo than for a success, as the person has to reach the action", () => {
+    toast.success("Saved");
+    toast.undo("Project deleted", vi.fn());
+    const [[, success], [, undo]] = vi.mocked(sonnerToast.success).mock.calls;
+
+    expect(success?.duration).toBeGreaterThan(0);
+    expect(undo?.duration).toBeGreaterThan(success?.duration ?? Infinity);
+    // Neither stays for ever: the error does
+    expect(undo?.duration).not.toBe(Infinity);
   });
 
   it("shows a success for 6 seconds", () => {
@@ -677,6 +702,17 @@ describe("toaster", () => {
 
     expect(props.position).toBe("top-center");
     expect(props.duration).toBe(3000);
+  });
+
+  // On a phone the shell has a tab bar, stuck to the bottom of the screen, which a toast must not sit over: an
+  // error stays until it is closed, and would hide the tabs for as long. The toaster is outside the shell, so it
+  // reads the height of the bar from the token that the page carries (global.css), 0 when there is no bar.
+  it("sits above the tab bar on a phone, by the token that holds its height, and a rem clear of it", () => {
+    expect(propsOf().mobileOffset).toEqual({ bottom: "calc(var(--tab-bar-height, 0px) + 1rem)" });
+  });
+
+  it("lets the caller place the toasts on a phone as well", () => {
+    expect(propsOf("en", { mobileOffset: 8 }).mobileOffset).toBe(8);
   });
 
   it("names the close button and the region in the language of the page", () => {

@@ -8,7 +8,16 @@ import { extendTailwindMerge } from "tailwind-merge";
 const twMerge = extendTailwindMerge({
   extend: {
     theme: {
-      text: ["caption", "meta", "body", "section", "panel", "page", "key"],
+      text: [
+        "caption",
+        "meta",
+        "body",
+        "section",
+        "panel",
+        "entity",
+        "page",
+        "key",
+      ],
     },
   },
 });

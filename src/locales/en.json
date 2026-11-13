@@ -1,6 +1,5 @@
 {
   "common": {
-    "appName": "SaaS Boilerplate",
     "loading": "Loading…",
     "save": "Save",
     "cancel": "Cancel",
@@ -26,6 +25,12 @@
     "undo": "Undo",
     "notifications": "Notifications",
     "moreActions": "More actions",
+    "breadcrumb": "Breadcrumb",
+    "typeToConfirm": "Type {text} to confirm",
+    "copy": "Copy",
+    "copied": "Copied",
+    "copyFailed": "We couldn't copy it. Select the text and copy it yourself.",
+    "done": "Done",
     "table": {
       "searchPlaceholder": "Search…",
       "results": "{count, plural, one {# result} other {# results}}",
@@ -36,37 +41,138 @@
       "lastPage": "Last page"
     }
   },
+  "states": {
+    "notFound": {
+      "title": "Page not found",
+      "description": "This page does not exist, or it has moved.",
+      "home": "Back to home"
+    }
+  },
+  "shell": {
+    "skipToContent": "Skip to content",
+    "menu": "Menu",
+    "more": "More",
+    "mainNavigation": "Main navigation",
+    "secondaryNavigation": "Secondary navigation",
+    "adminSection": "Administration",
+    "opensInNewTab": "(opens in a new tab)",
+    "nav": {
+      "home": "Home",
+      "settings": "Settings",
+      "help": "Help"
+    }
+  },
   "auth": {
     "signIn": "Sign In",
     "signUp": "Sign Up",
-    "signOut": "Sign Out",
     "email": "Email",
     "password": "Password",
     "confirmPassword": "Confirm Password",
     "forgotPassword": "Forgot Password?",
     "resetPassword": "Reset Password",
     "verifyEmail": "Verify Email",
+    "signInDescription": "Welcome back. Sign in to continue.",
+    "signUpDescription": "Create your account to get started.",
+    "forgotPasswordDescription": "We'll email you a link to choose a new password.",
+    "resetPasswordDescription": "Choose a new password for your account.",
+    "verifyEmailDescription": "We sent you an email with a link. Open it to confirm your address.",
+    "verifiedTitle": "Email verified",
+    "verifiedDescription": "Your email address is confirmed. You can now sign in.",
+    "verifyLinkExpired": "The link to verify your email has expired or was already used. Sign in and we'll send you a new one.",
     "noAccount": "Don't have an account?",
     "hasAccount": "Already have an account?",
+    "backToSignIn": "Back to sign in",
+    "requestNewLink": "Ask for a new link",
+    "linkExpiredTitle": "This link no longer works",
+    "linkExpired": "The link to reset your password has expired or was already used.",
     "orContinueWith": "Or continue with",
     "emailSent": "Email sent! Check your inbox.",
-    "invalidCredentials": "Invalid email or password",
+    "passwordUpdatedTitle": "Password updated",
+    "passwordUpdated": "Your password has been updated. You can now sign in.",
     "passwordMismatch": "Passwords do not match",
     "passwordTooWeak": "Password does not meet all requirements",
+    "errors": {
+      "invalidCredentials": "Invalid email or password",
+      "emailNotVerified": "Your email isn't verified yet. We've just sent you a new link: check your inbox.",
+      "userAlreadyExists": "An account with this email already exists. Sign in instead.",
+      "invalidEmail": "Enter a valid email address.",
+      "invalidToken": "This link has expired or was already used.",
+      "passwordTooShort": "Use at least 8 characters.",
+      "passwordTooLong": "Use at most 128 characters.",
+      "nameRequired": "Enter your name.",
+      "passwordRequired": "Enter your password.",
+      "accessDenied": "Sign-in was cancelled. You can try again.",
+      "tooManyAttempts": "Too many attempts. Wait a moment, then try again."
+    },
     "passwordStrength": {
       "minLength": "At least 8 characters",
       "uppercase": "One uppercase letter",
       "lowercase": "One lowercase letter",
       "number": "One number",
-      "special": "One special character"
+      "special": "One special character",
+      "met": "met",
+      "notMet": "not met"
     }
   },
-  "dashboard": {
-    "title": "Dashboard",
-    "welcome": "Welcome back, {name}!",
-    "overview": "Overview",
-    "recentActivity": "Recent Activity",
-    "noActivity": "No recent activity"
+  "home": {
+    "title": "Home",
+    "greeting": "Hello {name}",
+    "greetingFallback": "Hello",
+    "context": "{workspace} · {plan} plan",
+    "usage": "Usage",
+    "tasks": "First steps",
+    "tasksProgress": "{done} of {total}",
+    "taskDone": "Done:",
+    "activity": "Activity",
+    "activityEmpty": {
+      "title": "No activity yet",
+      "description": "What your team does in this workspace will show up here."
+    }
+  },
+  "activity": {
+    "someone": "Someone",
+    "other": "{actor} did something",
+    "member": {
+      "invited": "{actor} invited a new member",
+      "removed": "{actor} removed a member",
+      "role_changed": "{actor} changed a member's role"
+    },
+    "organization": {
+      "created": "{actor} created the workspace",
+      "updated": "{actor} updated the workspace",
+      "deleted": "{actor} deleted the workspace"
+    },
+    "subscription": {
+      "created": "A subscription started",
+      "updated": "The subscription was updated",
+      "cancelled": "The subscription was cancelled"
+    },
+    "payment": {
+      "succeeded": "A payment was received",
+      "failed": "A payment failed"
+    },
+    "api_key": {
+      "created": "{actor} created an API key",
+      "revoked": "{actor} revoked an API key"
+    },
+    "webhook": {
+      "created": "{actor} added a webhook",
+      "deleted": "{actor} removed a webhook"
+    },
+    "feedback": {
+      "created": "{actor} sent feedback"
+    },
+    "upload": {
+      "created": "{actor} uploaded a file"
+    },
+    "project": {
+      "created": "{actor} created {name}",
+      "updated": "{actor} updated {name}",
+      "deleted": "{actor} deleted {name}"
+    },
+    "ai": {
+      "conversation_created": "{actor} started a conversation with the assistant"
+    }
   },
   "billing": {
     "title": "Billing",
@@ -82,49 +188,230 @@
     "perMonth": "/month",
     "features": "Features",
     "getStarted": "Get Started",
-    "currentPlanBadge": "Current"
+    "currentPlanBadge": "Current",
+    "manageDescription": "Manage your subscription and billing",
+    "memberDescription": "The plan of this workspace. Its owner and admins manage the billing.",
+    "status": "Status",
+    "statuses": {
+      "active": "Active",
+      "trialing": "Trial",
+      "past_due": "Past due",
+      "canceled": "Canceled",
+      "unpaid": "Unpaid",
+      "incomplete": "Incomplete",
+      "incomplete_expired": "Expired",
+      "paused": "Paused"
+    },
+    "periodEnds": "Current period ends",
+    "price": "Price",
+    "pricePerMonth": "${price}/mo",
+    "redirecting": "Redirecting…",
+    "portalFailed": "The billing portal could not be opened. Try again.",
+    "checkoutFailed": "The checkout could not be opened. Try again.",
+    "deleteWorkspaceFailed": "The subscription of this workspace could not be cancelled, so the workspace was kept. Try again in a moment.",
+    "subscriptionCancelled": "Its subscription has already been cancelled.",
+    "planLimits": "Plan Limits",
+    "planLimitsDescription": "Your current plan includes the following limits",
+    "limits": {
+      "members": "Team Members",
+      "projects": "Projects",
+      "storage": "Storage (MB)",
+      "aiCredits": "AI Credits / month"
+    },
+    "unlimited": "Unlimited",
+    "upgradeTitle": "Upgrade your plan",
+    "upgradeDescription": "Get more features and higher limits with a paid plan",
+    "upgradeTo": "Upgrade to {plan} — ${price}/mo"
   },
   "settings": {
-    "title": "Settings",
+    "account": {
+      "title": "Account",
+      "delete": {
+        "description": "Deleting your account is permanent. Your profile and your sessions are removed for good.",
+        "button": "Delete account",
+        "confirmTitle": "Delete your account?",
+        "confirmDescription": "This can't be undone. A workspace you own is handed to another member when it has one.",
+        "done": "Your account was deleted."
+      }
+    },
     "profile": "Profile",
+    "profileDescription": "Your name and avatar, as your teammates see them.",
     "name": "Name",
+    "email": "Email",
+    "emailHint": "You can't change your email here.",
     "avatar": "Avatar",
-    "updateProfile": "Update Profile",
-    "changePassword": "Change Password",
+    "avatarHint": "A link to an image.",
+    "avatarPlaceholder": "https://example.com/avatar.png",
+    "avatarInvalid": "Enter a full link, such as https://example.com/me.png.",
+    "saved": "Saved",
+    "saveFailed": "We couldn't save your changes. Please try again.",
+    "password": "Password",
+    "changePassword": "Change password",
     "changePasswordDescription": "Update your password to keep your account secure.",
-    "currentPassword": "Current Password",
-    "newPassword": "New Password",
-    "confirmNewPassword": "Confirm New Password",
-    "passwordChanged": "Password changed successfully.",
-    "connectedAccounts": "Connected Accounts",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmNewPassword": "Confirm new password",
+    "passwordChanged": "Password changed",
+    "passwordFailed": "We couldn't change your password. Check your current password and try again.",
+    "connectedAccounts": "Connected accounts",
     "connectedAccountsDescription": "Manage your linked social accounts.",
+    "connectedAccountsFailed": "We couldn't load your connected accounts.",
     "connected": "Connected",
     "connect": "Connect",
     "disconnect": "Disconnect",
     "cannotDisconnect": "Cannot disconnect your only sign-in method.",
-    "activeSessions": "Active Sessions",
+    "connectProvider": "Connect {provider}",
+    "disconnectProvider": "Disconnect {provider}",
+    "activeSessions": "Sessions",
     "activeSessionsDescription": "Manage your active sessions across devices.",
-    "currentSession": "Current",
+    "currentSession": "Current session",
     "revokeSession": "Revoke",
+    "revokeSessionOn": "Revoke the session on {device}",
     "revokeAllSessions": "Revoke all other sessions",
     "sessionsRevoked": "Sessions revoked.",
+    "sessionsFailed": "We couldn't load your sessions.",
+    "sessionDevice": "{browser} on {os}",
     "unknownDevice": "Unknown device",
-    "lastActive": "Last active",
-    "notifications": "Notifications",
-    "team": "Team",
-    "api": "API & Webhooks",
-    "apiDescription": "Manage API keys and webhook endpoints",
-    "apiKeys": "API Keys",
-    "createApiKey": "Create API Key",
-    "revokeApiKey": "Revoke",
-    "webhookEndpoints": "Webhook Endpoints",
-    "createWebhook": "Create Webhook",
-    "webhookUrl": "Endpoint URL",
-    "webhookEvents": "Events",
-    "webhookSecret": "Signing Secret",
-    "dangerZone": "Danger Zone",
-    "deleteAccount": "Delete Account",
-    "deleteAccountWarning": "This action cannot be undone."
+    "team": {
+      "title": "Team",
+      "count": "{count, plural, one {# member} other {# members}}"
+    },
+    "developers": {
+      "title": "Developers",
+      "context": "{keys, plural, one {# API key} other {# API keys}} · {endpoints, plural, one {# webhook} other {# webhooks}}"
+    },
+    "billing": {
+      "title": "Billing"
+    },
+    "navLabel": "Settings",
+    "nav": {
+      "account": "Account",
+      "team": "Team",
+      "billing": "Billing",
+      "developers": "Developers",
+      "notifications": "Notifications"
+    }
+  },
+  "account": {
+    "links": {
+      "account": "Account",
+      "billing": "Billing"
+    },
+    "planLabel": "{plan} plan",
+    "theme": {
+      "label": "Theme",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
+    "language": {
+      "label": "Language",
+      "en": "English",
+      "fr": "Français"
+    },
+    "signOut": "Sign out"
+  },
+  "workspace": {
+    "switch": "Switch workspace",
+    "current": "Current workspace",
+    "search": "Search workspaces",
+    "noResults": "No workspace found",
+    "create": "Create workspace",
+    "createDescription": "A workspace is where your team works together.",
+    "nameLabel": "Workspace name",
+    "nameRequired": "Enter a name for your workspace.",
+    "createFailed": "We couldn't create the workspace. Please try again.",
+    "switchFailed": "We couldn't switch workspace. Please try again."
+  },
+  "quotas": {
+    "runningLow": "Running low",
+    "limitReached": "Limit reached",
+    "of": "of {limit}",
+    "valueText": "{used} of {limit} used",
+    "unlimited": "Unlimited",
+    "upgrade": "Upgrade",
+    "projects": "Projects",
+    "members": "Members",
+    "storage": "Storage",
+    "aiCredits": "AI credits this month"
+  },
+  "upload": {
+    "dropzone": "Drag & drop a file here, or click to browse",
+    "button": "Upload file",
+    "list": {
+      "empty": "No files uploaded yet.",
+      "view": "View",
+      "viewFile": "View {name}",
+      "delete": "Delete",
+      "deleteFile": "Delete {name}"
+    },
+    "deleteWorkspaceFailed": "The files of this workspace could not be deleted, so the workspace was kept. Try again in a moment.",
+    "tooLarge": "This file is too large. The maximum size is {max, number} MB.",
+    "typeNotAllowed": "Files of type {type} are not accepted.",
+    "failed": "We couldn't upload the file. Please try again."
+  },
+  "projects": {
+    "title": "Projects",
+    "nav": "Projects",
+    "count": "{count, plural, one {# project} other {# projects}}",
+    "page": "Page {page} of {total}",
+    "previous": "Previous page",
+    "next": "Next page",
+    "new": "New project",
+    "created": "Project created.",
+    "deleted": "Project deleted.",
+    "updated": "Updated <time>{when}</time>",
+    "recent": "Recent projects",
+    "recentEmpty": "Projects you create will show up here.",
+    "viewAll": "View all projects",
+    "task": "Create your first project",
+    "taskAction": "Create a project",
+    "tabsLabel": "Project",
+    "tabs": {
+      "overview": "Overview",
+      "settings": "Settings"
+    },
+    "status": {
+      "draft": "Draft",
+      "active": "Active"
+    },
+    "empty": {
+      "title": "No projects yet",
+      "description": "Create a project to keep your work in one place."
+    },
+    "create": {
+      "title": "New project",
+      "description": "Give it a name. You can change everything later.",
+      "failed": "We couldn't create the project. Please try again."
+    },
+    "fields": {
+      "name": "Name",
+      "description": "Description",
+      "descriptionHint": "Optional. {max} characters at most.",
+      "status": "Status"
+    },
+    "overview": {
+      "details": "Details",
+      "createdBy": "Created by",
+      "created": "Created",
+      "modified": "Modified",
+      "unknown": "Unknown",
+      "empty": {
+        "title": "Nothing here yet",
+        "description": "This is where the content of your project will go."
+      }
+    },
+    "settings": {
+      "general": "General",
+      "saved": "Saved",
+      "failed": "We couldn't save your changes. Please try again."
+    },
+    "delete": {
+      "description": "Deleting this project removes it for everyone in your workspace, and it can't be undone.",
+      "button": "Delete project",
+      "confirmTitle": "Delete this project?",
+      "confirmDescription": "It is removed for everyone in your workspace. This can't be undone."
+    }
   },
   "marketing": {
     "hero": {
@@ -159,56 +446,385 @@
   "admin": {
     "title": "Admin",
     "users": "Users",
+    "usersCount": "{count, plural, one {# user} other {# users}}",
+    "usersCapped": "This list shows the {shown, number} newest users out of {total, number}. Search and sorting cover these only.",
     "organizations": "Organizations",
+    "organizationsCount": "{count, plural, one {# organization} other {# organizations}}",
+    "organizationsCapped": "This list shows the {shown, number} newest organizations out of {total, number}. Search and sorting cover these only.",
     "metrics": "Metrics",
     "changelog": "Changelog",
+    "changelogCapped": "This list shows the {shown, number} latest entries. Search and sorting cover these only.",
     "auditLog": "Audit Log",
-    "auditLogDescription": "View all system activity and changes",
+    "auditCapped": "This list shows the {shown, number} latest events. Search and sorting cover these only.",
     "featureFlags": "Feature Flags",
-    "featureFlagsDescription": "Manage feature flags and rollout rules",
+    "featureFlagsCount": "{count, plural, one {# feature flag} other {# feature flags}}",
     "totalUsers": "Total Users",
     "totalOrgs": "Total Organizations",
     "mrr": "MRR",
-    "waitlist": "Waitlist"
+    "waitlist": "Waitlist",
+    "waitlistCount": "{count, plural, one {# signup} other {# signups}}",
+    "waitlistInvited": "Invited",
+    "waitlistWaiting": "Waiting",
+    "waitlistReferrers": "Top referrers",
+    "waitlistReferrals": "{count, plural, one {# referral} other {# referrals}}",
+    "waitlistEntries": "Signups",
+    "waitlistPage": "Page {page} of {total}",
+    "waitlistPrevious": "Previous page",
+    "waitlistNext": "Next page",
+    "usersTable": {
+      "search": "Search users…",
+      "name": "Name",
+      "email": "Email",
+      "role": "Role",
+      "verified": "Verified",
+      "joined": "Joined",
+      "admin": "Admin",
+      "user": "User",
+      "verifiedYes": "Verified",
+      "verifiedNo": "Unverified"
+    },
+    "organizationsTable": {
+      "search": "Search organizations…",
+      "name": "Name",
+      "slug": "Slug",
+      "created": "Created"
+    },
+    "auditTable": {
+      "search": "Search actions…",
+      "date": "Date",
+      "action": "Action",
+      "resourceType": "Resource type",
+      "resourceId": "Resource ID",
+      "workspace": "Workspace",
+      "deletedWorkspace": "{name} (deleted)",
+      "platform": "Platform",
+      "actorId": "Actor ID",
+      "system": "System"
+    },
+    "changelogTable": {
+      "search": "Search entries…",
+      "published": "Published",
+      "version": "Version",
+      "title": "Title",
+      "content": "Content",
+      "actions": "Actions",
+      "delete": "Delete",
+      "deleteLabel": "Delete {title}",
+      "deleteTitle": "Delete {title}?",
+      "deleteDescription": "It is removed from the public changelog, and this can't be undone.",
+      "deleteConfirm": "Delete entry",
+      "deleted": "Entry deleted: {title}."
+    },
+    "flagsTable": {
+      "search": "Search flags…",
+      "key": "Key",
+      "description": "Description",
+      "enabled": "Enabled",
+      "rules": "Rules",
+      "actions": "Actions",
+      "delete": "Delete",
+      "deleteLabel": "Delete {key}",
+      "deleteTitle": "Delete {key}?",
+      "deleteDescription": "The flag and its rules are removed, the code that reads it finds it off, and this can't be undone.",
+      "deleteConfirm": "Delete flag",
+      "deleted": "Flag deleted: {key}.",
+      "toggle": "Toggle {key}",
+      "toggleFailed": "We couldn't update this flag. Please try again."
+    },
+    "waitlistTable": {
+      "email": "Email",
+      "status": "Status",
+      "referrals": "Referrals",
+      "referralCode": "Referral code",
+      "joined": "Joined",
+      "actions": "Actions",
+      "invite": "Invite",
+      "inviteLabel": "Invite {email}",
+      "inviteFailed": "The invitation could not be sent. Try again.",
+      "empty": "No waitlist entries yet.",
+      "statuses": {
+        "waiting": "Waiting",
+        "invited": "Invited",
+        "joined": "Joined"
+      }
+    }
   },
   "notifications": {
     "title": "Notifications",
+    "bellLabel": "{count, plural, =0 {Notifications} one {Notifications: # unread} other {Notifications: # unread}}",
+    "unread": "Unread",
     "markAllRead": "Mark all as read",
+    "markedAllRead": "All notifications marked as read.",
+    "unreadCount": "{count, plural, =0 {No unread notifications} one {# unread notification} other {# unread notifications}}",
+    "latest": "Latest notifications",
     "noNotifications": "No notifications",
+    "emptyDescription": "New activity will show up here.",
+    "loadError": "We couldn't load your notifications.",
+    "retry": "Retry",
+    "viewAll": "View all notifications",
     "info": "Info",
     "warning": "Warning",
-    "error": "Error"
+    "error": "Error",
+    "events": {
+      "payment": {
+        "failed": {
+          "title": "Payment failed",
+          "body": "The payment for {workspace} didn't go through. Update the payment method to keep the plan."
+        },
+        "succeeded": {
+          "title": "Payment received",
+          "body": "The {plan} plan of {workspace} was renewed."
+        }
+      },
+      "member": {
+        "invited": {
+          "title": "New member invited",
+          "body": "Someone was invited to join {workspace}."
+        },
+        "joined": {
+          "title": "{actor} joined {workspace}",
+          "body": "{actor} accepted your invitation."
+        }
+      },
+      "subscription": {
+        "cancelled": {
+          "title": "Subscription cancelled",
+          "body": "The subscription of {workspace} was cancelled."
+        }
+      },
+      "project": {
+        "updated": {
+          "title": "{name} was updated",
+          "body": "{actor} made changes to {name}."
+        }
+      },
+      "ai": {
+        "credits_low": {
+          "title": "AI credits are running low",
+          "body": "{workspace} has used {percent}% of this month's AI credits."
+        }
+      },
+      "organization": {
+        "created": {
+          "title": "Welcome to {workspace}",
+          "body": "Your workspace is ready. Create a project to get started."
+        }
+      }
+    }
   },
   "feedback": {
     "title": "Feedback",
-    "send": "Send Feedback",
+    "nav": "Send feedback",
+    "send": "Send feedback",
+    "sending": "Sending…",
+    "failed": "We couldn't send your feedback. Please try again.",
     "type": "Type",
-    "bug": "Bug Report",
-    "feature": "Feature Request",
+    "bug": "Bug report",
+    "feature": "Feature request",
     "other": "Other",
     "message": "Message",
     "placeholder": "Tell us what you think…",
+    "screenshot": "Screenshot (optional)",
+    "attach": "Attach a screenshot",
+    "uploading": "Uploading…",
     "success": "Thank you for your feedback!"
   },
   "onboarding": {
     "title": "Welcome! Let's get you set up.",
-    "step1": "Your Profile",
-    "step2": "Your Organization",
-    "step3": "Invite Team",
+    "progress": "Step {current} of {total}",
+    "progressLabel": "Setup progress",
+    "profile": {
+      "title": "Your profile",
+      "description": "Welcome! Let's get you set up. This is the name your teammates will see."
+    },
+    "workspace": {
+      "title": "Your workspace",
+      "description": "A workspace is where your team works together."
+    },
+    "invite": {
+      "title": "Invite your team",
+      "description": "They'll get an email with a link to join. You can skip this and do it later.",
+      "emailLabel": "Email address of person {number}",
+      "roleLabel": "Role of person {number}",
+      "remove": "Remove person {number}",
+      "failed": "We couldn't send every invitation. The people left in the list were not invited: try again, or skip this step and invite them later.",
+      "invalid": "Some addresses are not valid. Correct the ones left in the list and try again, or skip this step."
+    },
     "skipInvite": "Skip for now",
     "complete": "Complete Setup"
   },
   "organization": {
-    "name": "Organization Name",
-    "slug": "URL Slug",
     "members": "Members",
-    "invite": "Invite Member",
+    "invite": "Invite member",
+    "inviteDescription": "They'll get an email with a link to join this workspace.",
+    "inviteSend": "Send invitation",
+    "invited": "Invitation sent to {email}.",
+    "inviteFailed": "We couldn't send the invitation. Please try again.",
+    "inviteInvalidEmail": "Enter a valid email address.",
     "role": "Role",
     "owner": "Owner",
     "admin": "Admin",
     "member": "Member",
-    "switchOrg": "Switch Organization",
-    "createOrg": "Create Organization"
+    "memberActions": "Actions for {name}",
+    "remove": "Remove from workspace",
+    "roleChanged": "Role updated.",
+    "memberFailed": "We couldn't update this member. Please try again.",
+    "removeTitle": "Remove {name}?",
+    "removeDescription": "They lose access to this workspace. You can invite them again later.",
+    "removeConfirm": "Remove",
+    "removed": "{name} was removed.",
+    "leave": "Leave workspace",
+    "leaveTitle": "Leave this workspace?",
+    "leaveDescription": "You lose access to it at once. To come back, an admin has to invite you again.",
+    "leaveConfirm": "Leave",
+    "left": "You left the workspace.",
+    "delete": {
+      "description": "Deleting this workspace removes it and everything in it for every member, and cancels any subscription it has. This can't be undone.",
+      "button": "Delete workspace",
+      "confirmTitle": "Delete this workspace?",
+      "confirmDescription": "{name} and everything in it are removed for every member, and any subscription it has is cancelled. This can't be undone.",
+      "done": "Workspace deleted."
+    },
+    "task": "Invite your first teammate",
+    "taskAction": "Invite a teammate"
+  },
+  "invitation": {
+    "title": "Invitation",
+    "signedOutTitle": "You've been invited",
+    "signedOutDescription": "Sign in, or create an account, with the address the invitation was sent to.",
+    "signIn": "Sign in",
+    "signUp": "Create an account",
+    "otherAccountTitle": "This invitation is for another address",
+    "otherAccountDescription": "It was sent to {invited}, and you're signed in as {current}. Sign in with the invited address to answer it.",
+    "switchAccount": "Switch account",
+    "invitedTitle": "Join {workspace}",
+    "invitedDescription": "{inviter} invited you to join {workspace} as {role, select, admin {an admin} other {a member}}.",
+    "accept": "Accept",
+    "decline": "Decline",
+    "acceptFailed": "The invitation could not be accepted. Try again.",
+    "declineFailed": "The invitation could not be declined. Try again.",
+    "declinedTitle": "Invitation declined",
+    "declinedDescription": "You won't join {workspace}. The person who invited you can send a new invitation.",
+    "deadTitle": "This invitation no longer works",
+    "deadDescription": "It has expired, was cancelled or was already answered. Ask the person who invited you for a new one.",
+    "openApp": "Go to the app"
+  },
+  "apiKeys": {
+    "task": "Create your first API key",
+    "taskAction": "Create an API key",
+    "title": "API keys",
+    "create": "Create API key",
+    "empty": {
+      "title": "No API keys yet",
+      "description": "Create a key to call the API from your own code."
+    },
+    "status": {
+      "active": "Active",
+      "expired": "Expired",
+      "revoked": "Revoked"
+    },
+    "created": "Created <time>{date}</time>",
+    "lastUsed": "Last used <time>{date}</time>",
+    "neverUsed": "Never used",
+    "keyActions": "Actions for {name}",
+    "revoke": "Revoke",
+    "revokeTitle": "Revoke {name}?",
+    "revokeDescription": "Anything that uses this key stops working at once. This can't be undone.",
+    "revokeConfirm": "Revoke",
+    "revoked": "Key revoked: {name}",
+    "dialog": {
+      "title": "Create API key",
+      "description": "A key lets your own code call the API for this workspace.",
+      "name": "Name",
+      "namePlaceholder": "Production server",
+      "scopes": "Scopes",
+      "scope": {
+        "read": "Read",
+        "write": "Write",
+        "admin": "Admin",
+        "all": "All (wildcard)"
+      },
+      "expires": "Expiration",
+      "expiresHint": "Optional. The key stops working at the start of that day (UTC).",
+      "expiresPast": "Choose {date} or later.",
+      "submit": "Create key",
+      "failed": "We couldn't create the key. Please try again.",
+      "createdTitle": "API key created",
+      "copyNow": "Copy your key now. You won't be able to see it again."
+    }
+  },
+  "webhooks": {
+    "title": "Webhooks",
+    "add": "Add endpoint",
+    "empty": {
+      "title": "No webhooks yet",
+      "description": "Add an endpoint to be told when something happens in your workspace."
+    },
+    "eventCount": "{count, plural, one {# event} other {# events}}",
+    "added": "Added <time>{date}</time>",
+    "toggle": "Send events to {url}",
+    "endpointActions": "Actions for {url}",
+    "delete": "Delete endpoint",
+    "deleteTitle": "Delete this endpoint?",
+    "deleteDescription": "{url} stops receiving events at once. This can't be undone.",
+    "deleteConfirm": "Delete",
+    "deleted": "Endpoint deleted.",
+    "toggleFailed": "We couldn't update this endpoint. Please try again.",
+    "dialog": {
+      "title": "Add endpoint",
+      "description": "We send a request to this address each time one of the events you pick happens.",
+      "url": "Endpoint URL",
+      "urlPlaceholder": "https://example.com/webhooks",
+      "urlInvalid": "Enter a full address, such as https://example.com/webhooks.",
+      "events": "Events",
+      "submit": "Add endpoint",
+      "failed": "We couldn't add the endpoint. Please try again.",
+      "createdTitle": "Endpoint added",
+      "copyNow": "Copy your signing secret now. You won't be able to see it again."
+    },
+    "event": {
+      "member": {
+        "invited": "Member invited",
+        "removed": "Member removed",
+        "role_changed": "Member role changed"
+      },
+      "organization": {
+        "created": "Workspace created",
+        "updated": "Workspace updated",
+        "deleted": "Workspace deleted"
+      },
+      "subscription": {
+        "created": "Subscription created",
+        "updated": "Subscription updated",
+        "cancelled": "Subscription cancelled"
+      },
+      "payment": {
+        "succeeded": "Payment succeeded",
+        "failed": "Payment failed"
+      },
+      "api_key": {
+        "created": "API key created",
+        "revoked": "API key revoked"
+      },
+      "webhook": {
+        "created": "Webhook created",
+        "deleted": "Webhook deleted"
+      },
+      "feature_flag": {
+        "updated": "Feature flag updated"
+      },
+      "feedback": {
+        "created": "Feedback sent"
+      },
+      "upload": {
+        "created": "File uploaded"
+      },
+      "project": {
+        "created": "Project created",
+        "updated": "Project updated",
+        "deleted": "Project deleted"
+      }
+    }
   },
   "legal": {
     "terms": "Terms of Service",
@@ -217,15 +833,39 @@
   },
   "ai": {
     "title": "AI Chat",
-    "newConversation": "New conversation",
+    "nav": "Assistant",
     "noProviders": "AI not configured",
-    "noProvidersDescription": "Add an AI provider API key to enable AI chat.",
+    "noProvidersDescription": "Set at least one of {variables} in your environment, then restart the app.",
+    "startConversation": "Start a conversation with any AI model.",
+    "conversation": "Conversation",
+    "task": "Task",
+    "footnotes": "Footnotes",
+    "footnoteBack": "Back to reference {reference}",
+    "messageLabel": "Message",
     "sendMessage": "Send a message…",
-    "credits": "credits",
+    "send": "Send message",
+    "stopGeneration": "Stop generation",
+    "credits": "{count, plural, one {# credit} other {# credits}}",
     "unlimited": "Unlimited",
-    "insufficientCredits": "Insufficient credits",
     "selectModel": "Select model",
-    "stopGeneration": "Stop generation"
+    "limit": {
+      "count": "{count} / {max}",
+      "near": "You're close to the limit of {max} characters.",
+      "over": "This message is over the limit of {max} characters. Shorten it to send it."
+    },
+    "errors": {
+      "credits": {
+        "title": "No credits left",
+        "admin": "This workspace has used all its credits. Upgrade the plan to keep using the assistant.",
+        "member": "This workspace has used all its credits. Ask an admin to upgrade the plan."
+      },
+      "gone": {
+        "title": "You can't continue here",
+        "description": "This workspace was deleted, you no longer have access to it, or your session has ended. Reload the page to continue."
+      },
+      "failed": "Your message didn't get an answer. Try again in a moment, or rephrase it.",
+      "reload": "Reload the page"
+    }
   },
   "waitlist": {
     "pageTitle": "Join the Waitlist",

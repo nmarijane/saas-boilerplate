@@ -1,11 +1,12 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
+import { DEV_APP_URL } from "@/shared/config/app";
 
 export const env = createEnv({
   server: {
     DATABASE_URL: z.string().url().optional(),
     BETTER_AUTH_SECRET: z.string().default("dev-secret-change-in-production"),
-    BETTER_AUTH_URL: z.string().url().default("http://localhost:3000"),
+    BETTER_AUTH_URL: z.string().url().default(DEV_APP_URL),
     STRIPE_SECRET_KEY: z.string().default(""),
     STRIPE_WEBHOOK_SECRET: z.string().default(""),
     SMTP_HOST: z.string().default("localhost"),
@@ -14,7 +15,7 @@ export const env = createEnv({
     SMTP_PASS: z.string().default(""),
     EMAIL_FROM: z.string().default("noreply@localhost"),
     STORAGE_ADAPTER: z.enum(["local", "s3"]).default("local"),
-    UPLOAD_MAX_SIZE: z.coerce.number().int().positive().default(10485760),
+    UPLOAD_MAX_SIZE: z.coerce.number().int().positive().default(10_000_000),
     S3_BUCKET: z.string().optional(),
     S3_REGION: z.string().optional(),
     S3_ACCESS_KEY: z.string().optional(),
@@ -44,7 +45,7 @@ export const env = createEnv({
   },
   client: {
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().default(""),
-    NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
+    NEXT_PUBLIC_APP_URL: z.string().url().default(DEV_APP_URL),
     NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
   },
   runtimeEnv: {
@@ -87,4 +88,7 @@ export const env = createEnv({
     AI_CREDITS_PER_ORG_MONTHLY: process.env.AI_CREDITS_PER_ORG_MONTHLY,
   },
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
+  // A variable set to nothing (`DATABASE_URL=`) counts as unset: the screenshot
+  // server sets it so, to keep the .env files from filling it in
+  emptyStringAsUndefined: true,
 });

@@ -4,8 +4,10 @@ import { user } from "./user";
 
 export const auditLog = pgTable("audit_log", {
   id: text("id").primaryKey(),
+  // The workspace of the event: its log goes with it. Null for an entry of the
+  // platform, which outlives its workspace: the deletion of one, named by the
+  // resource and the metadata (events/handlers/audit-log.ts).
   orgId: text("org_id")
-    .notNull()
     .references(() => organization.id, { onDelete: "cascade" }),
   actorId: text("actor_id").references(() => user.id, { onDelete: "set null" }),
   action: text("action").notNull(),

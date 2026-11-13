@@ -36,6 +36,7 @@
   --warning-bar: #B87A00;
   --danger: #D92D20;
   --danger-text: #B42318;
+  --danger-bg: #FDECEA;
   --danger-on: #FFFFFF;
 
   /* Quotas */
@@ -59,6 +60,10 @@
   /* Primary button */
   --btn-primary-edge: rgba(8, 18, 52, 0.28);
   --btn-press: 0px;
+
+  /* Destructive button: hover and press mix --danger with --ink, which is dark here and light in .dark, so the label keeps its contrast. */
+  --btn-danger-hover: color-mix(in oklab, var(--danger) 90%, var(--ink));
+  --btn-danger-active: color-mix(in oklab, var(--danger) 82%, var(--ink));
 
   /* Shapes */
   --corner-xs: 6px;
@@ -119,6 +124,8 @@
   --warning-bar: #E3A91E;
   --danger: #F0584A;
   --danger-text: #FF8A80;
+  /* A tint of --danger over --surface, as visible against the page as --success-bg and --warning-bg (1.15:1) */
+  --danger-bg: #3A1A17;
   --danger-on: #1A0503;
 
   --track: #232831;
@@ -135,6 +142,10 @@
   --tone-2-ink: #8FE0EC;
   --tone-3-ink: #C9B8FF;
   --tone-4-ink: #FFB4A3;
+
+  /* Computed again here, from the dark --danger and --ink: a dark wrapper inside a light page would otherwise inherit the light mix from :root. */
+  --btn-danger-hover: color-mix(in oklab, var(--danger) 90%, var(--ink));
+  --btn-danger-active: color-mix(in oklab, var(--danger) 82%, var(--ink));
 
   --scrim: rgba(0, 0, 0, 0.6);
 

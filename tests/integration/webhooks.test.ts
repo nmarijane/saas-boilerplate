@@ -6,6 +6,7 @@ import {
   deleteWebhookEndpointAction,
   toggleWebhookEndpointAction,
 } from "@/features/webhooks/actions";
+import { AVAILABLE_EVENTS } from "@/features/webhooks/available-events";
 import {
   getWebhookDeliveries,
   getWebhookEndpointsForOrg,
@@ -85,6 +86,80 @@ describe("webhook actions", () => {
           events: [],
         }),
       ).rejects.toThrow();
+    });
+  });
+
+  // The dialog offers the events of `AVAILABLE_EVENTS` and nothing else, and the server takes the same list: a
+  // request does not have to come from the dialog, and an endpoint asks only for events the app delivers.
+  describe("the events of an endpoint", () => {
+    const create = (events: string[]) =>
+      createWebhookEndpointAction(ORG_ID, { url: "https://example.com/hook", events: events as never });
+
+    it.each([
+      ["a name that is no event", ["payment.refunded"]],
+      ["a known event with a typo", ["payment.succeded"]],
+      // The matcher that delivers (`matchEvent`) reads patterns, and an endpoint that holds one goes on working;
+      // the action makes none, as the dialog offers names only
+      ["a segment wildcard", ["subscription.*"]],
+      ["the match-all pattern", ["**"]],
+      ["an empty name", [""]],
+      ["a name with the case changed", ["Payment.Succeeded"]],
+      ["one unknown among known ones", ["payment.succeeded", "made.up"]],
+    ])("refuses %s, and writes nothing", async (_, events) => {
+      await expect(create(events)).rejects.toThrow();
+
+      expect(await getWebhookEndpointsForOrg(ORG_ID)).toHaveLength(0);
+      expect(vi.mocked(emitEvent)).not.toHaveBeenCalled();
+    });
+
+    it("takes every event the dialog offers, all at once", async () => {
+      const { id } = await create(AVAILABLE_EVENTS);
+
+      const [endpoint] = await getWebhookEndpointsForOrg(ORG_ID);
+      expect(endpoint?.id).toBe(id);
+      expect(endpoint?.events).toEqual(AVAILABLE_EVENTS);
+    });
+
+    it("takes one event, whichever it is", async () => {
+      for (const event of AVAILABLE_EVENTS) {
+        await expect(create([event])).resolves.toHaveProperty("id");
+      }
+
+      expect(await getWebhookEndpointsForOrg(ORG_ID)).toHaveLength(AVAILABLE_EVENTS.length);
+    });
+
+    // A known event, repeated without end, is a list as long as a request can be: nothing needs more than one of each
+    it("refuses a list longer than the list of events there are, one more than there are events included", async () => {
+      await expect(create(Array.from({ length: AVAILABLE_EVENTS.length + 1 }, () => "payment.succeeded"))).rejects.toThrow();
+      await expect(create([...AVAILABLE_EVENTS, "payment.succeeded"])).rejects.toThrow();
+      await expect(create(Array.from({ length: 10_000 }, () => "payment.succeeded"))).rejects.toThrow();
+
+      expect(await getWebhookEndpointsForOrg(ORG_ID)).toHaveLength(0);
+      expect(vi.mocked(emitEvent)).not.toHaveBeenCalled();
+    });
+
+    it("takes a list as long as the list of events there are, however it is made up", async () => {
+      await expect(create(Array.from({ length: AVAILABLE_EVENTS.length }, () => "payment.succeeded"))).resolves.toHaveProperty("id");
+    });
+
+    // An endpoint is delivered an event once, however many times it asked for it: the list is kept without repeats,
+    // in the order each event was first given
+    it("writes an event once, however many times it was asked for", async () => {
+      await create(["payment.succeeded", "member.invited", "payment.succeeded", "member.invited", "payment.succeeded"]);
+
+      const [endpoint] = await getWebhookEndpointsForOrg(ORG_ID);
+      expect(endpoint?.events).toEqual(["payment.succeeded", "member.invited"]);
+    });
+
+    it("writes one event, once, for a list that is the same event as long as the list can be", async () => {
+      await create(Array.from({ length: AVAILABLE_EVENTS.length }, () => "payment.succeeded"));
+
+      const [endpoint] = await getWebhookEndpointsForOrg(ORG_ID);
+      expect(endpoint?.events).toEqual(["payment.succeeded"]);
+    });
+
+    it("refuses a list with no event at all", async () => {
+      await expect(create([])).rejects.toThrow();
     });
   });
 

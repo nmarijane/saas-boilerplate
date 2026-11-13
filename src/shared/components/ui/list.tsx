@@ -5,10 +5,17 @@ import { cn } from "@/shared/utils/cn";
 
 // Rows divided by a hairline. Inside a Card, put it in CardContent: the rows
 // then line up with the title above them. `role="list"` gives back the list
-// that Safari drops from a list with no bullets.
-function List({ className, ...props }: React.ComponentProps<"ul">) {
+// that Safari drops from a list with no bullets. It is a `ul`; where the order
+// of the rows is the point (the steps of a setup), `as="ol"` makes it an
+// ordered list, with the same rows, role and hairlines. It takes no `ref`: a
+// `ul` and an `ol` are two elements, and a ref cannot be typed for both.
+function List({
+  as: Tag = "ul",
+  className,
+  ...props
+}: Omit<React.ComponentProps<"ul">, "ref"> & { as?: "ul" | "ol" }) {
   return (
-    <ul
+    <Tag
       data-slot="list"
       role="list"
       className={cn("divide-y divide-hairline", className)}

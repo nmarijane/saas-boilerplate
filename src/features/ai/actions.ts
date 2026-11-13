@@ -8,39 +8,10 @@ import { requireAuth, requireRole } from "@/features/auth/guards";
 import { aiConversation } from "@/models/ai";
 import { db } from "@/shared/lib/DB";
 import { safeAction } from "@/shared/lib/safe-action";
-import { generateId } from "@/shared/utils/helpers";
 import { getCreditBalance } from "./queries";
 
-// addCredits lives in ./service: it is an internal operation.
-
-const createConversationSchema = z.object({
-  orgId: z.string().min(1),
-  model: z.string().min(1).default("gpt-4o-mini"),
-  title: z.string().min(1).max(200).optional(),
-});
-
-export async function createConversation(
-  input: z.infer<typeof createConversationSchema>,
-) {
-  return safeAction(async () => {
-    await requireAuth();
-    const parsed = createConversationSchema.parse(input);
-    // Chat usage is billed to this organization: the user must belong to it.
-    const { session } = await requireRole(parsed.orgId, "member");
-    const id = generateId();
-
-    await db.insert(aiConversation).values({
-      id,
-      organizationId: parsed.orgId,
-      userId: session.user.id,
-      title: parsed.title ?? "New conversation",
-      model: parsed.model,
-    });
-
-    revalidatePath("/ai");
-    return { id };
-  }, "Failed to create conversation");
-}
+// addCredits lives in ./service: it is an internal operation. A conversation is
+// started by the chat route, with its first message, in the active workspace.
 
 const deleteConversationSchema = z.object({
   conversationId: z.string().min(1),

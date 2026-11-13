@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
+import { APP_NAME, DEV_APP_URL } from "@/shared/config/app";
 
-const APP_NAME = "SaaS Boilerplate";
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? DEV_APP_URL;
 
 interface PageMetaOptions {
   title: string;

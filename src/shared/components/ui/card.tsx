@@ -31,9 +31,15 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
+// A div unless the card is a section of the page: `as` gives it the heading it
+// needs (level 2 or 3, as the h1 is the header's), and the look stays the same.
+function CardTitle({
+  as: Tag = "div",
+  className,
+  ...props
+}: React.ComponentProps<"div"> & { as?: "div" | "h2" | "h3" }) {
   return (
-    <div
+    <Tag
       data-slot="card-title"
       className={cn("leading-none font-semibold", className)}
       {...props}

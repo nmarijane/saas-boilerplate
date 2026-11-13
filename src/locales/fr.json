@@ -1,6 +1,5 @@
 {
   "common": {
-    "appName": "SaaS Boilerplate",
     "loading": "Chargement…",
     "save": "Enregistrer",
     "cancel": "Annuler",
@@ -26,6 +25,12 @@
     "undo": "Annuler",
     "notifications": "Notifications",
     "moreActions": "Autres actions",
+    "breadcrumb": "Fil d'Ariane",
+    "typeToConfirm": "Saisissez {text} pour confirmer",
+    "copy": "Copier",
+    "copied": "Copié",
+    "copyFailed": "Impossible de copier. Sélectionnez le texte et copiez-le vous-même.",
+    "done": "Terminé",
     "table": {
       "searchPlaceholder": "Rechercher…",
       "results": "{count, plural, one {# résultat} other {# résultats}}",
@@ -36,37 +41,138 @@
       "lastPage": "Dernière page"
     }
   },
+  "states": {
+    "notFound": {
+      "title": "Page introuvable",
+      "description": "Cette page n'existe pas, ou elle a été déplacée.",
+      "home": "Retour à l'accueil"
+    }
+  },
+  "shell": {
+    "skipToContent": "Aller au contenu",
+    "menu": "Menu",
+    "more": "Plus",
+    "mainNavigation": "Navigation principale",
+    "secondaryNavigation": "Navigation secondaire",
+    "adminSection": "Administration",
+    "opensInNewTab": "(s'ouvre dans un nouvel onglet)",
+    "nav": {
+      "home": "Accueil",
+      "settings": "Réglages",
+      "help": "Aide"
+    }
+  },
   "auth": {
     "signIn": "Se connecter",
     "signUp": "S'inscrire",
-    "signOut": "Se déconnecter",
     "email": "Email",
     "password": "Mot de passe",
     "confirmPassword": "Confirmer le mot de passe",
     "forgotPassword": "Mot de passe oublié ?",
     "resetPassword": "Réinitialiser le mot de passe",
     "verifyEmail": "Vérifier l'email",
+    "signInDescription": "Content de vous revoir. Connectez-vous pour continuer.",
+    "signUpDescription": "Créez votre compte pour commencer.",
+    "forgotPasswordDescription": "Nous vous enverrons par email un lien pour choisir un nouveau mot de passe.",
+    "resetPasswordDescription": "Choisissez un nouveau mot de passe pour votre compte.",
+    "verifyEmailDescription": "Nous vous avons envoyé un email avec un lien. Ouvrez-le pour confirmer votre adresse.",
+    "verifiedTitle": "Email vérifié",
+    "verifiedDescription": "Votre adresse email est confirmée. Vous pouvez maintenant vous connecter.",
+    "verifyLinkExpired": "Le lien de vérification de votre email a expiré ou a déjà été utilisé. Connectez-vous et nous vous en enverrons un nouveau.",
     "noAccount": "Pas encore de compte ?",
     "hasAccount": "Déjà un compte ?",
+    "backToSignIn": "Retour à la connexion",
+    "requestNewLink": "Demander un nouveau lien",
+    "linkExpiredTitle": "Ce lien ne fonctionne plus",
+    "linkExpired": "Le lien de réinitialisation du mot de passe a expiré ou a déjà été utilisé.",
     "orContinueWith": "Ou continuer avec",
     "emailSent": "Email envoyé ! Vérifiez votre boîte de réception.",
-    "invalidCredentials": "Email ou mot de passe invalide",
+    "passwordUpdatedTitle": "Mot de passe mis à jour",
+    "passwordUpdated": "Votre mot de passe a été mis à jour. Vous pouvez maintenant vous connecter.",
     "passwordMismatch": "Les mots de passe ne correspondent pas",
     "passwordTooWeak": "Le mot de passe ne remplit pas tous les critères",
+    "errors": {
+      "invalidCredentials": "Email ou mot de passe invalide",
+      "emailNotVerified": "Votre email n'est pas encore vérifié. Nous venons de vous envoyer un nouveau lien : consultez votre boîte de réception.",
+      "userAlreadyExists": "Un compte existe déjà avec cet email. Connectez-vous plutôt.",
+      "invalidEmail": "Saisissez une adresse email valide.",
+      "invalidToken": "Ce lien a expiré ou a déjà été utilisé.",
+      "passwordTooShort": "Utilisez au moins 8 caractères.",
+      "passwordTooLong": "Utilisez 128 caractères au maximum.",
+      "nameRequired": "Saisissez votre nom.",
+      "passwordRequired": "Saisissez votre mot de passe.",
+      "accessDenied": "La connexion a été annulée. Vous pouvez réessayer.",
+      "tooManyAttempts": "Trop de tentatives. Patientez un instant, puis réessayez."
+    },
     "passwordStrength": {
       "minLength": "Au moins 8 caractères",
       "uppercase": "Une lettre majuscule",
       "lowercase": "Une lettre minuscule",
       "number": "Un chiffre",
-      "special": "Un caractère spécial"
+      "special": "Un caractère spécial",
+      "met": "respecté",
+      "notMet": "non respecté"
     }
   },
-  "dashboard": {
-    "title": "Tableau de bord",
-    "welcome": "Bienvenue, {name} !",
-    "overview": "Vue d'ensemble",
-    "recentActivity": "Activité récente",
-    "noActivity": "Aucune activité récente"
+  "home": {
+    "title": "Accueil",
+    "greeting": "Bonjour {name}",
+    "greetingFallback": "Bonjour",
+    "context": "{workspace} · Plan {plan}",
+    "usage": "Utilisation",
+    "tasks": "Premiers pas",
+    "tasksProgress": "{done} sur {total}",
+    "taskDone": "Fait :",
+    "activity": "Activité",
+    "activityEmpty": {
+      "title": "Aucune activité pour l'instant",
+      "description": "Ce que votre équipe fait dans cet espace s'affichera ici."
+    }
+  },
+  "activity": {
+    "someone": "Quelqu'un",
+    "other": "{actor} a effectué une action",
+    "member": {
+      "invited": "{actor} a invité un nouveau membre",
+      "removed": "{actor} a retiré un membre",
+      "role_changed": "{actor} a modifié le rôle d'un membre"
+    },
+    "organization": {
+      "created": "{actor} a créé l'espace",
+      "updated": "{actor} a modifié l'espace",
+      "deleted": "{actor} a supprimé l'espace"
+    },
+    "subscription": {
+      "created": "Un abonnement a démarré",
+      "updated": "L'abonnement a été modifié",
+      "cancelled": "L'abonnement a été résilié"
+    },
+    "payment": {
+      "succeeded": "Un paiement a été reçu",
+      "failed": "Un paiement a échoué"
+    },
+    "api_key": {
+      "created": "{actor} a créé une clé d'API",
+      "revoked": "{actor} a révoqué une clé d'API"
+    },
+    "webhook": {
+      "created": "{actor} a ajouté un webhook",
+      "deleted": "{actor} a supprimé un webhook"
+    },
+    "feedback": {
+      "created": "{actor} a envoyé un feedback"
+    },
+    "upload": {
+      "created": "{actor} a téléversé un fichier"
+    },
+    "project": {
+      "created": "{actor} a créé {name}",
+      "updated": "{actor} a modifié {name}",
+      "deleted": "{actor} a supprimé {name}"
+    },
+    "ai": {
+      "conversation_created": "{actor} a démarré une conversation avec l'assistant"
+    }
   },
   "billing": {
     "title": "Facturation",
@@ -82,49 +188,230 @@
     "perMonth": "/mois",
     "features": "Fonctionnalités",
     "getStarted": "Commencer",
-    "currentPlanBadge": "Actuel"
+    "currentPlanBadge": "Actuel",
+    "manageDescription": "Gérez votre abonnement et votre facturation",
+    "memberDescription": "Le plan de cet espace. Son propriétaire et ses administrateurs gèrent la facturation.",
+    "status": "Statut",
+    "statuses": {
+      "active": "Actif",
+      "trialing": "Période d'essai",
+      "past_due": "Paiement en retard",
+      "canceled": "Annulé",
+      "unpaid": "Impayé",
+      "incomplete": "Incomplet",
+      "incomplete_expired": "Expiré",
+      "paused": "En pause"
+    },
+    "periodEnds": "Fin de la période en cours",
+    "price": "Prix",
+    "pricePerMonth": "{price} $ par mois",
+    "redirecting": "Redirection…",
+    "portalFailed": "Le portail de facturation n'a pas pu s'ouvrir. Réessayez.",
+    "checkoutFailed": "Le paiement n'a pas pu s'ouvrir. Réessayez.",
+    "deleteWorkspaceFailed": "L'abonnement de cet espace n'a pas pu être résilié : l'espace est conservé. Réessayez dans un instant.",
+    "subscriptionCancelled": "Son abonnement a déjà été résilié.",
+    "planLimits": "Limites du plan",
+    "planLimitsDescription": "Votre plan actuel inclut les limites suivantes",
+    "limits": {
+      "members": "Membres de l'équipe",
+      "projects": "Projets",
+      "storage": "Stockage (Mo)",
+      "aiCredits": "Crédits d'IA par mois"
+    },
+    "unlimited": "Illimité",
+    "upgradeTitle": "Passez à un plan supérieur",
+    "upgradeDescription": "Profitez de plus de fonctionnalités et de limites plus élevées avec un plan payant",
+    "upgradeTo": "Passer au plan {plan} — {price} $ par mois"
   },
   "settings": {
-    "title": "Paramètres",
+    "account": {
+      "title": "Compte",
+      "delete": {
+        "description": "La suppression de votre compte est définitive. Votre profil et vos sessions sont effacés pour de bon.",
+        "button": "Supprimer le compte",
+        "confirmTitle": "Supprimer votre compte ?",
+        "confirmDescription": "Cette action est irréversible. Un espace dont vous êtes propriétaire est transmis à un autre membre s'il en compte un.",
+        "done": "Votre compte a été supprimé."
+      }
+    },
     "profile": "Profil",
+    "profileDescription": "Votre nom et votre avatar, tels que vos coéquipiers les voient.",
     "name": "Nom",
+    "email": "E-mail",
+    "emailHint": "Vous ne pouvez pas modifier votre e-mail ici.",
     "avatar": "Avatar",
-    "updateProfile": "Mettre à jour le profil",
+    "avatarHint": "Un lien vers une image.",
+    "avatarPlaceholder": "https://example.com/avatar.png",
+    "avatarInvalid": "Saisissez un lien complet, comme https://example.com/moi.png.",
+    "saved": "Enregistré",
+    "saveFailed": "Impossible d'enregistrer vos modifications. Veuillez réessayer.",
+    "password": "Mot de passe",
     "changePassword": "Changer le mot de passe",
     "changePasswordDescription": "Mettez à jour votre mot de passe pour sécuriser votre compte.",
     "currentPassword": "Mot de passe actuel",
     "newPassword": "Nouveau mot de passe",
     "confirmNewPassword": "Confirmer le nouveau mot de passe",
-    "passwordChanged": "Mot de passe changé avec succès.",
-    "connectedAccounts": "Comptes connectés",
+    "passwordChanged": "Mot de passe modifié",
+    "passwordFailed": "Impossible de modifier votre mot de passe. Vérifiez votre mot de passe actuel puis réessayez.",
+    "connectedAccounts": "Comptes liés",
     "connectedAccountsDescription": "Gérez vos comptes sociaux liés.",
+    "connectedAccountsFailed": "Impossible de charger vos comptes liés.",
     "connected": "Connecté",
     "connect": "Connecter",
     "disconnect": "Déconnecter",
     "cannotDisconnect": "Impossible de déconnecter votre seule méthode de connexion.",
-    "activeSessions": "Sessions actives",
+    "connectProvider": "Connecter {provider}",
+    "disconnectProvider": "Déconnecter {provider}",
+    "activeSessions": "Sessions",
     "activeSessionsDescription": "Gérez vos sessions actives sur vos appareils.",
-    "currentSession": "Actuelle",
+    "currentSession": "Session actuelle",
     "revokeSession": "Révoquer",
+    "revokeSessionOn": "Révoquer la session sur {device}",
     "revokeAllSessions": "Révoquer toutes les autres sessions",
     "sessionsRevoked": "Sessions révoquées.",
+    "sessionsFailed": "Impossible de charger vos sessions.",
+    "sessionDevice": "{browser} sur {os}",
     "unknownDevice": "Appareil inconnu",
-    "lastActive": "Dernière activité",
-    "notifications": "Notifications",
-    "team": "Équipe",
-    "api": "API & Webhooks",
-    "apiDescription": "Gérer les clés API et les endpoints de webhooks",
-    "apiKeys": "Clés API",
-    "createApiKey": "Créer une clé API",
-    "revokeApiKey": "Révoquer",
-    "webhookEndpoints": "Points de terminaison webhook",
-    "createWebhook": "Créer un webhook",
-    "webhookUrl": "URL du point de terminaison",
-    "webhookEvents": "Événements",
-    "webhookSecret": "Secret de signature",
-    "dangerZone": "Zone de danger",
-    "deleteAccount": "Supprimer le compte",
-    "deleteAccountWarning": "Cette action est irréversible."
+    "team": {
+      "title": "Équipe",
+      "count": "{count, plural, one {# membre} other {# membres}}"
+    },
+    "developers": {
+      "title": "Développeurs",
+      "context": "{keys, plural, one {# clé d'API} other {# clés d'API}} · {endpoints, plural, one {# webhook} other {# webhooks}}"
+    },
+    "billing": {
+      "title": "Abonnement"
+    },
+    "navLabel": "Réglages",
+    "nav": {
+      "account": "Compte",
+      "team": "Équipe",
+      "billing": "Abonnement",
+      "developers": "Développeurs",
+      "notifications": "Notifications"
+    }
+  },
+  "account": {
+    "links": {
+      "account": "Compte",
+      "billing": "Abonnement"
+    },
+    "planLabel": "Plan {plan}",
+    "theme": {
+      "label": "Thème",
+      "light": "Clair",
+      "dark": "Sombre",
+      "system": "Système"
+    },
+    "language": {
+      "label": "Langue",
+      "en": "English",
+      "fr": "Français"
+    },
+    "signOut": "Se déconnecter"
+  },
+  "workspace": {
+    "switch": "Changer d'espace",
+    "current": "Espace actuel",
+    "search": "Rechercher un espace",
+    "noResults": "Aucun espace trouvé",
+    "create": "Créer un espace",
+    "createDescription": "Un espace est l'endroit où votre équipe travaille ensemble.",
+    "nameLabel": "Nom de l'espace",
+    "nameRequired": "Saisissez un nom pour votre espace.",
+    "createFailed": "Impossible de créer l'espace. Veuillez réessayer.",
+    "switchFailed": "Impossible de changer d'espace. Veuillez réessayer."
+  },
+  "quotas": {
+    "runningLow": "Bientôt épuisé",
+    "limitReached": "Limite atteinte",
+    "of": "sur {limit}",
+    "valueText": "{used} sur {limit} utilisés",
+    "unlimited": "Illimité",
+    "upgrade": "Passer au plan supérieur",
+    "projects": "Projets",
+    "members": "Membres",
+    "storage": "Stockage",
+    "aiCredits": "Crédits d'IA ce mois-ci"
+  },
+  "upload": {
+    "dropzone": "Glissez un fichier ici, ou cliquez pour en choisir un",
+    "button": "Téléverser un fichier",
+    "list": {
+      "empty": "Aucun fichier téléversé pour l'instant.",
+      "view": "Voir",
+      "viewFile": "Voir {name}",
+      "delete": "Supprimer",
+      "deleteFile": "Supprimer {name}"
+    },
+    "deleteWorkspaceFailed": "Les fichiers de cet espace n'ont pas pu être supprimés : l'espace est conservé. Réessayez dans un instant.",
+    "tooLarge": "Ce fichier est trop volumineux. La taille maximale est de {max, number} Mo.",
+    "typeNotAllowed": "Les fichiers de type {type} ne sont pas acceptés.",
+    "failed": "Impossible de téléverser le fichier. Veuillez réessayer."
+  },
+  "projects": {
+    "title": "Projets",
+    "nav": "Projets",
+    "count": "{count, plural, one {# projet} other {# projets}}",
+    "page": "Page {page} sur {total}",
+    "previous": "Page précédente",
+    "next": "Page suivante",
+    "new": "Nouveau projet",
+    "created": "Projet créé.",
+    "deleted": "Projet supprimé.",
+    "updated": "Modifié <time>{when}</time>",
+    "recent": "Projets récents",
+    "recentEmpty": "Les projets que vous créez apparaîtront ici.",
+    "viewAll": "Voir tous les projets",
+    "task": "Créez votre premier projet",
+    "taskAction": "Créer un projet",
+    "tabsLabel": "Projet",
+    "tabs": {
+      "overview": "Vue d'ensemble",
+      "settings": "Réglages"
+    },
+    "status": {
+      "draft": "Brouillon",
+      "active": "Actif"
+    },
+    "empty": {
+      "title": "Aucun projet pour l'instant",
+      "description": "Créez un projet pour garder votre travail au même endroit."
+    },
+    "create": {
+      "title": "Nouveau projet",
+      "description": "Donnez-lui un nom. Vous pourrez tout modifier plus tard.",
+      "failed": "Impossible de créer le projet. Veuillez réessayer."
+    },
+    "fields": {
+      "name": "Nom",
+      "description": "Description",
+      "descriptionHint": "Facultatif. {max} caractères au plus.",
+      "status": "Statut"
+    },
+    "overview": {
+      "details": "Détails",
+      "createdBy": "Créé par",
+      "created": "Créé le",
+      "modified": "Modifié le",
+      "unknown": "Inconnu",
+      "empty": {
+        "title": "Rien ici pour l'instant",
+        "description": "C'est ici que le contenu de votre projet apparaîtra."
+      }
+    },
+    "settings": {
+      "general": "Général",
+      "saved": "Enregistré",
+      "failed": "Impossible d'enregistrer vos modifications. Veuillez réessayer."
+    },
+    "delete": {
+      "description": "La suppression de ce projet l'efface pour tous les membres de votre espace, et elle est irréversible.",
+      "button": "Supprimer le projet",
+      "confirmTitle": "Supprimer ce projet ?",
+      "confirmDescription": "Il est supprimé pour tous les membres de votre espace. Cette action est irréversible."
+    }
   },
   "marketing": {
     "hero": {
@@ -159,56 +446,385 @@
   "admin": {
     "title": "Administration",
     "users": "Utilisateurs",
+    "usersCount": "{count, plural, one {# utilisateur} other {# utilisateurs}}",
+    "usersCapped": "Cette liste montre les {shown, number} utilisateurs les plus récents sur {total, number}. La recherche et le tri ne portent que sur eux.",
     "organizations": "Organisations",
+    "organizationsCount": "{count, plural, one {# organisation} other {# organisations}}",
+    "organizationsCapped": "Cette liste montre les {shown, number} organisations les plus récentes sur {total, number}. La recherche et le tri ne portent que sur elles.",
     "metrics": "Métriques",
     "changelog": "Changelog",
+    "changelogCapped": "Cette liste montre les {shown, number} entrées les plus récentes. La recherche et le tri ne portent que sur elles.",
     "auditLog": "Journal d'audit",
-    "auditLogDescription": "Voir toute l'activité et les modifications du système",
-    "featureFlags": "Feature Flags",
-    "featureFlagsDescription": "Gérer les feature flags et les règles de déploiement",
+    "auditCapped": "Cette liste montre les {shown, number} événements les plus récents. La recherche et le tri ne portent que sur eux.",
+    "featureFlags": "Indicateurs de fonctionnalité",
+    "featureFlagsCount": "{count, plural, one {# indicateur de fonctionnalité} other {# indicateurs de fonctionnalité}}",
     "totalUsers": "Utilisateurs totaux",
     "totalOrgs": "Organisations totales",
     "mrr": "MRR",
-    "waitlist": "Liste d'attente"
+    "waitlist": "Liste d'attente",
+    "waitlistCount": "{count, plural, one {# inscrit} other {# inscrits}}",
+    "waitlistInvited": "Invités",
+    "waitlistWaiting": "En attente",
+    "waitlistReferrers": "Meilleurs parrains",
+    "waitlistReferrals": "{count, plural, one {# parrainage} other {# parrainages}}",
+    "waitlistEntries": "Inscriptions",
+    "waitlistPage": "Page {page} sur {total}",
+    "waitlistPrevious": "Page précédente",
+    "waitlistNext": "Page suivante",
+    "usersTable": {
+      "search": "Rechercher un utilisateur…",
+      "name": "Nom",
+      "email": "Email",
+      "role": "Rôle",
+      "verified": "Vérifié",
+      "joined": "Inscrit le",
+      "admin": "Administrateur",
+      "user": "Utilisateur",
+      "verifiedYes": "Vérifié",
+      "verifiedNo": "Non vérifié"
+    },
+    "organizationsTable": {
+      "search": "Rechercher une organisation…",
+      "name": "Nom",
+      "slug": "Slug",
+      "created": "Créée le"
+    },
+    "auditTable": {
+      "search": "Rechercher une action…",
+      "date": "Date",
+      "action": "Action",
+      "resourceType": "Type de ressource",
+      "resourceId": "ID de la ressource",
+      "workspace": "Espace",
+      "deletedWorkspace": "{name} (supprimé)",
+      "platform": "Plateforme",
+      "actorId": "ID de l'acteur",
+      "system": "Système"
+    },
+    "changelogTable": {
+      "search": "Rechercher une entrée…",
+      "published": "Publiée le",
+      "version": "Version",
+      "title": "Titre",
+      "content": "Contenu",
+      "actions": "Actions",
+      "delete": "Supprimer",
+      "deleteLabel": "Supprimer {title}",
+      "deleteTitle": "Supprimer {title} ?",
+      "deleteDescription": "Elle disparaît du journal public des modifications, et cette action est irréversible.",
+      "deleteConfirm": "Supprimer l'entrée",
+      "deleted": "Entrée supprimée : {title}."
+    },
+    "flagsTable": {
+      "search": "Rechercher un indicateur…",
+      "key": "Clé",
+      "description": "Description",
+      "enabled": "Activé",
+      "rules": "Règles",
+      "actions": "Actions",
+      "delete": "Supprimer",
+      "deleteLabel": "Supprimer {key}",
+      "deleteTitle": "Supprimer {key} ?",
+      "deleteDescription": "L'indicateur et ses règles disparaissent, le code qui le lit le trouve désactivé, et cette action est irréversible.",
+      "deleteConfirm": "Supprimer l'indicateur",
+      "deleted": "Indicateur supprimé : {key}.",
+      "toggle": "Basculer {key}",
+      "toggleFailed": "Impossible de mettre à jour cet indicateur. Veuillez réessayer."
+    },
+    "waitlistTable": {
+      "email": "Email",
+      "status": "Statut",
+      "referrals": "Parrainages",
+      "referralCode": "Code de parrainage",
+      "joined": "Inscrit le",
+      "actions": "Actions",
+      "invite": "Inviter",
+      "inviteLabel": "Inviter {email}",
+      "inviteFailed": "L'invitation n'a pas pu être envoyée. Réessayez.",
+      "empty": "Aucune inscription pour l'instant.",
+      "statuses": {
+        "waiting": "En attente",
+        "invited": "Invité",
+        "joined": "Inscrit"
+      }
+    }
   },
   "notifications": {
     "title": "Notifications",
+    "bellLabel": "{count, plural, =0 {Notifications} one {Notifications : # non lue} other {Notifications : # non lues}}",
+    "unread": "Non lue",
     "markAllRead": "Tout marquer comme lu",
+    "markedAllRead": "Toutes les notifications sont marquées comme lues.",
+    "unreadCount": "{count, plural, =0 {Aucune notification non lue} one {# notification non lue} other {# notifications non lues}}",
+    "latest": "Dernières notifications",
     "noNotifications": "Aucune notification",
+    "emptyDescription": "Les nouvelles activités s'afficheront ici.",
+    "loadError": "Impossible de charger vos notifications.",
+    "retry": "Réessayer",
+    "viewAll": "Voir toutes les notifications",
     "info": "Info",
     "warning": "Avertissement",
-    "error": "Erreur"
+    "error": "Erreur",
+    "events": {
+      "payment": {
+        "failed": {
+          "title": "Échec du paiement",
+          "body": "Le paiement de {workspace} n'est pas passé. Mettez à jour le moyen de paiement pour garder le plan."
+        },
+        "succeeded": {
+          "title": "Paiement reçu",
+          "body": "Le plan {plan} de {workspace} a été renouvelé."
+        }
+      },
+      "member": {
+        "invited": {
+          "title": "Nouveau membre invité",
+          "body": "Une personne a été invitée à rejoindre {workspace}."
+        },
+        "joined": {
+          "title": "{actor} a rejoint {workspace}",
+          "body": "{actor} a accepté votre invitation."
+        }
+      },
+      "subscription": {
+        "cancelled": {
+          "title": "Abonnement annulé",
+          "body": "L'abonnement de {workspace} a été annulé."
+        }
+      },
+      "project": {
+        "updated": {
+          "title": "{name} a été modifié",
+          "body": "{actor} a modifié {name}."
+        }
+      },
+      "ai": {
+        "credits_low": {
+          "title": "Les crédits d'IA s'épuisent",
+          "body": "{workspace} a utilisé {percent} % des crédits d'IA de ce mois."
+        }
+      },
+      "organization": {
+        "created": {
+          "title": "Bienvenue dans {workspace}",
+          "body": "Votre espace est prêt. Créez un projet pour commencer."
+        }
+      }
+    }
   },
   "feedback": {
     "title": "Feedback",
+    "nav": "Envoyer un feedback",
     "send": "Envoyer un feedback",
+    "sending": "Envoi…",
+    "failed": "Impossible d'envoyer votre feedback. Veuillez réessayer.",
     "type": "Type",
     "bug": "Signaler un bug",
     "feature": "Demande de fonctionnalité",
     "other": "Autre",
     "message": "Message",
     "placeholder": "Dites-nous ce que vous en pensez…",
+    "screenshot": "Capture d'écran (facultatif)",
+    "attach": "Joindre une capture d'écran",
+    "uploading": "Téléversement…",
     "success": "Merci pour votre feedback !"
   },
   "onboarding": {
     "title": "Bienvenue ! Configurons votre compte.",
-    "step1": "Votre profil",
-    "step2": "Votre organisation",
-    "step3": "Inviter l'équipe",
+    "progress": "Étape {current} sur {total}",
+    "progressLabel": "Avancement de la configuration",
+    "profile": {
+      "title": "Votre profil",
+      "description": "Bienvenue ! Configurons votre compte. C'est le nom que verront vos coéquipiers."
+    },
+    "workspace": {
+      "title": "Votre espace",
+      "description": "Un espace est l'endroit où votre équipe travaille ensemble."
+    },
+    "invite": {
+      "title": "Invitez votre équipe",
+      "description": "Ces personnes recevront un e-mail avec un lien pour rejoindre l'espace. Vous pouvez passer cette étape et le faire plus tard.",
+      "emailLabel": "Adresse e-mail de la personne {number}",
+      "roleLabel": "Rôle de la personne {number}",
+      "remove": "Retirer la personne {number}",
+      "failed": "Nous n'avons pas pu envoyer toutes les invitations. Les personnes restées dans la liste n'ont pas été invitées : réessayez, ou passez cette étape et invitez-les plus tard.",
+      "invalid": "Certaines adresses ne sont pas valides. Corrigez celles qui restent dans la liste et réessayez, ou passez cette étape."
+    },
     "skipInvite": "Passer pour l'instant",
     "complete": "Terminer la configuration"
   },
   "organization": {
-    "name": "Nom de l'organisation",
-    "slug": "Identifiant URL",
     "members": "Membres",
     "invite": "Inviter un membre",
+    "inviteDescription": "Cette personne recevra un e-mail avec un lien pour rejoindre cet espace.",
+    "inviteSend": "Envoyer l'invitation",
+    "invited": "Invitation envoyée à {email}.",
+    "inviteFailed": "Impossible d'envoyer l'invitation. Veuillez réessayer.",
+    "inviteInvalidEmail": "Saisissez une adresse e-mail valide.",
     "role": "Rôle",
     "owner": "Propriétaire",
     "admin": "Administrateur",
     "member": "Membre",
-    "switchOrg": "Changer d'organisation",
-    "createOrg": "Créer une organisation"
+    "memberActions": "Actions pour {name}",
+    "remove": "Retirer de l'espace",
+    "roleChanged": "Rôle mis à jour.",
+    "memberFailed": "Impossible de mettre à jour ce membre. Veuillez réessayer.",
+    "removeTitle": "Retirer {name} ?",
+    "removeDescription": "Cette personne perd l'accès à cet espace. Vous pourrez l'inviter de nouveau plus tard.",
+    "removeConfirm": "Retirer",
+    "removed": "{name} ne fait plus partie de l'espace.",
+    "leave": "Quitter l'espace",
+    "leaveTitle": "Quitter cet espace ?",
+    "leaveDescription": "Vous en perdez l'accès aussitôt. Pour revenir, un administrateur devra vous inviter de nouveau.",
+    "leaveConfirm": "Quitter",
+    "left": "Vous avez quitté l'espace.",
+    "delete": {
+      "description": "La suppression de cet espace l'efface, avec tout son contenu, pour tous ses membres, et résilie son abonnement s'il en a un. Cette action est irréversible.",
+      "button": "Supprimer l'espace",
+      "confirmTitle": "Supprimer cet espace ?",
+      "confirmDescription": "{name} et tout son contenu sont supprimés pour tous les membres, et son abonnement, s'il en a un, est résilié. Cette action est irréversible.",
+      "done": "Espace supprimé."
+    },
+    "task": "Invitez votre premier membre",
+    "taskAction": "Inviter un membre"
+  },
+  "invitation": {
+    "title": "Invitation",
+    "signedOutTitle": "Une invitation vous attend",
+    "signedOutDescription": "Connectez-vous, ou créez un compte, avec l'adresse à laquelle l'invitation a été envoyée.",
+    "signIn": "Se connecter",
+    "signUp": "Créer un compte",
+    "otherAccountTitle": "Cette invitation est destinée à une autre adresse",
+    "otherAccountDescription": "Elle a été envoyée à {invited}, et vous utilisez le compte {current}. Connectez-vous avec l'adresse invitée pour y répondre.",
+    "switchAccount": "Changer de compte",
+    "invitedTitle": "Rejoindre {workspace}",
+    "invitedDescription": "{inviter} vous invite à rejoindre {workspace} en tant {role, select, admin {qu'administrateur} other {que membre}}.",
+    "accept": "Accepter",
+    "decline": "Refuser",
+    "acceptFailed": "L'invitation n'a pas pu être acceptée. Réessayez.",
+    "declineFailed": "L'invitation n'a pas pu être refusée. Réessayez.",
+    "declinedTitle": "Invitation refusée",
+    "declinedDescription": "Vous ne rejoindrez pas {workspace}. La personne à l'origine de l'invitation peut vous en envoyer une nouvelle.",
+    "deadTitle": "Cette invitation ne fonctionne plus",
+    "deadDescription": "Elle a expiré, a été annulée ou a déjà reçu une réponse. Demandez-en une nouvelle à la personne qui vous l'a envoyée.",
+    "openApp": "Aller à l'application"
+  },
+  "apiKeys": {
+    "task": "Créez votre première clé d'API",
+    "taskAction": "Créer une clé d'API",
+    "title": "Clés d'API",
+    "create": "Créer une clé d'API",
+    "empty": {
+      "title": "Aucune clé d'API pour le moment",
+      "description": "Créez une clé pour appeler l'API depuis votre propre code."
+    },
+    "status": {
+      "active": "Active",
+      "expired": "Expirée",
+      "revoked": "Révoquée"
+    },
+    "created": "Créée le <time>{date}</time>",
+    "lastUsed": "Dernière utilisation le <time>{date}</time>",
+    "neverUsed": "Jamais utilisée",
+    "keyActions": "Actions pour {name}",
+    "revoke": "Révoquer",
+    "revokeTitle": "Révoquer {name} ?",
+    "revokeDescription": "Tout ce qui utilise cette clé cesse de fonctionner immédiatement. Cette action est irréversible.",
+    "revokeConfirm": "Révoquer",
+    "revoked": "Clé révoquée : {name}",
+    "dialog": {
+      "title": "Créer une clé d'API",
+      "description": "Une clé permet à votre propre code d'appeler l'API pour cet espace.",
+      "name": "Nom",
+      "namePlaceholder": "Serveur de production",
+      "scopes": "Permissions",
+      "scope": {
+        "read": "Lecture",
+        "write": "Écriture",
+        "admin": "Administration",
+        "all": "Toutes (joker)"
+      },
+      "expires": "Expiration",
+      "expiresHint": "Facultatif. La clé cesse de fonctionner au début de ce jour (UTC).",
+      "expiresPast": "Choisissez le {date} ou une date ultérieure.",
+      "submit": "Créer la clé",
+      "failed": "Impossible de créer la clé. Veuillez réessayer.",
+      "createdTitle": "Clé d'API créée",
+      "copyNow": "Copiez votre clé maintenant. Elle ne sera plus affichée ensuite."
+    }
+  },
+  "webhooks": {
+    "title": "Webhooks",
+    "add": "Ajouter un endpoint",
+    "empty": {
+      "title": "Aucun webhook pour le moment",
+      "description": "Ajoutez un endpoint pour être prévenu dès que quelque chose se passe dans votre espace."
+    },
+    "eventCount": "{count, plural, one {# événement} other {# événements}}",
+    "added": "Ajouté le <time>{date}</time>",
+    "toggle": "Envoyer les événements à {url}",
+    "endpointActions": "Actions pour {url}",
+    "delete": "Supprimer l'endpoint",
+    "deleteTitle": "Supprimer cet endpoint ?",
+    "deleteDescription": "{url} ne reçoit plus d'événements dès maintenant. Cette action est irréversible.",
+    "deleteConfirm": "Supprimer",
+    "deleted": "Endpoint supprimé.",
+    "toggleFailed": "Impossible de mettre à jour cet endpoint. Veuillez réessayer.",
+    "dialog": {
+      "title": "Ajouter un endpoint",
+      "description": "Nous envoyons une requête à cette adresse chaque fois que l'un des événements choisis se produit.",
+      "url": "URL de l'endpoint",
+      "urlPlaceholder": "https://example.com/webhooks",
+      "urlInvalid": "Saisissez une adresse complète, comme https://example.com/webhooks.",
+      "events": "Événements",
+      "submit": "Ajouter l'endpoint",
+      "failed": "Impossible d'ajouter l'endpoint. Veuillez réessayer.",
+      "createdTitle": "Endpoint ajouté",
+      "copyNow": "Copiez votre secret de signature maintenant. Il ne sera plus affiché ensuite."
+    },
+    "event": {
+      "member": {
+        "invited": "Membre invité",
+        "removed": "Membre retiré",
+        "role_changed": "Rôle d'un membre modifié"
+      },
+      "organization": {
+        "created": "Espace créé",
+        "updated": "Espace modifié",
+        "deleted": "Espace supprimé"
+      },
+      "subscription": {
+        "created": "Abonnement créé",
+        "updated": "Abonnement modifié",
+        "cancelled": "Abonnement annulé"
+      },
+      "payment": {
+        "succeeded": "Paiement réussi",
+        "failed": "Paiement échoué"
+      },
+      "api_key": {
+        "created": "Clé d'API créée",
+        "revoked": "Clé d'API révoquée"
+      },
+      "webhook": {
+        "created": "Webhook créé",
+        "deleted": "Webhook supprimé"
+      },
+      "feature_flag": {
+        "updated": "Indicateur de fonctionnalité modifié"
+      },
+      "feedback": {
+        "created": "Feedback envoyé"
+      },
+      "upload": {
+        "created": "Fichier envoyé"
+      },
+      "project": {
+        "created": "Projet créé",
+        "updated": "Projet modifié",
+        "deleted": "Projet supprimé"
+      }
+    }
   },
   "legal": {
     "terms": "Conditions d'utilisation",
@@ -217,15 +833,39 @@
   },
   "ai": {
     "title": "Chat IA",
-    "newConversation": "Nouvelle conversation",
+    "nav": "Assistant",
     "noProviders": "IA non configurée",
-    "noProvidersDescription": "Ajoutez une clé API d'un fournisseur IA pour activer le chat IA.",
+    "noProvidersDescription": "Définissez au moins l'une des variables {variables} dans votre environnement, puis redémarrez l'application.",
+    "startConversation": "Démarrez une conversation avec le modèle d'IA de votre choix.",
+    "conversation": "Conversation",
+    "task": "Tâche",
+    "footnotes": "Notes de bas de page",
+    "footnoteBack": "Retour à la référence {reference}",
+    "messageLabel": "Message",
     "sendMessage": "Envoyer un message…",
-    "credits": "crédits",
+    "send": "Envoyer le message",
+    "stopGeneration": "Arrêter la génération",
+    "credits": "{count, plural, one {# crédit} other {# crédits}}",
     "unlimited": "Illimité",
-    "insufficientCredits": "Crédits insuffisants",
     "selectModel": "Sélectionner un modèle",
-    "stopGeneration": "Arrêter la génération"
+    "limit": {
+      "count": "{count} / {max}",
+      "near": "Vous approchez de la limite de {max} caractères.",
+      "over": "Ce message dépasse la limite de {max} caractères. Raccourcissez-le pour l'envoyer."
+    },
+    "errors": {
+      "credits": {
+        "title": "Plus de crédits",
+        "admin": "Cet espace a utilisé tous ses crédits. Passez à un plan supérieur pour continuer à utiliser l'assistant.",
+        "member": "Cet espace a utilisé tous ses crédits. Demandez à un administrateur de passer à un plan supérieur."
+      },
+      "gone": {
+        "title": "Vous ne pouvez pas continuer ici",
+        "description": "Cet espace a été supprimé, vous n'y avez plus accès ou votre session a pris fin. Rechargez la page pour continuer."
+      },
+      "failed": "Votre message n'a pas reçu de réponse. Réessayez dans un instant, ou reformulez-le.",
+      "reload": "Recharger la page"
+    }
   },
   "waitlist": {
     "pageTitle": "Rejoindre la liste d'attente",

@@ -6,7 +6,7 @@ export default function SubscriptionCancelledPreview() {
       name="John Doe"
       planName="Pro"
       endDate="April 17, 2026"
-      resubscribeUrl="http://localhost:3000/en/pricing"
+      resubscribeUrl="http://localhost:3088/en/pricing"
     />
   );
 }

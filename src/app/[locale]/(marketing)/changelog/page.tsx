@@ -8,6 +8,11 @@ import { db } from "@/shared/lib/DB";
 import { webPageJsonLd } from "@/shared/lib/jsonld";
 import { generatePageMetadata } from "@/shared/lib/seo";
 
+// The entries are read from the database for each request, never by the build. The
+// page was drawn per request already, but the build drew it once first, to find
+// that out, and its query opened ./local.db, which `npm run dev` may be holding.
+export const dynamic = "force-dynamic";
+
 interface Props {
   params: Promise<{ locale: string }>;
 }

@@ -4,7 +4,7 @@ export default function WelcomePreview() {
   return (
     <WelcomeEmail
       name="John Doe"
-      dashboardUrl="http://localhost:3000/en/dashboard"
+      dashboardUrl="http://localhost:3088/en/dashboard"
     />
   );
 }
