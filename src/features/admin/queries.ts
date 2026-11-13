@@ -64,7 +64,7 @@ export async function getAdminMetrics() {
     countOrganizations(),
     db
       .select({
-        mrr: sql<number>`COALESCE(SUM(${plan.price}), 0)`,
+        mrr: sql<number>`COALESCE(SUM(${plan.price}), 0)`.mapWith(Number),
       })
       .from(subscription)
       .innerJoin(plan, sql`${subscription.planId} = ${plan.id}`)

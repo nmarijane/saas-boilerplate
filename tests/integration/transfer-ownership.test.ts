@@ -127,11 +127,14 @@ describe("handing a workspace over", () => {
     `);
     await testDb.execute(sql`create trigger refuse_admin before update on organization_member for each row execute function refuse_admin()`);
 
-    const answer = await transferOwnership({ orgId: ORG, memberId: memberId(MEMBER) });
+    try {
+      const answer = await transferOwnership({ orgId: ORG, memberId: memberId(MEMBER) });
 
-    expect(answer.success).toBe(false);
-    expect(await roles()).toEqual({ [OWNER]: "owner", [ADMIN]: "admin", [MEMBER]: "member" });
-    expect(emitEvent).not.toHaveBeenCalled();
-    await testDb.execute(sql`drop trigger refuse_admin on organization_member`);
+      expect(answer.success).toBe(false);
+      expect(await roles()).toEqual({ [OWNER]: "owner", [ADMIN]: "admin", [MEMBER]: "member" });
+      expect(emitEvent).not.toHaveBeenCalled();
+    } finally {
+      await testDb.execute(sql`drop trigger if exists refuse_admin on organization_member`);
+    }
   });
 });

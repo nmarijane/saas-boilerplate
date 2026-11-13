@@ -382,11 +382,16 @@ describe("deleteAccount", () => {
       `);
       await testDb.execute(sql`create trigger refuse_user_delete before delete on "user" for each row execute function refuse_user_delete()`);
 
-      const answer = await deleteAccount();
+      try {
+        const answer = await deleteAccount();
 
-      expect(answer.success).toBe(false);
-      expect(await personExists()).toBe(true);
-      expect(await workspaceExists("set-org-alone")).toBe(true);
+        expect(answer.success).toBe(false);
+        expect(await personExists()).toBe(true);
+        expect(await workspaceExists("set-org-alone")).toBe(true);
+      } finally {
+        // The next test file may share the database (a real PostgreSQL does): the trigger goes, pass or fail
+        await testDb.execute(sql`drop trigger if exists refuse_user_delete on "user"`);
+      }
     });
   });
 });
