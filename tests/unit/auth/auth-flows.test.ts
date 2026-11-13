@@ -527,15 +527,12 @@ describe("asking for a link to reset the password", () => {
 describe("choosing a new password", () => {
   const STRONG = "Secret-123!";
 
-  it("asks for the new password and the token of the link, and for nothing else: it does not sign the person in", async () => {
+  it("asks for the new password, and for nothing else (the token of the link is the server's): it does not sign the person in", async () => {
     const client = fakeClient();
 
-    await expect(resetPasswordFlow(client, { newPassword: STRONG, token: "tok_123" })).resolves.toEqual({ ok: true });
+    await expect(resetPasswordFlow(client, { newPassword: STRONG })).resolves.toEqual({ ok: true });
 
-    expect(client.resetPassword).toHaveBeenCalledExactlyOnceWith({
-      newPassword: STRONG,
-      token: "tok_123",
-    });
+    expect(client.resetPassword).toHaveBeenCalledExactlyOnceWith({ newPassword: STRONG });
     expect(made(client)).toEqual(["resetPassword"]);
   });
 
@@ -543,7 +540,7 @@ describe("choosing a new password", () => {
     const client = fakeClient();
     client.resetPassword.mockResolvedValue(refused("INVALID_TOKEN", "Invalid token"));
 
-    await expect(resetPasswordFlow(client, { newPassword: STRONG, token: "tok_123" })).resolves.toEqual({
+    await expect(resetPasswordFlow(client, { newPassword: STRONG })).resolves.toEqual({
       ok: false,
       messageKey: "auth.errors.invalidToken",
     });
@@ -553,7 +550,7 @@ describe("choosing a new password", () => {
     const client = fakeClient();
     client.resetPassword.mockResolvedValue(refused("USER_NOT_FOUND", "User not found"));
 
-    await expect(resetPasswordFlow(client, { newPassword: STRONG, token: "tok_123" })).resolves.toEqual({
+    await expect(resetPasswordFlow(client, { newPassword: STRONG })).resolves.toEqual({
       ok: false,
       messageKey: "common.error",
     });
@@ -564,7 +561,7 @@ describe("choosing a new password", () => {
     const offline = new Error("offline");
     client.resetPassword.mockRejectedValue(offline);
 
-    await expect(resetPasswordFlow(client, { newPassword: STRONG, token: "tok_123" })).resolves.toEqual({
+    await expect(resetPasswordFlow(client, { newPassword: STRONG })).resolves.toEqual({
       ok: false,
       messageKey: "common.error",
     });
@@ -586,7 +583,7 @@ describe("choosing a new password", () => {
   ])("does not ask for %j: %s", async (newPassword) => {
     const client = fakeClient();
 
-    await expect(resetPasswordFlow(client, { newPassword, token: "tok_123" })).resolves.toEqual({
+    await expect(resetPasswordFlow(client, { newPassword })).resolves.toEqual({
       ok: false,
       messageKey: "auth.passwordTooWeak",
     });
@@ -610,7 +607,7 @@ describe("a refusal for too many requests", () => {
     ["signing in with a provider", (client: Client) => socialSignInFlow(client, { provider: "github", locale: "en" }), (client: Client) => client.signIn.social],
     ["signing up", (client: Client) => signUpFlow(client, { name: "Camille", email: "camille@example.com", password: "Secret-123!", locale: "en" }), (client: Client) => client.signUp.email],
     ["asking for a link to reset the password", (client: Client) => requestPasswordResetFlow(client, { email: "camille@example.com", locale: "en" }), (client: Client) => client.requestPasswordReset],
-    ["choosing a new password", (client: Client) => resetPasswordFlow(client, { newPassword: "Secret-123!", token: "tok_123" }), (client: Client) => client.resetPassword],
+    ["choosing a new password", (client: Client) => resetPasswordFlow(client, { newPassword: "Secret-123!" }), (client: Client) => client.resetPassword],
   ] as const;
 
   it.each(flows)("is told to wait, not told as an error of the app, when %s", async (_name, run, call) => {
@@ -651,7 +648,7 @@ describe.each(FRAMEWORK_ERRORS)("%s from a call", (_, framework) => {
       socialSignInFlow(client, { provider: "github", locale: "en" }),
       signUpFlow(client, { name: "Ada", email: "a@b.co", password: "x", locale: "en" }),
       requestPasswordResetFlow(client, { email: "a@b.co", locale: "en" }),
-      resetPasswordFlow(client, { token: "t", newPassword: "Secret-123!" }),
+      resetPasswordFlow(client, { newPassword: "Secret-123!" }),
     ]) {
       expect(await outcomeOf(flow)).toBe(framework);
     }

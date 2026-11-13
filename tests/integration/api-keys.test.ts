@@ -39,7 +39,7 @@ describe("api-key actions", () => {
       expect(result).toHaveProperty("id");
       expect(result).toHaveProperty("key");
       expect(result).toHaveProperty("prefix");
-      expect(result.key).toMatch(/^sk_live_/);
+      expect(result.key).toMatch(/^sb_live_/);
     });
 
     it("stored hash matches when hashing the returned key", async () => {

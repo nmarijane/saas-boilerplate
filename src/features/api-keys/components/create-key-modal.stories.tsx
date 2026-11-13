@@ -11,7 +11,7 @@ import { CreatedKeyView, CreateKeyFormView, CreateKeyModal } from "./create-key-
 // a wait look like is shown here too, by a `create` that fails and by one that
 // waits.
 
-const KEY = "sk_live_Zk3V-EXAMPLE-0000-0000-0000";
+const KEY = "sb_live_Zk3V-EXAMPLE-0000-0000-0000";
 
 /** What the server answers: the key, or why it was not made. */
 type Answer = { id: string; key: string; prefix: string } | { error: string };
@@ -119,7 +119,7 @@ const meta = {
     orgId: "org_1",
     open: true,
     onOpenChange: () => {},
-    create: fn(async (): Promise<Answer> => ({ id: "k1", key: KEY, prefix: "sk_live_Zk3V" })),
+    create: fn(async (): Promise<Answer> => ({ id: "k1", key: KEY, prefix: "sb_live_Zk3V" })),
   },
   argTypes: { onOpenChange: { action: "onOpenChange" } },
   parameters: {
@@ -463,7 +463,7 @@ export const WaitsForTheServer: Story = {
     await expect(args.onOpenChange).not.toHaveBeenCalled();
     await expect(page.getByRole("dialog", { name: "Create API key" })).toBeVisible();
 
-    gate.release({ id: "k1", key: KEY, prefix: "sk_live_Zk3V" });
+    gate.release({ id: "k1", key: KEY, prefix: "sb_live_Zk3V" });
     await expect(await page.findByRole("dialog", { name: "API key created" })).toBeVisible();
     await expect(args.create).toHaveBeenCalledOnce();
   },

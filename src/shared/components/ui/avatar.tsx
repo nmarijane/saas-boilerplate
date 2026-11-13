@@ -29,6 +29,11 @@ function AvatarImage({
     <AvatarPrimitive.Image
       data-slot="avatar-image"
       className={cn("aspect-square size-full", className)}
+      // A picture lives on a server that is not the app's: it is asked for without
+      // telling it which page the person is on (`no-referrer`) and without cookies
+      // (`anonymous`: no credentials; a server that does not allow it shows the initials)
+      referrerPolicy="no-referrer"
+      crossOrigin="anonymous"
       {...props}
     />
   );

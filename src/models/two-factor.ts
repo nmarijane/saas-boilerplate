@@ -3,6 +3,8 @@ import { user } from "./user";
 
 // The twoFactor plugin's `twoFactor` model. `secret` and `backupCodes` hold the
 // encrypted values the plugin writes; `user.two_factor_enabled` stays on the user.
+// The plugin is off (src/features/auth/auth.ts) and the table stays, so that turning it
+// on again needs no migration (docs/SETUP.md, "Two-factor authentication").
 export const twoFactor = pgTable("two_factor", {
   id: text("id").primaryKey(),
   secret: text("secret").notNull(),

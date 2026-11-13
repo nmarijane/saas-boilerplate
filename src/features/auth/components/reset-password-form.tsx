@@ -4,7 +4,6 @@ import type { FormEvent } from "react";
 import type { FlowMessageKey, PasswordResetClient } from "../auth-flows";
 import { useTranslations } from "next-intl";
 import { useEffect, useId, useRef, useState } from "react";
-import { authClient } from "@/features/auth/auth-client";
 import { Button } from "@/shared/components/ui/button";
 import { Field } from "@/shared/components/ui/field";
 import { PageAlert } from "@/shared/components/ui/page-alert";
@@ -14,7 +13,7 @@ import { Link } from "@/shared/lib/i18n-navigation";
 import { editing } from "@/shared/utils/helpers";
 import { resetPasswordFlow } from "../auth-flows";
 import { useAuthSubmit } from "../hooks/use-auth-submit";
-import { scheduleTokenRemoval } from "../reset-token";
+import { resetPasswordWithLinkToken } from "../reset-password-action";
 import { AuthCard } from "./auth-card";
 import { AuthConfirmation } from "./auth-confirmation";
 import { PasswordStrength } from "./password-strength";
@@ -140,33 +139,32 @@ export function ResetPasswordFormView({
 }
 
 interface ResetPasswordFormProps {
-  /** The token of the link of the email, which Better Auth has checked and put in the address. */
-  token: string;
-  /** The auth client: the page gives none (it is the app's own), and a story gives one that answers what it is told to. */
+  /** What sets the password: the page gives none (it is the server action that holds the token), and a story gives one that answers what it is told to. */
   client?: Pick<PasswordResetClient, "resetPassword">;
 }
+
+/** The server action: it reads the token of the link from its cookie, so that the page never holds it. */
+const serverClient: Pick<PasswordResetClient, "resetPassword"> = {
+  resetPassword: ({ newPassword }) => resetPasswordWithLinkToken({ newPassword }),
+};
 
 // The form that sets the new password. What was typed is kept when the reset is
 // refused, so that it is fixed, not retyped; it is wiped once the password has
 // changed. One send at a time (useAuthSubmit); the flow refuses a password that
 // is too weak, and that refusal is what the view tells under the field. The token
-// is a password for an hour: the page has read it from the address and handed it
-// here, where it stays in memory, and the address is replaced with one that does not
-// hold it, so that it is not kept in the history or on the screen.
+// is a password for an hour, and the form never holds it: the proxy kept it in an HttpOnly
+// cookie when the link was followed, and the server action reads it there (reset-token.ts).
 export function ResetPasswordForm({
-  token,
-  client = authClient,
+  client = serverClient,
 }: ResetPasswordFormProps) {
   const [password, setPassword] = useState("");
   const [done, setDone] = useState(false);
   const { pending, failure, run, clearFailure } = useAuthSubmit();
 
-  useEffect(() => scheduleTokenRemoval(window), []);
-
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     await run(
-      () => resetPasswordFlow(client, { newPassword: password, token }),
+      () => resetPasswordFlow(client, { newPassword: password }),
       () => {
         setPassword("");
         setDone(true);

@@ -16,7 +16,7 @@ import {
 // refusal and a wait look like is shown here too, by a `create` that fails and
 // by one that waits.
 
-const SECRET = "whsec_Q9n3-EXAMPLE-0000-0000-0000";
+const SECRET = "sb_whsec_Q9n3-EXAMPLE-0000-0000-0000";
 
 /** `beforeEach` of a story: the errors the app reports (`reportError`) are taken away from the page, for a story that fails on purpose. */
 const reported = fn();
@@ -239,7 +239,7 @@ export const RefusesABadAddress: Story = {
     await userEvent.click(within(dialog).getByRole("checkbox", { name: "Member invited" }));
     await userEvent.click(within(dialog).getByRole("button", { name: "Add endpoint" }));
 
-    await expect(within(dialog).getByRole("alert")).toHaveTextContent("Enter a full address, such as https://example.com/webhooks.");
+    await expect(within(dialog).getByRole("alert")).toHaveTextContent("Enter a full https address, such as https://example.com/webhooks.");
     await expect(url).toHaveAttribute("aria-invalid", "true");
     await expect(url).toHaveValue("example.com");
     await expect(args.create).not.toHaveBeenCalled();

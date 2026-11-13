@@ -57,6 +57,14 @@ export function canManageMember(
   );
 }
 
+/** Whether the viewer, who must own the workspace, is offered to hand it over to this member: any other member of it. */
+export function canTransferOwnership(
+  viewer: { userId: string; role: OrgRole },
+  member: { userId: string; role: string },
+): boolean {
+  return viewer.role === "owner" && member.role !== "owner" && member.userId !== viewer.userId;
+}
+
 /**
  * Whether this row is the viewer's own, and offers them to leave the workspace.
  * The owner never leaves (`leaveWorkspace` refuses it): a workspace is never

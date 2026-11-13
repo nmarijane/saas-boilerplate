@@ -4,13 +4,13 @@ import type { FormEvent } from "react";
 import { useTranslations } from "next-intl";
 import { unstable_rethrow } from "next/navigation";
 import { useId, useState } from "react";
-import { z } from "zod";
 import { Button } from "@/shared/components/ui/button";
 import { Field } from "@/shared/components/ui/field";
 import { InlineStatus } from "@/shared/components/ui/inline-status";
 import { Input } from "@/shared/components/ui/input";
 import { PageAlert } from "@/shared/components/ui/page-alert";
 import { useRouter } from "@/shared/lib/i18n-navigation";
+import { isAvatarUrl } from "@/shared/utils/avatar-url";
 import { editing } from "@/shared/utils/helpers";
 import { reportHandledError } from "@/shared/utils/report-error";
 import { updateProfile } from "../actions";
@@ -18,11 +18,9 @@ import { updateProfile } from "../actions";
 /** The length the server accepts for a name, from 1 to this. */
 const NAME_MAX = 100;
 
-const avatarSchema = z.url({ protocol: /^https?$/ });
-
-/** Whether a link can be an avatar: an address on the web, http or https, which the browser fetches. */
+/** Whether a link can be an avatar: an `https:` address, which the browser fetches (the server checks it again). */
 export function isAvatarLink(link: string): boolean {
-  return avatarSchema.safeParse(link).success;
+  return isAvatarUrl(link);
 }
 
 interface ProfileFormViewProps {

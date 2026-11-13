@@ -207,14 +207,14 @@ async function send(canvas: ReturnType<typeof within>, password: string) {
 }
 
 /**
- * Sending asks for the new password and the token of the link, and nothing
+ * Sending asks for the new password, and nothing
  * else: the person is not signed in. When the server takes it, the card is titled
  * Password updated and holds the confirmation, and the focus goes to it, as the
  * button that had it is gone.
  */
 export const Resets: Story = {
   loaders: [() => ({ client: fakeClient() })],
-  render: (_args, { loaded }) => <ResetPasswordForm token="tok_123" client={clientOf(loaded)} />,
+  render: (_args, { loaded }) => <ResetPasswordForm client={clientOf(loaded)} />,
   play: async ({ canvasElement, loaded }) => {
     const client = clientOf(loaded);
     const canvas = within(canvasElement);
@@ -225,7 +225,7 @@ export const Resets: Story = {
     await expect(canvas.getByRole("heading", { level: 1 })).toHaveTextContent("Password updated");
     await expect(canvas.queryByText("Choose a new password for your account.")).not.toBeInTheDocument();
     await expect(client.resetPassword).toHaveBeenCalledOnce();
-    await expect(client.resetPassword).toHaveBeenCalledWith({ newPassword: STRONG, token: "tok_123" });
+    await expect(client.resetPassword).toHaveBeenCalledWith({ newPassword: STRONG });
     await expect(canvas.queryByLabelText("New password")).not.toBeInTheDocument();
     await expect(canvas.getByRole("link", { name: "Sign In" })).toHaveAttribute("href", expect.stringMatching(/\/sign-in$/));
     await waitFor(() => expect(canvas.getByRole("status").parentElement).toHaveFocus());
@@ -239,7 +239,7 @@ export const Resets: Story = {
  */
 export const RefusesAWeakPassword: Story = {
   loaders: [() => ({ client: fakeClient() })],
-  render: (_args, { loaded }) => <ResetPasswordForm token="tok_123" client={clientOf(loaded)} />,
+  render: (_args, { loaded }) => <ResetPasswordForm client={clientOf(loaded)} />,
   play: async ({ canvasElement, loaded }) => {
     const client = clientOf(loaded);
     const canvas = within(canvasElement);
@@ -261,7 +261,7 @@ export const RefusesAWeakPassword: Story = {
 /** Sent with nothing typed, the button asks the same of the person: a password that meets the rules. Nothing is asked of the server. */
 export const RefusesAnEmptyField: Story = {
   loaders: [() => ({ client: fakeClient() })],
-  render: (_args, { loaded }) => <ResetPasswordForm token="tok_123" client={clientOf(loaded)} />,
+  render: (_args, { loaded }) => <ResetPasswordForm client={clientOf(loaded)} />,
   play: async ({ canvasElement, loaded }) => {
     const client = clientOf(loaded);
     const canvas = within(canvasElement);
@@ -282,7 +282,7 @@ export const LinkExpired: Story = {
       return { client };
     },
   ],
-  render: (_args, { loaded }) => <ResetPasswordForm token="tok_123" client={clientOf(loaded)} />,
+  render: (_args, { loaded }) => <ResetPasswordForm client={clientOf(loaded)} />,
   play: async ({ canvasElement, loaded }) => {
     const client = clientOf(loaded);
     const canvas = within(canvasElement);
@@ -309,7 +309,7 @@ export const OneSendAtATime: Story = {
       return { client };
     },
   ],
-  render: (_args, { loaded }) => <ResetPasswordForm token="tok_123" client={clientOf(loaded)} />,
+  render: (_args, { loaded }) => <ResetPasswordForm client={clientOf(loaded)} />,
   play: async ({ canvasElement, loaded }) => {
     const client = clientOf(loaded);
     const canvas = within(canvasElement);
@@ -336,7 +336,7 @@ export const OneSendInOneInstant: Story = {
       return { client };
     },
   ],
-  render: (_args, { loaded }) => <ResetPasswordForm token="tok_123" client={clientOf(loaded)} />,
+  render: (_args, { loaded }) => <ResetPasswordForm client={clientOf(loaded)} />,
   play: async ({ canvasElement, loaded }) => {
     const client = clientOf(loaded);
     const canvas = within(canvasElement);

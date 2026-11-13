@@ -283,8 +283,9 @@ Copy `.env.example` to `.env.local` and fill in the values:
 ```bash
 # Required for production
 DATABASE_URL=              # PostgreSQL connection string
-BETTER_AUTH_SECRET=        # Auth secret (generate with openssl rand -hex 32)
+BETTER_AUTH_SECRET=        # Auth secret, no default (generate with openssl rand -hex 32)
 BETTER_AUTH_URL=           # Your app URL (https://your-app.com)
+TRUST_PROXY=               # vercel, or the number of reverse proxies in front of the app
 STRIPE_SECRET_KEY=         # Stripe secret key
 STRIPE_WEBHOOK_SECRET=     # Stripe webhook signing secret
 

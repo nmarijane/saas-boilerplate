@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 import { hasLocale } from "next-intl";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
@@ -15,9 +15,9 @@ import { DEV_APP_URL } from "@/shared/config/app";
 import { db } from "@/shared/lib/DB";
 import { routing } from "@/shared/lib/i18n-routing";
 import { safeAction } from "@/shared/lib/safe-action";
-import { runWorkspaceCleanups } from "@/shared/shell/workspace-cleanup";
 import { invitationPath } from "./invitation-path";
 import { getOrganization } from "./queries";
+import { prepareWorkspaceDeletion } from "./workspace-deletion";
 
 const createOrgSchema = z.object({
   name: z.string().min(1).max(100),
@@ -125,14 +125,21 @@ export async function removeMember(data: z.infer<typeof removeMemberSchema>) {
     await requireRole(parsed.orgId, "admin");
     await assertNotOwner(parsed.orgId, parsed.memberIdToRemove);
 
-    await db
+    // The check above can be stale: the owner may hand the workspace to this member at this very moment. The
+    // write itself refuses an owner, and a write that touched no row is the refusal
+    const removed = await db
       .delete(organizationMember)
       .where(
         and(
           eq(organizationMember.organizationId, parsed.orgId),
           eq(organizationMember.id, parsed.memberIdToRemove),
+          ne(organizationMember.role, "owner"),
         ),
-      );
+      )
+      .returning();
+    if (removed.length === 0) {
+      throw new Error("The organization owner cannot be modified");
+    }
 
     revalidatePath("/settings/team");
   }, "Failed to remove member");
@@ -151,18 +158,80 @@ export async function changeRole(data: z.infer<typeof changeRoleSchema>) {
     await requireRole(parsed.orgId, "admin");
     await assertNotOwner(parsed.orgId, parsed.memberId);
 
-    await db
+    // As in removeMember: the write refuses an owner itself, whatever the check above read
+    const changed = await db
       .update(organizationMember)
       .set({ role: parsed.newRole })
       .where(
         and(
           eq(organizationMember.organizationId, parsed.orgId),
           eq(organizationMember.id, parsed.memberId),
+          ne(organizationMember.role, "owner"),
         ),
-      );
+      )
+      .returning();
+    if (changed.length === 0) {
+      throw new Error("The organization owner cannot be modified");
+    }
 
     revalidatePath("/settings/team");
   }, "Failed to change role");
+}
+
+const transferOwnershipSchema = z.object({
+  orgId: z.string().min(1),
+  /** The membership that becomes the owner: by its own id, as `changeRole` finds one. */
+  memberId: z.string().min(1),
+});
+
+/**
+ * Hands the workspace over: the member chosen becomes its owner, and the owner becomes an admin. Only the owner
+ * may, and only to a member of this workspace (an id from another one, or the owner's own, finds nothing). It is
+ * one transaction that reads both rows again under a lock, so that two hand-overs at once, or an owner that
+ * stopped being one in between, leave one owner and not two or none. The owner of a workspace that has other
+ * members cannot delete their account until they have done this (or removed the members).
+ */
+export async function transferOwnership(data: z.infer<typeof transferOwnershipSchema>) {
+  return safeAction(async () => {
+    await requireAuth();
+    const parsed = transferOwnershipSchema.parse(data);
+    const { session } = await requireRole(parsed.orgId, "owner");
+
+    const next = await db.transaction(async (transaction) => {
+      const [owner] = await transaction
+        .select({ id: organizationMember.id, role: organizationMember.role })
+        .from(organizationMember)
+        .where(and(eq(organizationMember.organizationId, parsed.orgId), eq(organizationMember.userId, session.user.id)))
+        .for("update");
+      if (owner?.role !== "owner") {
+        throw new Error("Only the owner can hand the workspace over");
+      }
+
+      const [target] = await transaction
+        .select({ id: organizationMember.id, role: organizationMember.role, userId: organizationMember.userId })
+        .from(organizationMember)
+        .where(and(eq(organizationMember.organizationId, parsed.orgId), eq(organizationMember.id, parsed.memberId)))
+        .for("update");
+      if (!target || target.userId === session.user.id || target.role === "owner") {
+        throw new Error("The new owner has to be another member of the workspace");
+      }
+
+      await transaction.update(organizationMember).set({ role: "owner" }).where(eq(organizationMember.id, target.id));
+      await transaction.update(organizationMember).set({ role: "admin" }).where(eq(organizationMember.id, owner.id));
+
+      return target;
+    });
+
+    await emitEvent("member.role_changed", {
+      orgId: parsed.orgId,
+      actorId: session.user.id,
+      resourceType: "organization_member",
+      resourceId: next.id,
+      metadata: { role: "owner", previousRole: next.role, handedOverBy: session.user.id },
+    });
+
+    revalidatePath("/settings/team");
+  }, "Failed to hand the workspace over");
 }
 
 const deleteOrgSchema = z.object({
@@ -176,7 +245,7 @@ const deleteOrgSchema = z.object({
  * files); one that cannot keeps the workspace, and the answer says why, as a
  * message key, with what the steps before it did (a subscription cancelled
  * already). Then `organization.deleted` is told while the workspace is still
- * there: the deliveries to its webhooks are queued while its endpoints exist,
+ * there: the deliveries to its webhooks are made while its endpoints exist,
  * and the audit log keeps it as an entry of the platform, which outlives the
  * workspace. Then the rows go, in cascade, with the workspace's own log.
  */
@@ -191,26 +260,10 @@ export async function deleteOrganization(data: z.infer<typeof deleteOrgSchema>) 
       throw new Error("Organization not found");
     }
 
-    // The registry is read when a workspace is deleted, and not when this module
-    // loads: it holds every feature, which the other actions have no use for.
-    const { FEATURES } = await import("@/features/registry");
-    const { failed, done } = await runWorkspaceCleanups(FEATURES, parsed.orgId);
-    if (failed) {
-      return { deleted: false, messageKey: failed, done };
+    const prepared = await prepareWorkspaceDeletion({ id: parsed.orgId, name: workspace.name }, session.user.id);
+    if (!prepared.ready) {
+      return { deleted: false, messageKey: prepared.messageKey, done: prepared.done };
     }
-
-    // Its webhooks are queued before the rows go: the endpoints go in cascade
-    await emitEvent(
-      "organization.deleted",
-      {
-        orgId: parsed.orgId,
-        actorId: session.user.id,
-        resourceType: "organization",
-        resourceId: parsed.orgId,
-        metadata: { name: workspace.name },
-      },
-      { awaitWebhooks: true },
-    );
 
     await db
       .delete(organizationTable)

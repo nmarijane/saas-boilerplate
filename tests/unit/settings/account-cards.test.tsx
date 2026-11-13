@@ -147,7 +147,7 @@ describe("the profile card", () => {
     const html = render({ image: "example.com/me.png", imageInvalid: true });
     const [, , image = ""] = startTags(html, "input");
 
-    expect(textOf(html)).toContain("Enter a full link, such as https://example.com/me.png.");
+    expect(textOf(html)).toContain("Enter a full https link, such as https://example.com/me.png.");
     expect(attribute(image, "aria-invalid")).toBe("true");
     expect(attribute(image, "value")).toBe("example.com/me.png");
   });
@@ -177,14 +177,14 @@ describe("the profile card", () => {
 });
 
 describe("what can be an avatar", () => {
-  it("is an address on the web, http or https", () => {
-    for (const link of ["https://example.com/me.png", "http://cdn.example.com/a/b.jpg?v=2", "HTTPS://EXAMPLE.COM/ME.PNG"]) {
+  it("is an https address", () => {
+    for (const link of ["https://example.com/me.png", "https://cdn.example.com/a/b.jpg?v=2", "HTTPS://EXAMPLE.COM/ME.PNG"]) {
       expect(isAvatarLink(link), link).toBe(true);
     }
   });
 
-  it("is not a link with another scheme, a bare domain or a path", () => {
-    for (const link of ["javascript:alert(1)", "data:image/png;base64,AAAA", "ftp://example.com/me.png", "example.com/me.png", "//example.com/me.png", "/me.png", "me", "https://", ""]) {
+  it("is not a link with another scheme (http included), a bare domain, credentials or a path", () => {
+    for (const link of ["http://cdn.example.com/a/b.jpg", "https://user:pass@example.com/me.png", "javascript:alert(1)", "data:image/png;base64,AAAA", "ftp://example.com/me.png", "example.com/me.png", "//example.com/me.png", "/me.png", "me", "https://", ""]) {
       expect(isAvatarLink(link), link).toBe(false);
     }
   });

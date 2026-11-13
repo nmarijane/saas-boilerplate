@@ -27,3 +27,27 @@ export const APP_PATH_PREFIXES = [
   "/onboarding",
   "/admin",
 ] as const;
+
+/**
+ * What the secrets the app issues begin with, set once here: the API keys that a
+ * person creates (`sb_live_…`, `sb_test_…`) and the signing secret of a webhook
+ * endpoint (`sb_whsec_…`). They are the project's own on purpose: Stripe's
+ * (`sk_live_`, `whsec_`) make a key of the app look like a Stripe key to the
+ * secret scanners and to a person who pastes it. A project that rebrands picks a
+ * prefix of its own (docs/SETUP.md, Phase 4). Changing a prefix leaves the keys
+ * already issued as they are: a key is checked by the hash of the whole string,
+ * whatever it begins with.
+ */
+export const SECRET_PREFIXES = {
+  apiKeyLive: "sb_live_",
+  apiKeyTest: "sb_test_",
+  webhookSecret: "sb_whsec_",
+} as const;
+
+/**
+ * How many workspaces one person may own (create and not give away). Joining
+ * other people's workspaces is not counted. Creating is open to every person who
+ * is signed in, and each workspace is rows, a plan and a place for files: without
+ * a cap one account fills the database. A project with plans sets it by plan.
+ */
+export const MAX_OWNED_WORKSPACES = 10;

@@ -1,5 +1,6 @@
 "use client";
 
+import type { DeleteAccountOutcome } from "../actions";
 import { useTranslations } from "next-intl";
 import { useId, useRef, useState } from "react";
 import { Button } from "@/shared/components/ui/button";
@@ -18,8 +19,9 @@ import { deleteAccount } from "../actions";
 // deleted the person goes to the sign-in page, where the toast says so, and the
 // session they had went with the account; if it is not deleted, the dialog stays
 // open with an error toast.
-export function DeleteAccountZone() {
+export function DeleteAccountZone({ needsPassword }: { needsPassword: boolean }) {
   const t = useTranslations("settings.account.delete");
+  const tSettings = useTranslations("settings");
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -32,12 +34,32 @@ export function DeleteAccountZone() {
     trigger.current?.focus();
   };
 
+  const refusalMessage = (outcome: Exclude<DeleteAccountOutcome, { deleted: true }>) => {
+    switch (outcome.reason) {
+      case "workspace-has-members":
+        return t("ownsWithMembers", { workspace: outcome.workspace });
+      case "workspace-kept":
+        return t("workspaceKept");
+      case "recent-sign-in-required":
+        return t("recentSignIn");
+      default:
+        return t("wrongPassword");
+    }
+  };
+
   // It rejects when the account is still there (the server refused, or did not
   // answer), so that the dialog stays open and says so.
-  const remove = async () => {
-    const answer = await deleteAccount();
+  const remove = async (password: string) => {
+    const answer = await deleteAccount(needsPassword ? { password } : undefined);
     if (!answer.success) {
       throw new Error(answer.error);
+    }
+    // The server refused for a reason the person can act on: said in words, and the dialog stays open
+    // (The stub that Storybook puts in place of the action answers with no data: that is a deletion that went.)
+    const outcome: DeleteAccountOutcome | undefined = answer.data;
+    if (outcome?.deleted === false) {
+      toast.error(refusalMessage(outcome));
+      throw new Error(outcome.reason);
     }
 
     toast.success(t("done"));
@@ -72,9 +94,10 @@ export function DeleteAccountZone() {
         onOpenChange={setOpen}
         tone="danger"
         title={t("confirmTitle")}
-        description={t("confirmDescription")}
+        description={needsPassword ? t("confirmDescription") : t("confirmDescriptionNoPassword")}
         confirmLabel={t("button")}
         requireText="DELETE"
+        passwordLabel={needsPassword ? tSettings("currentPassword") : undefined}
         onCloseAutoFocus={restoreFocus}
         onConfirm={remove}
       />

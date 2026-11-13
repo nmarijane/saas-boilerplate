@@ -56,7 +56,7 @@ const faqItems = [
   {
     question: "What authentication methods are supported?",
     answer:
-      "Email/password, magic links, social login (Google, GitHub), and multi-factor authentication (TOTP). All powered by Better Auth.",
+      "Email and password with verified addresses, and social login (Google, GitHub). All powered by Better Auth.",
   },
   {
     question: "Is the codebase production-ready?",

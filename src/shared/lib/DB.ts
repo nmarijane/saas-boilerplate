@@ -4,6 +4,7 @@ import { Pool } from "pg";
 import * as schema from "@/models";
 import { resolvePgliteDataDir } from "./pglite-data-dir";
 import { openPglite } from "./pglite-open";
+import { assertDatabaseConfigured } from "./production-config";
 
 /**
  * A client that the first query makes, not the import: a process that loads the
@@ -40,9 +41,14 @@ function createDb() {
     });
   }
 
-  // PGlite for local development (no DATABASE_URL)
+  // PGlite for local development (no DATABASE_URL). A production server refuses it
+  // (production-config.ts): checked with the first query, as the client is made, so
+  // that a build, which loads this file and never queries, is not stopped by it.
   return drizzlePglite({
-    client: madeByFirstQuery(() => openPglite(resolvePgliteDataDir())),
+    client: madeByFirstQuery(() => {
+      assertDatabaseConfigured();
+      return openPglite(resolvePgliteDataDir());
+    }),
     schema,
   });
 }

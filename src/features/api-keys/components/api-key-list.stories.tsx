@@ -21,7 +21,7 @@ import { ApiKeyList } from "./api-key-list";
 const ACTIVE: ApiKeyItem = {
   id: "k1",
   name: "Production server",
-  prefix: "sk_live_AbCd",
+  prefix: "sb_live_AbCd",
   status: "active",
   createdAt: "2026-11-03T12:00:00.000Z",
   lastUsed: "2026-11-05T09:30:00.000Z",
@@ -29,7 +29,7 @@ const ACTIVE: ApiKeyItem = {
 const EXPIRED: ApiKeyItem = {
   id: "k2",
   name: "Staging",
-  prefix: "sk_live_Qw3e",
+  prefix: "sb_live_Qw3e",
   status: "expired",
   createdAt: "2026-10-12T12:00:00.000Z",
   lastUsed: null,
@@ -37,7 +37,7 @@ const EXPIRED: ApiKeyItem = {
 const REVOKED: ApiKeyItem = {
   id: "k3",
   name: "Old laptop",
-  prefix: "sk_live_Zz9y",
+  prefix: "sb_live_Zz9y",
   status: "revoked",
   createdAt: "2026-10-01T12:00:00.000Z",
   lastUsed: "2026-10-20T08:00:00.000Z",
@@ -45,7 +45,7 @@ const REVOKED: ApiKeyItem = {
 const FRESH: ApiKeyItem = {
   id: "k4",
   name: "CI pipeline",
-  prefix: "sk_live_Mm1n",
+  prefix: "sb_live_Mm1n",
   status: "active",
   createdAt: "2026-11-04T08:00:00.000Z",
   lastUsed: null,
@@ -140,8 +140,8 @@ export const Default: Story = {
     await expect(canvas.getByRole("heading", { level: 2, name: "API keys" })).toBeVisible();
     await expect(canvas.getByRole("list", { name: "API keys" })).toBeVisible();
     await expect(canvas.getAllByRole("listitem")).toHaveLength(4);
-    await expect(canvas.getByText("sk_live_AbCd…")).toBeVisible();
-    await expect(canvas.getByText("sk_live_AbCd…").tagName).toBe("CODE");
+    await expect(canvas.getByText("sb_live_AbCd…")).toBeVisible();
+    await expect(canvas.getByText("sb_live_AbCd…").tagName).toBe("CODE");
     await expect(canvas.getAllByText(/Last used/)).toHaveLength(2);
     await expect(canvas.getAllByText(/Never used/)).toHaveLength(2);
     await expect(canvas.getAllByText("Active")).toHaveLength(2);

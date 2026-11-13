@@ -294,6 +294,27 @@ describe("organization actions", () => {
       expect(members).toHaveLength(0);
     });
 
+    // The owner hands the workspace to this member at the moment an admin removes them: the check that read
+    // "member" is stale, and the write itself must refuse the row that is an owner now
+    it("refuses to remove a member who became the owner after the check, and removes nobody", async () => {
+      await seedOrg(ORG_ID);
+      await seedUser("just-made-owner");
+      const member = await seedOrgMember("just-made-owner", ORG_ID, "owner");
+      // What the check read, before the hand-over: a member
+      const stale = vi.spyOn(testDb, "select").mockImplementationOnce((() => ({
+        from: () => ({ where: () => ({ limit: async () => [{ role: "member" }] }) }),
+      })) as never);
+      const { removeMember } = await import("@/features/auth/organization/actions");
+
+      const result = await removeMember({ orgId: ORG_ID, memberIdToRemove: member.id });
+      stale.mockRestore();
+
+      expect(result.success).toBe(false);
+      const rows = await testDb.select().from(organizationMember).where(eq(organizationMember.id, member.id));
+      expect(rows).toHaveLength(1);
+      expect(rows[0]?.role).toBe("owner");
+    });
+
     it("returns validation error for empty orgId", async () => {
       const { removeMember } = await import(
         "@/features/auth/organization/actions"
@@ -359,6 +380,23 @@ describe("organization actions", () => {
         .where(eq(organizationMember.id, member.id));
       expect(updated).toHaveLength(1);
       expect(updated[0].role).toBe("admin");
+    });
+
+    it("refuses to demote a member who became the owner after the check, and changes nothing", async () => {
+      await seedOrg(ORG_ID);
+      await seedUser("just-made-owner-2");
+      const member = await seedOrgMember("just-made-owner-2", ORG_ID, "owner");
+      const stale = vi.spyOn(testDb, "select").mockImplementationOnce((() => ({
+        from: () => ({ where: () => ({ limit: async () => [{ role: "admin" }] }) }),
+      })) as never);
+      const { changeRole } = await import("@/features/auth/organization/actions");
+
+      const result = await changeRole({ orgId: ORG_ID, memberId: member.id, newRole: "member" });
+      stale.mockRestore();
+
+      expect(result.success).toBe(false);
+      const rows = await testDb.select().from(organizationMember).where(eq(organizationMember.id, member.id));
+      expect(rows[0]?.role).toBe("owner");
     });
 
     it("changes a member role from admin to member", async () => {

@@ -1,10 +1,17 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { organization, twoFactor } from "better-auth/plugins";
+import { APIError } from "better-auth/api";
+import { organization } from "better-auth/plugins";
+import { and, count, eq } from "drizzle-orm";
 import { sendEmail } from "@/features/email/send";
+import { sendAfterResponse } from "@/features/email/send-after-response";
 import { ResetPassword } from "@/features/email/templates/reset-password";
 import { VerifyEmail } from "@/features/email/templates/verify-email";
+import { organizationMember } from "@/models/organization";
+import { MAX_OWNED_WORKSPACES } from "@/shared/config/app";
+import { CLIENT_IP_HEADER } from "@/shared/lib/client-ip";
 import { db } from "@/shared/lib/DB";
+import { isAvatarUrl } from "@/shared/utils/avatar-url";
 import { verificationLink } from "./verification";
 
 // The verification e-mail says that its link lasts 24 hours (templates/verify-email.tsx)
@@ -24,16 +31,19 @@ export const auth = betterAuth({
     // A new password ends every session of the person: a password is reset when someone
     // else may have it, and a session they opened with it is renewed each time it is used
     revokeSessionsOnPasswordReset: true,
-    sendResetPassword: async ({ user, url }) => {
-      await sendEmail({
-        to: user.email,
-        subject: "Reset your password",
-        template: ResetPassword({
-          name: user.name,
-          resetUrl: url,
+    // The mail goes out after the answer (sendAfterResponse): the answer takes the same time for an address
+    // that has an account and one that has none
+    sendResetPassword: ({ user, url }) =>
+      sendAfterResponse(() =>
+        sendEmail({
+          to: user.email,
+          subject: "Reset your password",
+          template: ResetPassword({
+            name: user.name,
+            resetUrl: url,
+          }),
         }),
-      });
-    },
+      ),
   },
   emailVerification: {
     sendOnSignUp: true,
@@ -46,17 +56,20 @@ export const auth = betterAuth({
     // whoever merely knows the address.
     sendOnSignIn: false,
     expiresIn: VERIFICATION_LINK_SECONDS,
-    sendVerificationEmail: async ({ user, url }) => {
-      await sendEmail({
-        to: user.email,
-        subject: "Verify your email",
-        template: VerifyEmail({
-          name: user.name,
-          // Lands on the verify page, which says that it worked (verification.ts)
-          verificationUrl: verificationLink(url),
+    // After the answer, as the reset mail is: `/send-verification-email` holds its answer to a floor of
+    // 500 ms to hide whether a mail was sent, and a mail that is awaited would lift the answer above it
+    sendVerificationEmail: ({ user, url }) =>
+      sendAfterResponse(() =>
+        sendEmail({
+          to: user.email,
+          subject: "Verify your email",
+          template: VerifyEmail({
+            name: user.name,
+            // Lands on the verify page, which says that it worked (verification.ts)
+            verificationUrl: verificationLink(url),
+          }),
         }),
-      });
-    },
+      ),
   },
   socialProviders: {
     google: {
@@ -84,6 +97,34 @@ export const auth = betterAuth({
       },
     },
   },
+  // A failed provider sign-in lands on the sign-in page of the app, with `?error=`, which says it in the words of
+  // the page: Better Auth's own error page is unstyled under the closed policy of /api (next.config.ts)
+  onAPIError: { errorURL: "/sign-in" },
+  advanced: {
+    // The limit by address of Better Auth reads the address from this header only, and
+    // the route of Better Auth (api/auth/[...all]/route.ts) writes it: the address that
+    // TRUST_PROXY allows, or none. The `X-Forwarded-For` of a client is nobody's word.
+    ipAddress: { ipAddressHeaders: [CLIENT_IP_HEADER] },
+  },
+  databaseHooks: {
+    user: {
+      // A picture is an https address (isAvatarUrl): the browser of everyone who sees the person
+      // fetches it. What a provider sends at a social sign-in that is not one is left out and the
+      // person signs in without a picture; what the person sends is refused, and says so.
+      create: {
+        before: async (person) => ({
+          data: { ...person, image: typeof person.image === "string" && isAvatarUrl(person.image) ? person.image : null },
+        }),
+      },
+      update: {
+        before: async (changes) => {
+          if (typeof changes.image === "string" && changes.image !== "" && !isAvatarUrl(changes.image)) {
+            throw new APIError("BAD_REQUEST", { message: "The picture must be an https address" });
+          }
+        },
+      },
+    },
+  },
   // Organization writes go through organization/actions.ts (validation, requireRole, assertNotOwner);
   // over HTTP the browser only switches and reads the active organization.
   disabledPaths: [
@@ -103,8 +144,18 @@ export const auth = betterAuth({
     organization({
       schema: { member: { modelName: "organizationMember" } },
       invitationExpiresIn: INVITATION_SECONDS,
+      // A person owns a limited number of workspaces (MAX_OWNED_WORKSPACES); the ones they joined don't count
+      organizationLimit: async (person) => {
+        const [owned] = await db
+          .select({ total: count() })
+          .from(organizationMember)
+          .where(and(eq(organizationMember.userId, person.id), eq(organizationMember.role, "owner")));
+
+        return (owned?.total ?? 0) >= MAX_OWNED_WORKSPACES;
+      },
     }),
-    twoFactor(),
+    // Two-factor is off: the `twoFactor()` plugin has no page to ask for the code at sign-in
+    // yet (docs/SETUP.md, "Two-factor authentication"). Its table and `two_factor_enabled` stay.
   ],
 });
 

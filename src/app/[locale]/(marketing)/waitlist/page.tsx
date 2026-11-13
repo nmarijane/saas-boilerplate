@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { cookies } from "next/headers";
 import { WaitlistPageClient } from "@/features/waitlist/components/waitlist-page-client";
-import { getWaitlistEntry, getWaitlistStats } from "@/features/waitlist/queries";
+import { getWaitlistEntryWithPosition, getWaitlistStats } from "@/features/waitlist/queries";
 import { generatePageMetadata } from "@/shared/lib/seo";
 
 interface Props {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ email?: string }>;
+  searchParams: Promise<{ code?: string }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -25,19 +24,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function WaitlistPage({ searchParams }: Props) {
   const t = await getTranslations("waitlist");
-  const { email: queryEmail } = await searchParams;
-
-  const cookieStore = await cookies();
-  const cookieEmail = cookieStore.get("waitlist_email")?.value;
-  const emailToCheck = queryEmail ?? cookieEmail;
+  // The page shows a position for a referral code, which joining answers with: never for an address, which is
+  // anybody's to type (an address in the query shows nothing)
+  const { code } = await searchParams;
 
   let stats = { total: 0, invited: 0 };
-  let entryWithPosition: Awaited<ReturnType<typeof getWaitlistEntry>> = null;
+  let entryWithPosition: Awaited<ReturnType<typeof getWaitlistEntryWithPosition>> = null;
 
   try {
     stats = await getWaitlistStats();
-    if (emailToCheck) {
-      entryWithPosition = await getWaitlistEntry(emailToCheck);
+    if (typeof code === "string" && code.length > 0 && code.length <= 32) {
+      entryWithPosition = await getWaitlistEntryWithPosition(code);
     }
   } catch {
     // DB might not be ready

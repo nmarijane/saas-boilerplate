@@ -30,7 +30,7 @@ const meta = {
   title: "UI/CopyCode",
   component: CopyCode,
   tags: ["autodocs"],
-  args: { value: "sk_live_Zk3V-EXAMPLE-0000-0000-0000" },
+  args: { value: "sb_live_Zk3V-EXAMPLE-0000-0000-0000" },
   decorators: [
     (Story) => (
       <div className="max-w-sm">
@@ -124,7 +124,7 @@ export const Focused: Story = {
  * value has no place to break but where it is cut, and is still not a run that looks like a key.
  */
 export const Long: Story = {
-  args: { value: `whsec_${"Q9n3_Vb7X_cLz2_MfHk_".repeat(8)}` },
+  args: { value: `sb_whsec_${"Q9n3_Vb7X_cLz2_MfHk_".repeat(8)}` },
   play: async ({ args, canvasElement }) => {
     const code = within(canvasElement).getByText(args.value);
 

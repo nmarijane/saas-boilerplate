@@ -47,9 +47,12 @@ Nothing. The app runs out of the box on PGlite, a PostgreSQL database kept in th
 | Variable | How to get it | Used by |
 |----------|--------------|---------|
 | `DATABASE_URL` | Create a PostgreSQL database (Neon, Supabase, Railway, or self-hosted). Format: `postgresql://user:password@host:5432/dbname` | Database |
-| `BETTER_AUTH_SECRET` | Generate: `openssl rand -hex 32` | Auth sessions |
+| `BETTER_AUTH_SECRET` | Generate: `openssl rand -hex 32` (32 characters at least). It has no default: a production server does not start without it | Auth sessions |
 | `BETTER_AUTH_URL` | Your deployed app URL (e.g. `https://my-app.com`) | Auth callbacks |
 | `NEXT_PUBLIC_APP_URL` | Same as BETTER_AUTH_URL | Links, metadata |
+| `TRUST_PROXY` | `vercel` (on Vercel `VERCEL=1` makes it the default), the number of reverse proxies in front of the app, or `none` (see "Behind a proxy" below) | The address of the client, for the rate limits |
+
+A production server (`NODE_ENV=production`) refuses to start, and exits with the reasons, when any of these is wrong: `DATABASE_URL` is missing or only whitespace (the app would fall back to PGlite, a folder on the server's disk that is lost with it and not shared between instances), `BETTER_AUTH_SECRET` is missing or shorter than 32 characters once trimmed, or `TRUST_PROXY` is not set to a valid value. `ALLOW_PGLITE_IN_PRODUCTION=1` lifts the first refusal only; the end-to-end tests and the screenshots set it, because they serve a production build over a throwaway database. A deployment never should. A build (`next build`) is not a server and is never refused.
 
 ### Required for billing (Stripe)
 
@@ -138,6 +141,8 @@ SENTRY_PROJECT=my-project
 
 The browser reports the errors that the route boundaries catch, from `src/instrumentation-client.ts`, and starts only where `NEXT_PUBLIC_SENTRY_DSN` is set. The server and the edge start from `sentry.server.config.ts` and `sentry.edge.config.ts`. All three filter the reset-password token out of what they send (`src/shared/lib/sentry-scrub.ts`): in a `?token=` parameter, in the path of Better Auth's own address (`/api/auth/reset-password/<token>`), and in `reset-password:<token>`, the identifier a database error may carry, each also when it is percent-encoded inside another address. The server and the edge also remove `token`, `password`, `newPassword` and `currentPassword` from the request data an event or a transaction carries (an object or a JSON string). That covers events, breadcrumbs and sampled transactions with their spans.
 
+The server ships with **no incoming request body**: `sentry.server.config.ts` starts the SDK's `httpIntegration` with `maxIncomingRequestBodySize: "none"` (the SDK would otherwise keep up to 10 kB of every body, whatever `sendDefaultPii` says, and attach it to events). The cookies of a request, parsed and as a header, are removed from every server event as well: the session's, and the token of a reset link while it waits. The edge config has no such option and sends no body. To turn bodies back on, remove the `integrations` line of `sentry.server.config.ts` (or set a size: `"small"`, `"medium"`): events then carry what forms and server actions sent, minus the secret fields named above (a list that cannot follow every field a project adds), so sign-in addresses, assistant messages and feedback text would reach Sentry.
+
 ### Optional: Background jobs (Inngest)
 
 Auto-detected in dev. For production, sign up at inngest.com:
@@ -146,6 +151,53 @@ Auto-detected in dev. For production, sign up at inngest.com:
 INNGEST_EVENT_KEY=...
 INNGEST_SIGNING_KEY=...
 ```
+
+## Production hardening
+
+What a deployment has to know about the protections that ship with the boilerplate.
+
+### Behind a proxy (`TRUST_PROXY`)
+
+The rate limits count requests by the address of the client. A request carries it in headers, and a client can write any header it likes: `X-Forwarded-For` is the client's own word until a proxy you run has overwritten or extended it. So the app reads an address from a header only when `TRUST_PROXY` says which one to believe, for its own limits and for those of Better Auth. A production server must say, and does not start without a valid value:
+
+| `TRUST_PROXY` | The address of the client is | Use it for |
+|---------------|------------------------------|------------|
+| `vercel` | the `x-vercel-forwarded-for` header, which Vercel sets itself (the default when `VERCEL=1` and nothing is set) | Vercel |
+| a number `N` | the Nth entry from the right of `X-Forwarded-For` | `N` reverse proxies in front of the app (nginx, Caddy, a load balancer, a CDN), each appending the address it saw |
+| `none` | none: **one rate limit is shared by every client at once** | A server that nothing stands in front of, chosen on purpose |
+
+`none` means exactly that: the 100 requests a minute of `/api`, and the 3 sign-ins in 10 seconds of Better Auth, are counted for everybody together. One client that sends enough of them keeps everyone else out, and your own webhooks (Stripe, Inngest) live under `/api` too. Use it only when you accept that. In development nothing is required and the same one limit applies.
+
+Count the proxies that really stand between the client and the app: `1` for a single nginx or Caddy that sets `X-Forwarded-For` (also right for a proxy that overwrites the header, `proxy_set_header X-Forwarded-For $remote_addr;`). Too high a number leaves the app with no address, so one shared limit; too low a number takes the address of one of your own proxies. A value that is not `vercel`, `none` or a number, a typo included, stops the server at start.
+
+### Content Security Policy
+
+Pages are served with an enforced `Content-Security-Policy` (`src/shared/lib/csp.ts`, set by `src/proxy.ts`): scripts run when they are the app's own or carry the nonce of the request, a nonce that is new at each request and that Next.js puts on its own scripts. An injected script has no nonce, so it does not run. Styles keep `'unsafe-inline'` (the components set `style` attributes), pictures may come from any `https:` address (people's pictures), and the sources that are left (Stripe, Sentry) are listed in the file.
+
+A nonce is new at each request, so a page cannot be built once and served to everyone: **every page is rendered per request, and static pages are not available with this policy** (the root layout reads the request's headers; the build lists every route as dynamic). That is the price of a policy that does not allow inline scripts, and the boilerplate ships that one. A third-party script (analytics, a chat widget) has to be added to the policy in `csp.ts`, or loaded by one of the app's scripts with the nonce (`<Script nonce={...}>`). The console of the browser names what the policy blocks: look at it after adding one. The answers of `/api` carry `default-src 'none'; frame-ancestors 'none'`: they are data, and nothing they send may be loaded, run or framed.
+
+### Webhooks you send
+
+An endpoint is an `https:` address chosen by whoever administers a workspace, so the server must not be made to call what only the server can reach. Endpoints are `https` only (`http://localhost` in development), without credentials in the address, and at each delivery the address is resolved by the server, every address it leads to must be public (no loopback, private, link-local or metadata address), and the connection is made to the address that was checked. A redirect is not followed, a delivery has one deadline of 10 seconds for the whole call (resolving the name, connecting, the answer: a receiver that sends a byte at a time does not keep it open), and only the first 16 KiB of an answer are read. An address written as numbers that is not public (`https://10.0.0.1/`) is refused when the endpoint is made; a name is checked at each delivery. The delivery log says one thing, "Not delivered", for a name that does not resolve and for one that is not public, so that it tells nothing of the network behind the server.
+
+A queued delivery carries which endpoint and what happened, never the address or the signing secret: the job reads them from the endpoint's row when it runs. So an endpoint that was deleted or switched off since the event was queued receives nothing more. The signature is the HMAC-SHA256 of the body with the endpoint's secret, in `X-Webhook-Signature`.
+
+`organization.deleted` is the one event that cannot be queued, because the endpoints go with the workspace. It is sent at once, before the rows are deleted, signed like the others, to every active endpoint that listens for it, with a 5-second deadline and no second try. A receiver can rely on it being signed and sent at most once; it cannot rely on getting it, since a receiver that is down at that moment is not asked again.
+
+The signing secrets of the endpoints and the API keys begin with the project's own prefixes, set in one place (`SECRET_PREFIXES` in `src/shared/config/app.ts`): `sb_whsec_`, `sb_live_` and `sb_test_`, not Stripe's. Change them when you rebrand; the keys already issued keep working, since a key is checked by the hash of the whole string.
+
+### Accounts and workspaces
+
+- Deleting an account asks for the password again, or, for an account that signs in through a provider and so has none, for a session opened in the last five minutes. A workspace the person owns alone is deleted with them (billing and files are cleaned up first, and its webhooks are told); one that has other members blocks the deletion until it is handed over (on the Team page, the owner opens the menu of a member and chooses "Make owner": that member becomes the owner and the owner an admin, in one transaction) or the members leave. Handing a workspace over asks no password of the owner, cannot be undone by the giver (only the new owner can hand it back), and does not ask the receiver, who may thereby go past `MAX_OWNED_WORKSPACES` and then cannot delete their own account until they hand it on or the workspace is gone; deleting a workspace asks no password either. A write that removes or demotes a member refuses a row that is an owner at the moment it writes, so a hand-over made at the same instant cannot leave a workspace with no owner. Every cleanup runs first and the events go last; one short transaction then locks the workspaces, checks the members again and deletes the pending invitations before the first event is told (no lock is held during a delivery), and the membership is checked again inside the transaction that deletes, so a member who joined meanwhile keeps the workspace. The rows go in one transaction.
+- A person owns at most `MAX_OWNED_WORKSPACES` workspaces (`src/shared/config/app.ts`). The workspaces they only joined are not counted.
+- A picture is an `https:` address (or none): other schemes are refused by the profile form, by the server and by Better Auth's own update route.
+- Joining the waitlist answers the same way for an address that is new and one that is already on the list, and the waitlist page shows a position for a referral code only (`/waitlist?code=…`), never for an address in the query.
+- The mails of the account (verification, password reset) go out after the answer, so that the answer takes as long whether the address has an account or not.
+- The token of a reset link never stays in the address of the page: the proxy keeps it in an HttpOnly cookie for 15 minutes, `Secure` when `BETTER_AUTH_URL` is https and sent only to the reset page of the language (`/en/reset-password`, not the whole site), and redirects to the page without it; the form hands the new password to a server action that reads the cookie. The cookie keeps a plain name: a `__Host-` name needs the path `/`, which is what narrowing the path avoids.
+
+### Two-factor authentication
+
+The `twoFactor()` plugin of Better Auth is off. It has no page to ask for the code when a person signs in, and a plugin that is on without one protects nobody. The table `two_factor` and the column `user.two_factor_enabled` are kept, so that turning it on again needs no migration. To turn it on, add `twoFactor()` to the plugins in `src/features/auth/auth.ts` and `twoFactorClient()` to `src/features/auth/auth-client.ts`, then build what the plugin does not: the step at sign-in that asks for the code when the answer says `twoFactorRedirect`, a card in the account settings to turn it on and show the backup codes, and the tests of both. Better Auth's documentation describes the calls. An account that had two-factor turned on, while the plugin was on, signs in with its password alone, without a code: the columns are ignored.
 
 ## Phase 3: Remove Unused Features
 
@@ -215,7 +267,7 @@ Remove: the links to /pricing from src/app/[locale]/(marketing)/layout.tsx and s
 
 Then edit what reads billing's tables:
 
-- `src/features/settings/actions.ts`: in the account deletion, take out the block that cancels the Stripe subscription of a workspace whose only member leaves, the `subscription` import and the `unstable_rethrow` import. The transfer of ownership stays: take out the `if (otherMembers.length === 0) { ... }` block, and keep the body of the `else` without the `else`.
+- `src/features/settings/actions.ts` needs no edit: the account deletion does not read billing's tables. The subscription of a workspace is cancelled by billing's cleanup when the workspace is deleted (`onWorkspaceDelete`), which goes with the registry line.
 - `src/features/admin/queries.ts` and `src/app/[locale]/(app)/(shell)/admin/metrics/page.tsx`: take out the revenue, which is the `mrr` of `getAdminMetrics` and the "MRR" card, with `getFormatter` and its `format`, which only the card used.
 - `src/app/[locale]/(app)/(shell)/ai/page.tsx` and `src/app/api/ai/chat/route.ts`: the assistant reads the plan of the workspace from its subscription, to size its credits. Replace that read with `const planId = "free";`, or with your own rule.
 - `scripts/seed.ts`: take out the plans. `scripts/demo-data.ts`: take out the `SUBSCRIPTION` id, the subscription insert, the `referenceId: SUBSCRIPTION` of the credit allocation, the audit entry `demo-audit-3` and the notification `demo-notification-3`.
@@ -547,7 +599,7 @@ export const ticketsShell: FeatureShell = {
 
 The page goes under `src/app/[locale]/(app)/(shell)/tickets/`, and its prefix, `"/tickets"`, goes in `APP_PATH_PREFIXES` (`src/shared/config/app.ts`) so that the proxy sends a visitor with no session cookie to sign in.
 
-**The proxy is not the protection.** It only checks that a session cookie exists: it cannot tell a valid one from a forged or an expired one, and its matcher leaves out every address that holds a dot. Every page that reads data calls a guard first, which checks the session, the workspace and the role: `requireAuth()`, `requireWorkspace()` (a page takes its workspace from it, never from a parameter), `requireAdmin()` or `requireRole(orgId, minRole)`. A page without one shows its data to whoever sends any cookie.
+**The proxy is not the protection.** It only checks that a session cookie exists: it cannot tell a valid one from a forged or an expired one, and its matcher leaves out `_next` and the files with a known extension (the list is in its matcher, `src/proxy.ts`). Every page that reads data calls a guard first, which checks the session, the workspace and the role: `requireAuth()`, `requireWorkspace()` (a page takes its workspace from it, never from a parameter), `requireAdmin()` or `requireRole(orgId, minRole)`. A page without one shows its data to whoever sends any cookie.
 
 **A redirect keeps the language.** A guard that sends someone away (`/sign-in`, `/dashboard`, `/onboarding`) calls `redirectTo()` (`src/features/auth/redirect-to.ts`), which reads the language of the request and sends to `/fr/sign-in`, not to a bare `/sign-in` that the proxy would redirect a second time. A page or a layout, which receives `params`, uses the localized `redirect` of `@/shared/lib/i18n-navigation` with its `locale`. No file of `src` imports `redirect` from `next/navigation` (`tests/unit/localized-redirects.test.ts`).
 
@@ -686,4 +738,6 @@ npm run docker:up
 - [ ] Configure Stripe webhook endpoint: `https://your-app.com/api/stripe/webhook`
 - [ ] Configure OAuth redirect URIs with your production URL
 - [ ] Test sign-up, sign-in, and email flows
-- [ ] Switch CSP from `Content-Security-Policy-Report-Only` to `Content-Security-Policy` in `next.config.ts` after verification
+- [ ] Set `TRUST_PROXY` (`vercel`, the number of reverse proxies in front of the app, or `none` for one limit shared by every client): the server does not start without a valid value
+- [ ] Check that `BETTER_AUTH_SECRET` is set and is not shared with another environment
+- [ ] Open the home, sign-in, the dashboard and the assistant with the console of the browser open: it names anything the Content Security Policy blocks

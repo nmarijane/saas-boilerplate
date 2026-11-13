@@ -19,6 +19,8 @@ const GUARDS = new Set(["requireAuth", "requireAdmin", "requireRole"]);
 const PUBLIC_ACTIONS: Record<string, string> = {
   "src/features/waitlist/actions.ts#joinWaitlist":
     "Anonymous waitlist sign-up: zod-validated input, rate-limited per IP.",
+  "src/features/auth/reset-password-action.ts#resetPasswordWithLinkToken":
+    "Sets a new password for someone who is not signed in: the token of the link is in an HttpOnly cookie (not an argument), zod-validated input, rate-limited per IP.",
 };
 
 /** Read modules and internal operations: server-only, never server actions. */
