@@ -177,21 +177,8 @@
   "billing": {
     "title": "Billing",
     "currentPlan": "Current Plan",
-    "upgrade": "Upgrade",
-    "downgrade": "Downgrade",
-    "manageBilling": "Manage Billing",
-    "free": "Free",
-    "pro": "Pro",
-    "enterprise": "Enterprise",
-    "monthly": "Monthly",
-    "yearly": "Yearly",
-    "perMonth": "/month",
-    "features": "Features",
-    "getStarted": "Get Started",
-    "currentPlanBadge": "Current",
     "manageDescription": "Manage your subscription and billing",
     "memberDescription": "The plan of this workspace. Its owner and admins manage the billing.",
-    "status": "Status",
     "statuses": {
       "active": "Active",
       "trialing": "Trial",
@@ -202,26 +189,153 @@
       "incomplete_expired": "Expired",
       "paused": "Paused"
     },
-    "periodEnds": "Current period ends",
     "price": "Price",
-    "pricePerMonth": "${price}/mo",
     "redirecting": "Redirecting…",
     "portalFailed": "The billing portal could not be opened. Try again.",
-    "checkoutFailed": "The checkout could not be opened. Try again.",
     "deleteWorkspaceFailed": "The subscription of this workspace could not be cancelled, so the workspace was kept. Try again in a moment.",
     "subscriptionCancelled": "Its subscription has already been cancelled.",
-    "planLimits": "Plan Limits",
-    "planLimitsDescription": "Your current plan includes the following limits",
     "limits": {
       "members": "Team Members",
       "projects": "Projects",
       "storage": "Storage (MB)",
       "aiCredits": "AI Credits / month"
     },
-    "unlimited": "Unlimited",
-    "upgradeTitle": "Upgrade your plan",
-    "upgradeDescription": "Get more features and higher limits with a paid plan",
-    "upgradeTo": "Upgrade to {plan} — ${price}/mo"
+    "emails": {
+      "greeting": "Hi {name},",
+      "paymentSuccess": {
+        "subject": "Payment received",
+        "heading": "Payment received",
+        "body": "Thank you: your payment went through.",
+        "details": "Payment details:",
+        "plan": "Plan",
+        "amount": "Amount"
+      },
+      "paymentFailed": {
+        "subject": "Your payment failed",
+        "heading": "Your payment failed",
+        "body": "We could not charge the payment for your {plan} plan. Update your payment method to keep your plan: the payment is tried again in the next days.",
+        "button": "Update payment method"
+      },
+      "subscriptionCancelled": {
+        "subject": "Your subscription is cancelled",
+        "heading": "Your subscription is cancelled",
+        "body": "Your {plan} subscription is cancelled.",
+        "access": "Your workspace keeps the plan until {date}, then moves to the free plan.",
+        "noAccess": "Your workspace is now on the free plan.",
+        "button": "Choose a plan again"
+      },
+      "trialEnding": {
+        "subject": "Your free trial ends in 3 days",
+        "heading": "Your free trial ends soon",
+        "body": "Your trial of the {plan} plan ends on {date}. Nothing to do to keep it: the subscription starts then. Change or cancel before that date if you prefer.",
+        "button": "Manage your plan"
+      }
+    },
+    "managePayment": "Manage payment method",
+    "creditsAdded": "Credits added to your workspace.",
+    "planActive": "Your plan is active.",
+    "perMonthShort": "a month",
+    "perYearShort": "a year",
+    "trialEnds": "Trial ends",
+    "endsOn": "Plan ends",
+    "renewsOn": "Renews on",
+    "freeNote": "This workspace is on the free plan. Choose a plan to raise its limits.",
+    "paymentMethodNote": "Your payment method and invoices are managed securely at our payment provider.",
+    "limitLines": {
+      "members": "{count, plural, =-1 {Unlimited team members} one {# team member} other {# team members}}",
+      "projects": "{count, plural, =-1 {Unlimited projects} one {# project} other {# projects}}",
+      "storage": "{count, plural, =-1 {Unlimited storage} other {# MB of storage}}",
+      "aiCredits": "{count, plural, =-1 {Unlimited AI credits} other {# AI credits a month}}",
+      "other": "{count, plural, =-1 {Unlimited {name}} other {# {name}}}"
+    },
+    "limitValue": "{count, number}",
+    "featureLabels": {
+      "basicAnalytics": "Basic analytics",
+      "emailSupport": "Email support",
+      "apiAccess": "API access",
+      "prioritySupport": "Priority support",
+      "customBranding": "Custom branding",
+      "advancedAnalytics": "Advanced analytics",
+      "aiChat": "AI assistant"
+    },
+    "plans": {
+      "free": {
+        "description": "For individuals getting started"
+      },
+      "pro": {
+        "description": "For growing teams"
+      },
+      "enterprise": {
+        "description": "For large organizations"
+      }
+    },
+    "topUp": {
+      "trigger": "Top up credits",
+      "title": "Top up your AI credits",
+      "description": "One-off packs. They never expire and are used after your monthly credits.",
+      "pack": "{credits} credits",
+      "cancel": "Cancel",
+      "buy": "Continue to payment"
+    },
+    "cancel": {
+      "title": "Cancel subscription",
+      "description": "You keep your plan until the end of the period you have paid for. Nothing is deleted.",
+      "button": "Cancel subscription",
+      "confirmTitle": "Cancel the {plan} subscription?",
+      "confirmDescription": "Your workspace keeps the plan until {date}, then moves to the free plan. Nothing is deleted, but you will not be able to add more than the free plan allows.",
+      "confirmDescriptionNoDate": "Your workspace keeps the plan until the end of the period, then moves to the free plan. Nothing is deleted.",
+      "confirm": "Cancel subscription",
+      "done": "Subscription cancelled. You keep your plan until the end of the period.",
+      "resume": "Keep my subscription",
+      "resumed": "Your subscription goes on.",
+      "resumeFailed": "The subscription could not be resumed. Try again."
+    },
+    "change": {
+      "trigger": "Change plan",
+      "title": "Change plan",
+      "description": "Pick a plan and a period. You see what it costs before you confirm.",
+      "currentPlan": "{plan} (current)",
+      "previewing": "Calculating the cost…",
+      "previewFailed": "The cost of this change could not be calculated. Try again.",
+      "retry": "Try again",
+      "trialChange": "You are in your free trial: nothing is charged now. The new plan starts when the trial ends, on {date}.",
+      "dueNow": "You pay {amount} today, for the days left of the current period.",
+      "credit": "A credit of {amount} is applied to your next invoices.",
+      "nothingNow": "Nothing is charged today.",
+      "renewal": "The new price starts at the next renewal, on {date}.",
+      "overTitle": "Your workspace would be over some limits",
+      "overLine": "{used} used, {limit} allowed",
+      "overNote": "Nothing is deleted, but you will not be able to add more until you are back under these limits.",
+      "cancel": "Cancel",
+      "confirm": "Confirm the change",
+      "pickAnother": "Pick another plan or period",
+      "done": "Your plan was changed.",
+      "failed": "The plan could not be changed. Try again.",
+      "stale": "The preview was too old to be charged on. Check the new one and confirm again."
+    },
+    "credits": {
+      "title": "AI credits",
+      "unlimited": "Unlimited",
+      "leftOf": "left of {total} this month",
+      "valueText": "{left} of {total} credits left this month",
+      "renews": "Your monthly credits are renewed on {date}.",
+      "packs": "Plus {count} purchased credits, which never expire."
+    },
+    "invoices": {
+      "title": "Invoices",
+      "failed": "The invoices could not be loaded. Try again in a moment.",
+      "empty": "No invoice yet.",
+      "view": "View",
+      "statuses": {
+        "paid": "Paid",
+        "open": "Due",
+        "uncollectible": "Unpaid",
+        "void": "Void",
+        "draft": "Draft"
+      },
+      "opensInNewTab": "(opens in a new tab)"
+    },
+    "cancelledNote": "This plan was cancelled: it ends when the period that is paid for does."
   },
   "settings": {
     "account": {
@@ -286,7 +400,18 @@
       "context": "{keys, plural, one {# API key} other {# API keys}} · {endpoints, plural, one {# webhook} other {# webhooks}}"
     },
     "billing": {
-      "title": "Billing"
+      "title": "Billing",
+      "pastDueTitle": "Your last payment failed",
+      "pastDue": "Update your payment method to keep your plan. The payment is tried again in the next days.",
+      "pastDueMember": "An owner or an admin needs to update the payment method to keep the plan.",
+      "pastDueAction": "Update payment method",
+      "cancelScheduledTitle": "Your {plan} subscription is cancelled",
+      "cancelScheduled": "You keep your plan until {date}, then the workspace moves to the free plan.",
+      "trialTitle": "Free trial of the {plan} plan",
+      "trial": "Your trial ends on {date}. The subscription starts then, unless you cancel before.",
+      "trialNotOwner": "Your trial ends on {date}. The subscription starts then.",
+      "choosePlan": "Choose a plan",
+      "usageTitle": "Usage this month"
     },
     "navLabel": "Settings",
     "nav": {
@@ -326,7 +451,8 @@
     "nameLabel": "Workspace name",
     "nameRequired": "Enter a name for your workspace.",
     "createFailed": "We couldn't create the workspace. Please try again.",
-    "switchFailed": "We couldn't switch workspace. Please try again."
+    "switchFailed": "We couldn't switch workspace. Please try again.",
+    "limitFeature": "More workspaces"
   },
   "quotas": {
     "runningLow": "Running low",
@@ -387,7 +513,8 @@
     "create": {
       "title": "New project",
       "description": "Give it a name. You can change everything later.",
-      "failed": "We couldn't create the project. Please try again."
+      "failed": "We couldn't create the project. Please try again.",
+      "limitFeature": "More projects"
     },
     "fields": {
       "name": "Name",
@@ -431,10 +558,6 @@
     "faq": {
       "title": "Frequently Asked Questions"
     },
-    "pricing": {
-      "title": "Simple, transparent pricing",
-      "subtitle": "Choose the plan that fits your needs."
-    },
     "about": {
       "title": "About Us"
     },
@@ -446,6 +569,13 @@
       "navTitle": "Blog",
       "description": "Insights, guides, and updates from our team.",
       "noPosts": "No posts yet. Check back soon!"
+    },
+    "freeTrial": "Free trial",
+    "navigation": "Main navigation",
+    "navLabels": {
+      "features": "Features",
+      "about": "About",
+      "changelog": "Changelog"
     }
   },
   "admin": {
@@ -653,7 +783,12 @@
       "roleLabel": "Role of person {number}",
       "remove": "Remove person {number}",
       "failed": "We couldn't send every invitation. The people left in the list were not invited: try again, or skip this step and invite them later.",
-      "invalid": "Some addresses are not valid. Correct the ones left in the list and try again, or skip this step."
+      "invalid": "Some addresses are not valid. Correct the ones left in the list and try again, or skip this step.",
+      "limit": "Your plan has no room for more people. Skip this step: you can invite them after choosing a plan.",
+      "lockFeature": "Inviting teammates",
+      "lockDescription": "Your workspace has room for you alone for now.",
+      "lockNote": "Choose a plan next, then invite your team from the Team page.",
+      "later": "Later"
     },
     "skipInvite": "Skip for now",
     "complete": "Complete Setup"
@@ -696,7 +831,8 @@
       "done": "Workspace deleted."
     },
     "task": "Invite your first teammate",
-    "taskAction": "Invite a teammate"
+    "taskAction": "Invite a teammate",
+    "inviteLimitFeature": "Inviting more teammates"
   },
   "invitation": {
     "title": "Invitation",
@@ -866,8 +1002,10 @@
     "errors": {
       "credits": {
         "title": "No credits left",
-        "admin": "This workspace has used all its credits. Upgrade the plan to keep using the assistant.",
-        "member": "This workspace has used all its credits. Ask an admin to upgrade the plan."
+        "admin": "This workspace has used all its credits. Top up credits, or change the plan, to keep using the assistant.",
+        "member": "This workspace has used all its credits. Ask an admin to upgrade the plan.",
+        "topUp": "Top up",
+        "changePlan": "Change plan"
       },
       "gone": {
         "title": "You can't continue here",
@@ -903,5 +1041,130 @@
     "referralHeroTitle": "Your friend invited you 👋",
     "referralHeroSubtitle": "Join {count} others already on the waitlist.",
     "joinAheadOf": "Join now and skip ahead of {count} people"
+  },
+  "emails": {
+    "welcome": {
+      "subject": "Welcome aboard",
+      "greeting": "Hi {name},",
+      "heading": "Welcome aboard!",
+      "body": "Your address is confirmed and your account is ready. Create your first project, invite your team and start working.",
+      "button": "Open your workspace"
+    }
+  },
+  "planLock": {
+    "included": "Included in the {plan} plan",
+    "notIncluded": "Not included in your plan",
+    "upgrade": "See the plans",
+    "askAdmin": "Ask an owner or an admin of the workspace to change the plan."
+  },
+  "pricing": {
+    "title": "Pricing",
+    "description": "Simple, transparent pricing for every team size.",
+    "heading": "Simple, transparent pricing",
+    "subtitle": "Start free, upgrade when your team grows, cancel whenever you like.",
+    "memberNotice": "Only an owner or an admin of your workspace can change its plan.",
+    "period": "Billing period",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "save": "Save {percent}%",
+    "recommended": "Recommended",
+    "perMonth": "per month",
+    "perYear": "per year",
+    "yearlyEquivalent": "That is {price} a month, billed once a year",
+    "exclVat": "Excl. VAT",
+    "trial": "{days}-day free trial",
+    "included": "Included",
+    "notIncluded": "Not included",
+    "unlimited": "Unlimited",
+    "compare": "Compare the plans",
+    "feature": "Feature",
+    "startTrial": "Start free trial",
+    "choose": "Choose {plan}",
+    "startFree": "Start for free",
+    "changePlan": "Change plan",
+    "yourPlan": "Your plan",
+    "continueFree": "Continue on {plan}",
+    "failed": "Something went wrong. Try again.",
+    "checkoutErrors": {
+      "not_configured": "Payments are not set up yet. Try again later.",
+      "price_missing": "This plan cannot be bought yet. Try again later.",
+      "unknown_plan": "This plan is not available.",
+      "unknown_pack": "This pack is not available.",
+      "already_subscribed": "This workspace already has a subscription: change its plan from the billing page.",
+      "failed": "The payment page could not be opened. Try again."
+    },
+    "reassurance": {
+      "cancel": "Cancel at any time",
+      "change": "Change plan whenever you like",
+      "secure": "Secure payment"
+    },
+    "faq": {
+      "title": "Questions about the plans",
+      "cancel": {
+        "question": "Can I cancel at any time?",
+        "answer": "Yes. You keep your plan until the end of the period you have paid for, then the workspace moves to the free plan. Nothing is deleted."
+      },
+      "change": {
+        "question": "Can I change plan later?",
+        "answer": "Yes, from the billing page. When you move up, you pay the difference for the days left of the period; when you move down, it becomes a credit."
+      },
+      "trial": {
+        "question": "How does the free trial work?",
+        "answer": "You enter a card to start it, and nothing is charged until the trial ends. Cancel before then and you pay nothing. A trial is given once per account."
+      },
+      "payment": {
+        "question": "Which payment methods do you accept?",
+        "answer": "Cards, and the other methods that the payment provider offers in your country. Your card details never reach our servers."
+      },
+      "vat": {
+        "question": "Are prices with or without VAT?",
+        "answer": "Prices are shown as they are charged. When VAT applies, it is computed at checkout from your address, and you can add your VAT number."
+      }
+    }
+  },
+  "chooseYourPlan": {
+    "title": "Choose a plan",
+    "heading": "Choose a plan for {workspace}",
+    "subtitle": "Payment is per workspace. The owner of the workspace can cancel at any time.",
+    "memberTitle": "Choosing a plan",
+    "memberNotice": "Only an owner or an admin of this workspace can choose its plan.",
+    "backToApp": "Go to the app",
+    "chooseAnother": "Choose another plan",
+    "resuming": "Taking you to the payment of the plan you chose…"
+  },
+  "checkout": {
+    "title": "Payment",
+    "heading": "Complete your payment",
+    "returnTitle": "Confirming your payment",
+    "summary": "Your order",
+    "pack": "{credits} AI credits",
+    "packNote": "One-off purchase. These credits never expire and are used after your monthly credits.",
+    "today": "Due today",
+    "then": "Then, from {date}",
+    "renews": "Renews at",
+    "planLine": "{plan} plan",
+    "billedMonthly": "Billed every month",
+    "billedYearly": "Billed every year",
+    "perMonth": "a month",
+    "perYear": "a year",
+    "trialNote": "Your {days}-day free trial starts now. If the subscription is cancelled before it ends, nothing is charged.",
+    "exclVat": "Prices exclude VAT, which is added at payment when it applies.",
+    "included": "Included",
+    "loadFailedTitle": "The payment form did not load",
+    "loadFailed": "Check your connection, then try again.",
+    "loading": "Loading the payment form",
+    "expiredTitle": "This payment has expired",
+    "expired": "A payment page stays open for a day. Start again to get a new one.",
+    "expiredAction": "Start again",
+    "waitingTitle": "Confirming your payment…",
+    "waiting": "This takes a few seconds. Please keep this page open.",
+    "lateTitle": "Your payment is being confirmed",
+    "late": "It is taking longer than usual. Your payment was made: your plan shows up on the billing page as soon as it is confirmed, and you will get an email.",
+    "lateAction": "Go to billing",
+    "trialSpentTitle": "Your free trial was already used",
+    "trialSpent": "The free trial is for one workspace per owner, and yours was used on another one. Nothing was charged and no subscription was started. Pick a plan to go on.",
+    "trialSpentAction": "Choose a plan",
+    "backToPlans": "Choose another plan",
+    "backToBilling": "Back to billing"
   }
 }

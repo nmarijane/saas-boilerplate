@@ -41,11 +41,13 @@ describe("the chat's account of what went wrong", () => {
       const html = draw("credits", { upgradeHref: "/settings/billing" });
 
       expect(textOf(html)).toContain("No credits left");
-      expect(textOf(html)).toContain("This workspace has used all its credits. Upgrade the plan to keep using the assistant.");
-      const [link] = startTags(html, "a");
-      expect(attribute(link ?? "", "href")).toBe("/settings/billing");
-      expect(link).toContain("data-locale-link");
-      expect(textOf(elements(html, "a")[0] ?? "")).toBe("Upgrade");
+      expect(textOf(html)).toContain("This workspace has used all its credits. Top up credits, or change the plan, to keep using the assistant.");
+      // Two ways on: the packs, which the billing page opens (`?topup=1`), and the plans
+      const [topUp, changePlan] = startTags(html, "a");
+      expect(attribute(topUp ?? "", "href")).toBe("/settings/billing?topup=1");
+      expect(attribute(changePlan ?? "", "href")).toBe("/settings/billing");
+      expect(topUp).toContain("data-locale-link");
+      expect(elements(html, "a").map(textOf)).toEqual(["Top up", "Change plan"]);
     });
 
     it("tells a member to ask an admin, and offers no way they could not take", () => {
@@ -69,9 +71,9 @@ describe("the chat's account of what went wrong", () => {
       const member = draw("credits", { locale: "fr" });
 
       expect(textOf(admin)).toContain("Plus de crédits");
-      expect(textOf(admin)).toContain("Cet espace a utilisé tous ses crédits. Passez à un plan supérieur pour continuer à utiliser l'assistant.");
-      expect(textOf(elements(admin, "a")[0] ?? "")).toBe("Passer au plan supérieur");
-      expect(textOf(member)).toContain("Cet espace a utilisé tous ses crédits. Demandez à un administrateur de passer à un plan supérieur.");
+      expect(textOf(admin)).toContain("Cet espace a utilisé tous ses crédits. Rechargez des crédits, ou changez d'offre, pour continuer à utiliser l'assistant.");
+      expect(elements(admin, "a").map(textOf)).toEqual(["Recharger", "Changer d'offre"]);
+      expect(textOf(member)).toContain("Cet espace a utilisé tous ses crédits. Demandez à un administrateur de passer à une offre supérieure.");
     });
   });
 
@@ -135,8 +137,8 @@ describe("the chat's account of what went wrong", () => {
     });
   });
 
-  it("offers one way out in each state, never two", () => {
-    expect(startTags(draw("credits", { upgradeHref: "/settings/billing" }), "a")).toHaveLength(1);
+  it("offers one way out in each state, and the two that a workspace out of credits has: more credits, or a bigger plan", () => {
+    expect(startTags(draw("credits", { upgradeHref: "/settings/billing" }), "a")).toHaveLength(2);
     expect(startTags(draw("credits", { upgradeHref: "/settings/billing" }), "button")).toHaveLength(0);
     expect(elements(draw("gone"), "button")).toHaveLength(1);
     expect(elements(draw("failed"), "button")).toHaveLength(1);

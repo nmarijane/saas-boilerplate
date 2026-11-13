@@ -2,6 +2,14 @@ import { getSessionCookie } from "better-auth/cookies";
 import createMiddleware from "next-intl/middleware";
 import { NextRequest, NextResponse  } from "next/server";
 import { RESET_TOKEN_COOKIE, resetTokenCookieOptions, resetTokenPath } from "@/features/auth/reset-token";
+import {
+  decodePlanChoice,
+  encodePlanChoice,
+  PLAN_CHOICE_COOKIE,
+  PLAN_CHOICE_PATHS,
+  planChoiceCookieOptions,
+  planChoiceFromSearch,
+} from "@/features/billing/plan-choice";
 import { APP_PATH_PREFIXES } from "@/shared/config/app";
 import { limitKeyOf } from "@/shared/lib/client-ip";
 import { contentSecurityPolicy, makeNonce } from "@/shared/lib/csp";
@@ -82,14 +90,46 @@ export async function proxy(request: NextRequest) {
     isActivePath(pathWithoutLocale, prefix),
   );
 
+  // 5. A plan picked on the pricing page is remembered for an hour (plan-choice.ts), whichever of
+  // these pages the visitor lands on, and whether they are sent on to sign in or not
+  // Not by a prefetch: Next fetches the links in view ahead of the click (a link to `/sign-up?plan=pro` on the prices
+  // is one), and a plan that a visitor never chose must not be remembered because a link was on the screen
+  const prefetch =
+    request.headers.has("next-router-prefetch") ||
+    request.headers.has("next-router-segment-prefetch") ||
+    request.headers.get("purpose") === "prefetch" ||
+    request.headers.get("sec-purpose")?.startsWith("prefetch") === true;
+  const choice = !prefetch && PLAN_CHOICE_PATHS.includes(pathWithoutLocale) ? planChoiceFromSearch(request.nextUrl.searchParams) : null;
+  const remember = <T extends NextResponse>(answer: T): T => {
+    if (choice) {
+      answer.cookies.set(PLAN_CHOICE_COOKIE, encodePlanChoice(choice), planChoiceCookieOptions());
+    }
+    return answer;
+  };
+
+  // The plan picked before signing up is paid for as soon as the person lands in the app: the home sends
+  // them to the choice of a plan, once. The choice goes in the address and the cookie is spent here, so that
+  // it cannot send anyone back there (a member, a workspace that pays already) on every visit of the home
+  const pending = decodePlanChoice(request.cookies.get(PLAN_CHOICE_COOKIE)?.value);
+  if (!prefetch && sessionToken && pending && pathWithoutLocale === "/dashboard") {
+    const locale = localeMatch?.[1] ?? routing.defaultLocale;
+    const target = new URL(`/${locale}/choose-plan`, request.url);
+    target.searchParams.set("plan", pending.planId);
+    target.searchParams.set("interval", pending.interval);
+    const sent = NextResponse.redirect(target);
+    sent.cookies.delete(PLAN_CHOICE_COOKIE);
+
+    return sent;
+  }
+
   if (needsSession && !sessionToken) {
     const locale = localeMatch?.[1] ?? routing.defaultLocale;
     const signInUrl = new URL(`/${locale}/sign-in`, request.url);
     signInUrl.searchParams.set("callbackUrl", pathname);
-    return NextResponse.redirect(signInUrl);
+    return remember(NextResponse.redirect(signInUrl));
   }
 
-  return response;
+  return remember(response);
 }
 
 export const config = {

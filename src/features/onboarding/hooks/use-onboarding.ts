@@ -6,6 +6,7 @@ import { useCallback, useState } from "react";
 import { authClient } from "@/features/auth/auth-client";
 import { ONBOARDING_STEPS, TOTAL_STEPS } from "@/features/onboarding/steps";
 import { toast } from "@/shared/components/ui/sonner";
+import { AFTER_ONBOARDING_PATH } from "@/shared/config/app";
 import { useRouter } from "@/shared/lib/i18n-navigation";
 import { reportHandledError } from "@/shared/utils/report-error";
 
@@ -48,7 +49,7 @@ export function useOnboarding(startAt: OnboardingStepId = "profile") {
       if (error) {
         throw new Error(error.message ?? error.statusText);
       }
-      router.push("/dashboard");
+      router.push(AFTER_ONBOARDING_PATH);
     } catch (error) {
       toast.error(t("error"));
       reportHandledError(error);

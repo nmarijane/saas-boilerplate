@@ -10,13 +10,14 @@ import { requireAuth, requireRole } from "@/features/auth/guards";
 import { sendEmail } from "@/features/email/send";
 import { InvitationEmail } from "@/features/email/templates/invitation";
 import { emitEvent } from "@/features/events/emitter";
-import { organizationMember, organization as organizationTable } from "@/models/organization";
+import { assertFreeWorkspaceRoom, assertWithinPlan, settleFreeWorkspaces } from "@/features/plan-limits";
+import { invitation as invitationTable, organizationMember, organization as organizationTable } from "@/models/organization";
 import { DEV_APP_URL } from "@/shared/config/app";
 import { db } from "@/shared/lib/DB";
 import { routing } from "@/shared/lib/i18n-routing";
 import { safeAction } from "@/shared/lib/safe-action";
 import { invitationPath } from "./invitation-path";
-import { getOrganization } from "./queries";
+import { countMembers, getOrganization } from "./queries";
 import { prepareWorkspaceDeletion } from "./workspace-deletion";
 
 const createOrgSchema = z.object({
@@ -28,6 +29,8 @@ export async function createOrganization(data: z.infer<typeof createOrgSchema>) 
   return safeAction(async () => {
     await requireAuth();
     const parsed = createOrgSchema.parse(data);
+    // Free credits are the owner's, once a month: a person owns a limited number of free workspaces
+    await assertFreeWorkspaceRoom((await requireAuth()).user.id);
 
     const result = await auth.api.createOrganization({
       headers: await headers(),
@@ -36,6 +39,9 @@ export async function createOrganization(data: z.infer<typeof createOrgSchema>) 
         slug: parsed.slug,
       },
     });
+
+    // Written on another connection, the workspace may have been made at the same time as another: the cap is settled now
+    await settleFreeWorkspaces((await requireAuth()).user.id, result.id);
 
     revalidatePath("/dashboard");
     return result;
@@ -55,6 +61,8 @@ export async function inviteMember(data: z.infer<typeof inviteSchema>) {
     await requireAuth();
     const parsed = inviteSchema.parse(data);
     const { session } = await requireRole(parsed.orgId, "admin");
+    // A seat for the person invited: the members and the invitations still waiting count against the plan
+    await assertWithinPlan(parsed.orgId, "members");
     // A language the app does not serve gives the link the default one
     const locale = hasLocale(routing.locales, parsed.locale) ? parsed.locale : routing.defaultLocale;
 
@@ -288,6 +296,17 @@ export async function acceptInvitation(data: z.infer<typeof invitationSchema>) {
   return safeAction(async () => {
     await requireAuth();
     const parsed = invitationSchema.parse(data);
+
+    // The invitation holds its seat already: what can have changed since is the plan (a downgrade), so
+    // the members that are there, and the one who joins, are what is counted
+    const [invited] = await db
+      .select({ orgId: invitationTable.organizationId })
+      .from(invitationTable)
+      .where(eq(invitationTable.id, parsed.invitationId))
+      .limit(1);
+    if (invited) {
+      await assertWithinPlan(invited.orgId, "members", 1, () => countMembers(invited.orgId));
+    }
 
     const { invitation } = await auth.api.acceptInvitation({
       headers: await headers(),

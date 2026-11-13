@@ -176,22 +176,9 @@
   },
   "billing": {
     "title": "Facturation",
-    "currentPlan": "Plan actuel",
-    "upgrade": "Passer au plan supérieur",
-    "downgrade": "Passer au plan inférieur",
-    "manageBilling": "Gérer la facturation",
-    "free": "Gratuit",
-    "pro": "Pro",
-    "enterprise": "Enterprise",
-    "monthly": "Mensuel",
-    "yearly": "Annuel",
-    "perMonth": "/mois",
-    "features": "Fonctionnalités",
-    "getStarted": "Commencer",
-    "currentPlanBadge": "Actuel",
+    "currentPlan": "Offre actuelle",
     "manageDescription": "Gérez votre abonnement et votre facturation",
-    "memberDescription": "Le plan de cet espace. Son propriétaire et ses administrateurs gèrent la facturation.",
-    "status": "Statut",
+    "memberDescription": "L'offre de cet espace. Son propriétaire et ses administrateurs gèrent la facturation.",
     "statuses": {
       "active": "Actif",
       "trialing": "Période d'essai",
@@ -202,26 +189,153 @@
       "incomplete_expired": "Expiré",
       "paused": "En pause"
     },
-    "periodEnds": "Fin de la période en cours",
     "price": "Prix",
-    "pricePerMonth": "{price} $ par mois",
     "redirecting": "Redirection…",
     "portalFailed": "Le portail de facturation n'a pas pu s'ouvrir. Réessayez.",
-    "checkoutFailed": "Le paiement n'a pas pu s'ouvrir. Réessayez.",
     "deleteWorkspaceFailed": "L'abonnement de cet espace n'a pas pu être résilié : l'espace est conservé. Réessayez dans un instant.",
     "subscriptionCancelled": "Son abonnement a déjà été résilié.",
-    "planLimits": "Limites du plan",
-    "planLimitsDescription": "Votre plan actuel inclut les limites suivantes",
     "limits": {
       "members": "Membres de l'équipe",
       "projects": "Projets",
       "storage": "Stockage (Mo)",
       "aiCredits": "Crédits d'IA par mois"
     },
-    "unlimited": "Illimité",
-    "upgradeTitle": "Passez à un plan supérieur",
-    "upgradeDescription": "Profitez de plus de fonctionnalités et de limites plus élevées avec un plan payant",
-    "upgradeTo": "Passer au plan {plan} — {price} $ par mois"
+    "emails": {
+      "greeting": "Bonjour {name},",
+      "paymentSuccess": {
+        "subject": "Paiement reçu",
+        "heading": "Paiement reçu",
+        "body": "Merci : votre paiement a bien été effectué.",
+        "details": "Détail du paiement :",
+        "plan": "Offre",
+        "amount": "Montant"
+      },
+      "paymentFailed": {
+        "subject": "Votre paiement a échoué",
+        "heading": "Votre paiement a échoué",
+        "body": "Nous n'avons pas pu encaisser le paiement de votre offre {plan}. Mettez à jour votre moyen de paiement pour la conserver : le paiement sera retenté dans les prochains jours.",
+        "button": "Mettre à jour le moyen de paiement"
+      },
+      "subscriptionCancelled": {
+        "subject": "Votre abonnement est résilié",
+        "heading": "Votre abonnement est résilié",
+        "body": "Votre abonnement {plan} est résilié.",
+        "access": "Votre espace garde l'offre jusqu'au {date}, puis passe à l'offre gratuite.",
+        "noAccess": "Votre espace est maintenant sur l'offre gratuite.",
+        "button": "Choisir à nouveau une offre"
+      },
+      "trialEnding": {
+        "subject": "Votre essai gratuit se termine dans 3 jours",
+        "heading": "Votre essai gratuit se termine bientôt",
+        "body": "Votre essai de l'offre {plan} se termine le {date}. Vous n'avez rien à faire pour la garder : l'abonnement démarre à cette date. Changez d'offre ou résiliez avant si vous préférez.",
+        "button": "Gérer votre offre"
+      }
+    },
+    "managePayment": "Gérer le moyen de paiement",
+    "creditsAdded": "Les crédits ont été ajoutés à votre espace.",
+    "planActive": "Votre offre est active.",
+    "perMonthShort": "par mois",
+    "perYearShort": "par an",
+    "trialEnds": "Fin de l'essai",
+    "endsOn": "Fin de l'offre",
+    "renewsOn": "Renouvellement le",
+    "freeNote": "Cet espace est sur l'offre gratuite. Choisissez une offre pour relever ses limites.",
+    "paymentMethodNote": "Votre moyen de paiement et vos factures sont gérés en toute sécurité chez notre prestataire de paiement.",
+    "limitLines": {
+      "members": "{count, plural, =-1 {Membres illimités} one {# membre} other {# membres}}",
+      "projects": "{count, plural, =-1 {Projets illimités} one {# projet} other {# projets}}",
+      "storage": "{count, plural, =-1 {Stockage illimité} other {# Mo de stockage}}",
+      "aiCredits": "{count, plural, =-1 {Crédits IA illimités} other {# crédits IA par mois}}",
+      "other": "{count, plural, =-1 {{name} illimité} other {# {name}}}"
+    },
+    "limitValue": "{count, number}",
+    "featureLabels": {
+      "basicAnalytics": "Statistiques de base",
+      "emailSupport": "Support par e-mail",
+      "apiAccess": "Accès à l'API",
+      "prioritySupport": "Support prioritaire",
+      "customBranding": "Marque personnalisée",
+      "advancedAnalytics": "Statistiques avancées",
+      "aiChat": "Assistant IA"
+    },
+    "plans": {
+      "free": {
+        "description": "Pour démarrer seul"
+      },
+      "pro": {
+        "description": "Pour les équipes qui grandissent"
+      },
+      "enterprise": {
+        "description": "Pour les grandes organisations"
+      }
+    },
+    "topUp": {
+      "trigger": "Recharger des crédits",
+      "title": "Rechargez vos crédits IA",
+      "description": "Des packs ponctuels. Ils n'expirent jamais et sont utilisés après vos crédits mensuels.",
+      "pack": "{credits} crédits",
+      "cancel": "Annuler",
+      "buy": "Continuer vers le paiement"
+    },
+    "cancel": {
+      "title": "Résilier l'abonnement",
+      "description": "Vous gardez votre offre jusqu'à la fin de la période payée. Rien n'est supprimé.",
+      "button": "Résilier l'abonnement",
+      "confirmTitle": "Résilier l'abonnement {plan} ?",
+      "confirmDescription": "Votre espace garde l'offre jusqu'au {date}, puis passe à l'offre gratuite. Rien n'est supprimé, mais vous ne pourrez plus ajouter au-delà de ce que l'offre gratuite permet.",
+      "confirmDescriptionNoDate": "Votre espace garde l'offre jusqu'à la fin de la période, puis passe à l'offre gratuite. Rien n'est supprimé.",
+      "confirm": "Résilier l'abonnement",
+      "done": "Abonnement résilié. Vous gardez votre offre jusqu'à la fin de la période.",
+      "resume": "Garder mon abonnement",
+      "resumed": "Votre abonnement continue.",
+      "resumeFailed": "L'abonnement n'a pas pu être repris. Réessayez."
+    },
+    "change": {
+      "trigger": "Changer d'offre",
+      "title": "Changer d'offre",
+      "description": "Choisissez une offre et une période. Vous voyez ce que cela coûte avant de confirmer.",
+      "currentPlan": "{plan} (actuelle)",
+      "previewing": "Calcul du coût…",
+      "previewFailed": "Le coût de ce changement n'a pas pu être calculé. Réessayez.",
+      "retry": "Réessayer",
+      "trialChange": "Vous êtes en essai gratuit : rien n'est prélevé maintenant. La nouvelle offre démarre à la fin de l'essai, le {date}.",
+      "dueNow": "Vous réglez {amount} aujourd'hui, pour les jours restants de la période en cours.",
+      "credit": "Un crédit de {amount} est appliqué à vos prochaines factures.",
+      "nothingNow": "Rien n'est prélevé aujourd'hui.",
+      "renewal": "Le nouveau prix s'applique au prochain renouvellement, le {date}.",
+      "overTitle": "Votre espace dépasserait certaines limites",
+      "overLine": "{used} utilisés, {limit} autorisés",
+      "overNote": "Rien n'est supprimé, mais vous ne pourrez plus rien ajouter tant que vous n'êtes pas repassé sous ces limites.",
+      "cancel": "Annuler",
+      "confirm": "Confirmer le changement",
+      "pickAnother": "Choisissez une autre offre ou une autre période",
+      "done": "Votre offre a été changée.",
+      "failed": "L'offre n'a pas pu être changée. Réessayez.",
+      "stale": "L'aperçu était trop ancien pour servir au paiement. Vérifiez le nouveau et confirmez à nouveau."
+    },
+    "credits": {
+      "title": "Crédits IA",
+      "unlimited": "Illimités",
+      "leftOf": "restants sur {total} ce mois-ci",
+      "valueText": "{left} crédits restants sur {total} ce mois-ci",
+      "renews": "Vos crédits mensuels sont renouvelés le {date}.",
+      "packs": "Plus {count} crédits achetés, qui n'expirent jamais."
+    },
+    "invoices": {
+      "title": "Factures",
+      "failed": "Les factures n'ont pas pu être chargées. Réessayez dans un instant.",
+      "empty": "Aucune facture pour le moment.",
+      "view": "Voir",
+      "statuses": {
+        "paid": "Payée",
+        "open": "À payer",
+        "uncollectible": "Impayée",
+        "void": "Annulée",
+        "draft": "Brouillon"
+      },
+      "opensInNewTab": "(s'ouvre dans un nouvel onglet)"
+    },
+    "cancelledNote": "Cette offre est résiliée : elle s'arrête à la fin de la période payée."
   },
   "settings": {
     "account": {
@@ -286,7 +400,18 @@
       "context": "{keys, plural, one {# clé d'API} other {# clés d'API}} · {endpoints, plural, one {# webhook} other {# webhooks}}"
     },
     "billing": {
-      "title": "Abonnement"
+      "title": "Abonnement",
+      "pastDueTitle": "Votre dernier paiement a échoué",
+      "pastDue": "Mettez à jour votre moyen de paiement pour garder votre offre. Le paiement sera retenté dans les prochains jours.",
+      "pastDueMember": "Un propriétaire ou un administrateur doit mettre à jour le moyen de paiement pour garder l'offre.",
+      "pastDueAction": "Mettre à jour le moyen de paiement",
+      "cancelScheduledTitle": "Votre abonnement {plan} est résilié",
+      "cancelScheduled": "Vous gardez votre offre jusqu'au {date}, puis l'espace passe à l'offre gratuite.",
+      "trialTitle": "Essai gratuit de l'offre {plan}",
+      "trial": "Votre essai se termine le {date}. L'abonnement démarre alors, sauf si vous résiliez avant.",
+      "trialNotOwner": "Votre essai se termine le {date}. L'abonnement démarre alors.",
+      "choosePlan": "Choisir une offre",
+      "usageTitle": "Utilisation ce mois-ci"
     },
     "navLabel": "Réglages",
     "nav": {
@@ -326,7 +451,8 @@
     "nameLabel": "Nom de l'espace",
     "nameRequired": "Saisissez un nom pour votre espace.",
     "createFailed": "Impossible de créer l'espace. Veuillez réessayer.",
-    "switchFailed": "Impossible de changer d'espace. Veuillez réessayer."
+    "switchFailed": "Impossible de changer d'espace. Veuillez réessayer.",
+    "limitFeature": "Plus d'espaces"
   },
   "quotas": {
     "runningLow": "Bientôt épuisé",
@@ -334,7 +460,7 @@
     "of": "sur {limit}",
     "valueText": "{used} sur {limit} utilisés",
     "unlimited": "Illimité",
-    "upgrade": "Passer au plan supérieur",
+    "upgrade": "Passer à l'offre supérieure",
     "projects": "Projets",
     "members": "Membres",
     "storage": "Stockage",
@@ -387,7 +513,8 @@
     "create": {
       "title": "Nouveau projet",
       "description": "Donnez-lui un nom. Vous pourrez tout modifier plus tard.",
-      "failed": "Impossible de créer le projet. Veuillez réessayer."
+      "failed": "Impossible de créer le projet. Veuillez réessayer.",
+      "limitFeature": "Plus de projets"
     },
     "fields": {
       "name": "Nom",
@@ -431,10 +558,6 @@
     "faq": {
       "title": "Questions fréquentes"
     },
-    "pricing": {
-      "title": "Tarifs simples et transparents",
-      "subtitle": "Choisissez le plan qui vous convient."
-    },
     "about": {
       "title": "À propos"
     },
@@ -446,6 +569,13 @@
       "navTitle": "Blog",
       "description": "Insights, guides et actualités de notre équipe.",
       "noPosts": "Aucun article pour le moment. Revenez bientôt !"
+    },
+    "freeTrial": "Essai gratuit",
+    "navigation": "Navigation principale",
+    "navLabels": {
+      "features": "Fonctionnalités",
+      "about": "À propos",
+      "changelog": "Nouveautés"
     }
   },
   "admin": {
@@ -653,7 +783,12 @@
       "roleLabel": "Rôle de la personne {number}",
       "remove": "Retirer la personne {number}",
       "failed": "Nous n'avons pas pu envoyer toutes les invitations. Les personnes restées dans la liste n'ont pas été invitées : réessayez, ou passez cette étape et invitez-les plus tard.",
-      "invalid": "Certaines adresses ne sont pas valides. Corrigez celles qui restent dans la liste et réessayez, ou passez cette étape."
+      "invalid": "Certaines adresses ne sont pas valides. Corrigez celles qui restent dans la liste et réessayez, ou passez cette étape.",
+      "limit": "Votre offre n'a plus de place pour d'autres personnes. Passez cette étape : vous pourrez les inviter après avoir choisi une offre.",
+      "lockFeature": "Inviter des coéquipiers",
+      "lockDescription": "Pour l'instant, votre espace n'a de place que pour vous.",
+      "lockNote": "Choisissez une offre ensuite, puis invitez votre équipe depuis la page Équipe.",
+      "later": "Plus tard"
     },
     "skipInvite": "Passer pour l'instant",
     "complete": "Terminer la configuration"
@@ -696,7 +831,8 @@
       "done": "Espace supprimé."
     },
     "task": "Invitez votre premier membre",
-    "taskAction": "Inviter un membre"
+    "taskAction": "Inviter un membre",
+    "inviteLimitFeature": "Inviter d'autres coéquipiers"
   },
   "invitation": {
     "title": "Invitation",
@@ -866,8 +1002,10 @@
     "errors": {
       "credits": {
         "title": "Plus de crédits",
-        "admin": "Cet espace a utilisé tous ses crédits. Passez à un plan supérieur pour continuer à utiliser l'assistant.",
-        "member": "Cet espace a utilisé tous ses crédits. Demandez à un administrateur de passer à un plan supérieur."
+        "admin": "Cet espace a utilisé tous ses crédits. Rechargez des crédits, ou changez d'offre, pour continuer à utiliser l'assistant.",
+        "member": "Cet espace a utilisé tous ses crédits. Demandez à un administrateur de passer à une offre supérieure.",
+        "topUp": "Recharger",
+        "changePlan": "Changer d'offre"
       },
       "gone": {
         "title": "Vous ne pouvez pas continuer ici",
@@ -903,5 +1041,130 @@
     "referralHeroTitle": "Votre ami vous a invité 👋",
     "referralHeroSubtitle": "Rejoignez {count} personnes déjà sur la liste.",
     "joinAheadOf": "Rejoignez maintenant et passez devant {count} personnes"
+  },
+  "emails": {
+    "welcome": {
+      "subject": "Bienvenue",
+      "greeting": "Bonjour {name},",
+      "heading": "Bienvenue à bord !",
+      "body": "Votre adresse est confirmée et votre compte est prêt. Créez votre premier projet, invitez votre équipe et mettez-vous au travail.",
+      "button": "Ouvrir votre espace"
+    }
+  },
+  "planLock": {
+    "included": "Inclus dans l'offre {plan}",
+    "notIncluded": "Non inclus dans votre offre",
+    "upgrade": "Voir les offres",
+    "askAdmin": "Demandez à un propriétaire ou à un administrateur de l'espace de changer d'offre."
+  },
+  "pricing": {
+    "title": "Tarifs",
+    "description": "Des tarifs simples et transparents, pour toutes les tailles d'équipe.",
+    "heading": "Des tarifs simples et transparents",
+    "subtitle": "Commencez gratuitement, changez d'offre quand votre équipe grandit, résiliez quand vous voulez.",
+    "memberNotice": "Seul un propriétaire ou un administrateur de votre espace peut en changer l'offre.",
+    "period": "Période de facturation",
+    "monthly": "Mensuel",
+    "yearly": "Annuel",
+    "save": "Économisez {percent} %",
+    "recommended": "Recommandée",
+    "perMonth": "par mois",
+    "perYear": "par an",
+    "yearlyEquivalent": "Soit {price} par mois, facturé une fois par an",
+    "exclVat": "HT",
+    "trial": "Essai gratuit de {days} jours",
+    "included": "Inclus",
+    "notIncluded": "Non inclus",
+    "unlimited": "Illimité",
+    "compare": "Comparer les offres",
+    "feature": "Fonctionnalité",
+    "startTrial": "Démarrer l'essai gratuit",
+    "choose": "Choisir {plan}",
+    "startFree": "Commencer gratuitement",
+    "changePlan": "Changer d'offre",
+    "yourPlan": "Votre offre",
+    "continueFree": "Continuer en {plan}",
+    "failed": "Une erreur est survenue. Réessayez.",
+    "checkoutErrors": {
+      "not_configured": "Le paiement n'est pas encore configuré. Réessayez plus tard.",
+      "price_missing": "Cette offre ne peut pas encore être achetée. Réessayez plus tard.",
+      "unknown_plan": "Cette offre n'est pas disponible.",
+      "unknown_pack": "Ce pack n'est pas disponible.",
+      "already_subscribed": "Cet espace a déjà un abonnement : changez d'offre depuis la page Abonnement.",
+      "failed": "La page de paiement n'a pas pu s'ouvrir. Réessayez."
+    },
+    "reassurance": {
+      "cancel": "Résiliation à tout moment",
+      "change": "Changement d'offre quand vous voulez",
+      "secure": "Paiement sécurisé"
+    },
+    "faq": {
+      "title": "Questions sur les offres",
+      "cancel": {
+        "question": "Puis-je résilier à tout moment ?",
+        "answer": "Oui. Vous gardez votre offre jusqu'à la fin de la période payée, puis l'espace passe à l'offre gratuite. Rien n'est supprimé."
+      },
+      "change": {
+        "question": "Puis-je changer d'offre plus tard ?",
+        "answer": "Oui, depuis la page Abonnement. En passant à une offre supérieure, vous réglez la différence pour les jours restants de la période ; en passant à une offre inférieure, elle devient un crédit."
+      },
+      "trial": {
+        "question": "Comment fonctionne l'essai gratuit ?",
+        "answer": "Vous renseignez une carte pour le démarrer, et rien n'est prélevé avant la fin de l'essai. Résiliez avant et vous ne payez rien. L'essai est accordé une seule fois par compte."
+      },
+      "payment": {
+        "question": "Quels moyens de paiement acceptez-vous ?",
+        "answer": "Les cartes, et les autres moyens que le prestataire de paiement propose dans votre pays. Vos coordonnées bancaires n'arrivent jamais sur nos serveurs."
+      },
+      "vat": {
+        "question": "Les prix sont-ils hors taxes ?",
+        "answer": "Les prix sont affichés tels qu'ils sont facturés. Quand la TVA s'applique, elle est calculée au paiement à partir de votre adresse, et vous pouvez saisir votre numéro de TVA."
+      }
+    }
+  },
+  "chooseYourPlan": {
+    "title": "Choisir une offre",
+    "heading": "Choisissez une offre pour {workspace}",
+    "subtitle": "Le paiement se fait par espace. Le propriétaire de l'espace peut résilier à tout moment.",
+    "memberTitle": "Choix de l'offre",
+    "memberNotice": "Seul un propriétaire ou un administrateur de cet espace peut en choisir l'offre.",
+    "backToApp": "Aller dans l'application",
+    "chooseAnother": "Choisir une autre offre",
+    "resuming": "Nous vous emmenons vers le paiement de l'offre que vous avez choisie…"
+  },
+  "checkout": {
+    "title": "Paiement",
+    "heading": "Finalisez votre paiement",
+    "returnTitle": "Confirmation du paiement",
+    "summary": "Votre commande",
+    "pack": "{credits} crédits IA",
+    "packNote": "Achat ponctuel. Ces crédits n'expirent jamais et sont utilisés après vos crédits mensuels.",
+    "today": "À payer aujourd'hui",
+    "then": "Puis, à partir du {date}",
+    "renews": "Renouvellement à",
+    "planLine": "Offre {plan}",
+    "billedMonthly": "Facturée chaque mois",
+    "billedYearly": "Facturée chaque année",
+    "perMonth": "par mois",
+    "perYear": "par an",
+    "trialNote": "Votre essai gratuit de {days} jours démarre maintenant. Si l'abonnement est résilié avant la fin, rien n'est prélevé.",
+    "exclVat": "Les prix sont hors taxes : la TVA est ajoutée au paiement quand elle s'applique.",
+    "included": "Inclus",
+    "loadFailedTitle": "Le formulaire de paiement ne s'est pas chargé",
+    "loadFailed": "Vérifiez votre connexion, puis réessayez.",
+    "loading": "Chargement du formulaire de paiement",
+    "expiredTitle": "Ce paiement a expiré",
+    "expired": "Une page de paiement reste ouverte une journée. Recommencez pour en obtenir une nouvelle.",
+    "expiredAction": "Recommencer",
+    "waitingTitle": "Confirmation de votre paiement…",
+    "waiting": "Cela prend quelques secondes. Gardez cette page ouverte.",
+    "lateTitle": "Votre paiement est en cours de confirmation",
+    "late": "Cela prend plus de temps que d'habitude. Votre paiement a bien été effectué : votre offre apparaîtra sur la page Abonnement dès qu'il sera confirmé, et vous recevrez un e-mail.",
+    "lateAction": "Aller à l'abonnement",
+    "trialSpentTitle": "Votre essai gratuit a déjà été utilisé",
+    "trialSpent": "L'essai gratuit est accordé une seule fois par propriétaire, et le vôtre l'a été sur un autre espace de travail. Rien n'a été prélevé et aucun abonnement n'a démarré. Choisissez une offre pour continuer.",
+    "trialSpentAction": "Choisir une offre",
+    "backToPlans": "Choisir une autre offre",
+    "backToBilling": "Retour à l'abonnement"
   }
 }

@@ -40,8 +40,9 @@ export const NoCreditsForAnAdmin: Story = {
     const canvas = within(canvasElement);
 
     await expect(canvas.getByRole("alert")).toHaveTextContent("No credits left");
-    await expect(canvas.getByRole("alert")).toHaveTextContent("Upgrade the plan to keep using the assistant.");
-    await expect(canvas.getByRole("link", { name: "Upgrade" })).toHaveAttribute("href", "/en/settings/billing");
+    await expect(canvas.getByRole("alert")).toHaveTextContent("Top up credits, or change the plan, to keep using the assistant.");
+    await expect(canvas.getByRole("link", { name: "Top up" })).toHaveAttribute("href", "/en/settings/billing?topup=1");
+    await expect(canvas.getByRole("link", { name: "Change plan" })).toHaveAttribute("href", "/en/settings/billing");
     await expect(canvas.queryByRole("button")).not.toBeInTheDocument();
   },
 };
@@ -103,7 +104,7 @@ export const InFrench: Story = {
     const canvas = within(canvasElement);
 
     await expect(canvas.getByText("Plus de crédits")).toBeVisible();
-    await expect(canvas.getByRole("link", { name: "Passer au plan supérieur" })).toHaveAttribute("href", "/fr/settings/billing");
+    await expect(canvas.getByRole("link", { name: "Changer d'offre" })).toHaveAttribute("href", "/fr/settings/billing");
     await expect(canvas.getByText("Vous ne pouvez pas continuer ici")).toBeVisible();
     await expect(canvas.getByRole("button", { name: "Recharger la page" })).toBeVisible();
     await expect(canvas.getByRole("button", { name: "Réessayer" })).toBeVisible();
@@ -115,6 +116,6 @@ export const NoCreditsForAMemberInFrench: Story = {
   globals: { locale: "fr" },
   args: { failure: "credits", upgradeHref: null },
   play: async ({ canvasElement }) => {
-    await expect(within(canvasElement).getByRole("alert")).toHaveTextContent("Demandez à un administrateur de passer à un plan supérieur.");
+    await expect(within(canvasElement).getByRole("alert")).toHaveTextContent("Demandez à un administrateur de passer à une offre supérieure.");
   },
 };

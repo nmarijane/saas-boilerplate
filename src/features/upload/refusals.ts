@@ -10,6 +10,8 @@
 const MESSAGE_OF = {
   FILE_TOO_LARGE: "upload.tooLarge",
   FILE_TYPE_NOT_ALLOWED: "upload.typeNotAllowed",
+  // The plan's storage is full (`values`: `limit` in megabytes, `plan`): the route answers 402, not 400
+  PLAN_LIMIT: "upload.planLimit",
 } as const;
 
 export type UploadRefusalCode = keyof typeof MESSAGE_OF;

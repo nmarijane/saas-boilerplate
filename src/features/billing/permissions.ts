@@ -14,3 +14,15 @@ export const BILLING_MIN_ROLE: OrgRole = "admin";
 export function canManageBilling(role: OrgRole): boolean {
   return (ROLE_HIERARCHY[role] ?? 0) >= ROLE_HIERARCHY[BILLING_MIN_ROLE];
 }
+
+/**
+ * The lowest role that may cancel the subscription, or take the cancellation
+ * back: what ends the plan of the whole team is the owner's alone, as deleting
+ * the workspace is. Buying and changing the plan stay with `BILLING_MIN_ROLE`.
+ */
+export const SUBSCRIPTION_OWNER_ROLE: OrgRole = "owner";
+
+/** Whether a role may cancel or resume the subscription. */
+export function canCancelSubscription(role: OrgRole): boolean {
+  return (ROLE_HIERARCHY[role] ?? 0) >= ROLE_HIERARCHY[SUBSCRIPTION_OWNER_ROLE];
+}

@@ -26,8 +26,8 @@ export async function getFileById(id: string) {
  * the limits of the plans are written in), on one decimal. A workspace with no
  * file weighs nothing: zero, not null.
  */
-export async function getStorageUsedMb(orgId: string): Promise<number> {
-  const [row] = await db
+export async function getStorageUsedMb(orgId: string, reader: Pick<typeof db, "select"> = db): Promise<number> {
+  const [row] = await reader
     .select({
       bytes: sql<number>`COALESCE(SUM(${upload.size}), 0)`.mapWith(Number),
     })

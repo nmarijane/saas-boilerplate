@@ -5,6 +5,7 @@ import type {
   ProjectStatus,
   updateProjectSchema,
 } from "./schemas";
+import type { LimitInfo } from "@/shared/lib/action-refusal";
 import type { ActionResult } from "@/shared/lib/safe-action";
 import { unstable_rethrow } from "next/navigation";
 import { reportHandledError } from "@/shared/utils/report-error";
@@ -22,10 +23,15 @@ import { reportHandledError } from "@/shared/utils/report-error";
  * The call that fails is handled, not hidden: the error reporter of the app
  * still hears it.
  */
-async function attempt<T>(run: () => Promise<ActionResult<T>>): Promise<{ done: true; data: T } | { done: false }> {
+async function attempt<T>(run: () => Promise<ActionResult<T>>): Promise<{ done: true; data: T } | { done: false; limit?: LimitInfo }> {
   try {
     const answer = await run();
-    return answer.success ? { done: true, data: answer.data } : { done: false };
+    if (answer.success) {
+      return { done: true, data: answer.data };
+    }
+
+    // A refusal for a limit of the plan is told as such, with where to go from there
+    return answer.error === "limit_reached" && answer.limit ? { done: false, limit: answer.limit } : { done: false };
   } catch (error) {
     unstable_rethrow(error);
     reportHandledError(error);
@@ -41,6 +47,8 @@ interface CreateProjectDeps {
   notify: () => void;
   /** Goes to the page of the project. */
   open: (id: string) => void;
+  /** The plan has no room for another project: the dialog shows the lock. */
+  onLimit?: (limit: LimitInfo) => void;
 }
 
 /**
@@ -60,6 +68,9 @@ export async function createProjectFlow(
     }),
   );
   if (!outcome.done) {
+    if (outcome.limit) {
+      deps.onLimit?.(outcome.limit);
+    }
     return false;
   }
 

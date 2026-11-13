@@ -24,13 +24,13 @@ function pagesUnder(folder: string): string[] {
 }
 
 describe("the routes of the connected space", () => {
-  it("puts every page under the shell, onboarding aside", () => {
+  it("puts every page under the shell, onboarding and the pages of payment aside", () => {
     const pages = pagesUnder(APP);
 
     expect(pages.length).toBeGreaterThan(0);
     expect(
       pages.filter(
-        (page) => !page.startsWith("(shell)/") && !page.startsWith("onboarding/"),
+        (page) => !page.startsWith("(shell)/") && !page.startsWith("onboarding/") && !page.startsWith("(pay)/"),
       ),
     ).toEqual([]);
   });

@@ -11,7 +11,9 @@ import {
 } from "@/features/auth/organization/permissions";
 import { getOrganizationMembers } from "@/features/auth/organization/queries";
 import { requireWorkspace } from "@/features/auth/organization/workspace";
+import { getLimitStatus } from "@/features/plan-limits";
 import { PageHeader } from "@/shared/components/data/page-header";
+import { PlanLock } from "@/shared/components/data/plan-lock";
 import { SettingsNav } from "@/shared/components/shell/settings-nav";
 import {
   Card,
@@ -47,10 +49,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function TeamSettingsPage({ params }: Props) {
   const { locale } = await params;
   const { user, workspace } = await requireWorkspace();
-  const [t, tOrg, members] = await Promise.all([
+  const [t, tOrg, members, seats] = await Promise.all([
     getTranslations({ locale, namespace: "settings.team" }),
     getTranslations({ locale, namespace: "organization" }),
     getOrganizationMembers(workspace.id),
+    getLimitStatus(workspace.id, "members"),
   ]);
 
   return (
@@ -66,6 +69,10 @@ export default async function TeamSettingsPage({ params }: Props) {
         }
         tabs={<SettingsNav />}
       />
+      {/* The plan has no seat left: said before the button is pressed, to the roles that may invite (the server refuses anyway) */}
+      {seats.reached && canManageMembers(workspace.role) ? (
+        <PlanLock variant="line" feature={tOrg("inviteLimitFeature")} planName={seats.includedIn ?? undefined} href={seats.upgradeHref} />
+      ) : null}
       <Card>
         <CardHeader>
           <CardTitle as="h2" id={MEMBERS_TITLE_ID}>

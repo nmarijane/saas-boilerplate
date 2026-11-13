@@ -10,6 +10,7 @@ import { POST } from "@/app/api/ai/chat/route";
 import { MAX_HISTORY_MESSAGES, MAX_MESSAGE_LENGTH } from "@/features/ai/config/chat";
 import { AI_CREDITS_QUOTA_ID } from "@/features/ai/config/credits";
 import { getModelConfig } from "@/features/ai/config/models";
+import { periodOf } from "@/features/ai/queries";
 import { aiConversation, aiCreditLedger, aiMessage, organization, organizationMember, user } from "@/models";
 import { classesOf, elements, startTags, textOf } from "../helpers/html";
 import { renderWithIntl } from "../helpers/intl";
@@ -80,22 +81,22 @@ vi.mock("next/server", async (importOriginal) => ({
   },
 }));
 // A database across a network answers in a few milliseconds, and can fail: a case can
-// slow the read of the balance down, so that two answers which finish together read it
+// slow the read of the credits down, so that two answers which finish together read it
 // at the same time, or make the read inside the debit's transaction (the one that is
 // given the transaction) throw
 vi.mock("@/features/ai/queries", async (importOriginal) => {
   const queries = await importOriginal<typeof import("@/features/ai/queries")>();
   return {
     ...queries,
-    getCreditBalance: async (...args: Parameters<typeof queries.getCreditBalance>) => {
-      if (balanceRead.failInTransaction && args[1] !== undefined) {
+    readCredits: async (...args: Parameters<typeof queries.readCredits>) => {
+      if (balanceRead.failInTransaction && args[2] !== undefined) {
         throw new Error("The database failed inside the transaction");
       }
-      const balance = await queries.getCreditBalance(...args);
+      const credits = await queries.readCredits(...args);
       if (balanceRead.delayMs > 0) {
         await new Promise((resolve) => setTimeout(resolve, balanceRead.delayMs));
       }
-      return balance;
+      return credits;
     },
   };
 });
@@ -311,8 +312,14 @@ async function messagesOf(conversationId: string) {
     .map(({ role, content }) => [role, content]);
 }
 
+/** The monthly credits of the workspace, as the first use of the month grants them: one allocation row of this month. */
 async function allocate(orgId: string, amount: number) {
-  await testDb.insert(aiCreditLedger).values({ id: `allocation-${orgId}`, organizationId: orgId, amount, reason: "plan_allocation" });
+  await testDb.insert(aiCreditLedger).values({ id: `allocation-${orgId}`, organizationId: orgId, amount, reason: "plan_allocation", bucket: "allocation", period: periodOf() });
+}
+
+/** Credits of this month's allocation that were spent already. */
+async function spend(orgId: string, amount: number) {
+  await testDb.insert(aiCreditLedger).values({ id: `spent-${orgId}`, organizationId: orgId, amount: -amount, reason: "usage", bucket: "allocation", period: periodOf() });
 }
 
 type Locale = "en" | "fr";
@@ -642,6 +649,9 @@ describe("the assistant", () => {
       signIn(null);
       expect((await chat({ messages: [{ role: "user", content: "Hello" }], model: "gpt-4o-mini" })).status).toBe(401);
 
+      // Northwind is on the free plan: its 100 credits of the month are all spent
+      await allocate(NORTHWIND, 100);
+      await spend(NORTHWIND, 100);
       signIn(CAMILLE, NORTHWIND);
       expect((await chat({ messages: [{ role: "user", content: "Hello" }], model: "gpt-4o-mini" })).status).toBe(402);
 
@@ -954,7 +964,9 @@ describe("the assistant", () => {
     });
 
     it("never takes the balance below zero: an answer that costs more than is left takes what is left", async () => {
-      await allocate(ACME, 1);
+      // The free plan's 100 credits, 99 of them spent: one is left
+      await allocate(ACME, 100);
+      await spend(ACME, 99);
       signIn(CAMILLE, ACME);
 
       await (await chat({ messages: [{ role: "user", content: "Make it shorter" }], conversationId: ACME_CHAT, model: "gpt-4o-mini" })).text();
@@ -969,7 +981,8 @@ describe("the assistant", () => {
     // Two members of a workspace with one credit left each have an answer on its
     // way, and both finish at once: the second is debited from what the first left
     it("debits two answers that finish together one after the other: the balance never goes below zero", async () => {
-      await allocate(ACME, 1);
+      await allocate(ACME, 100);
+      await spend(ACME, 99);
       signIn(CAMILLE, ACME);
       balanceRead.delayMs = 50;
 
@@ -987,7 +1000,7 @@ describe("the assistant", () => {
         expect(await creditsOfReplies()).toHaveLength(2);
       }, { timeout: 3000 });
       expect(await creditsOfReplies()).toEqual([0, 1]);
-      expect((await credits(ACME)).map(({ amount }) => amount).sort((a, b) => a - b)).toEqual([-1, 1]);
+      expect((await credits(ACME)).map(({ amount }) => amount).sort((a, b) => a - b)).toEqual([-99, -1, 100]);
     });
 
     it("refuses a request with no message of the person", async () => {

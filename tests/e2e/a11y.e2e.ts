@@ -9,6 +9,7 @@ import { expect, test } from "@playwright/test";
 
 const PAGES = [
   ["the landing page", "/en"],
+  ["the public prices", "/en/pricing"],
   ["the sign-in page", "/en/sign-in"],
   ["the sign-up page", "/en/sign-up"],
   ["the forgot-password page", "/en/forgot-password"],

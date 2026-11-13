@@ -223,7 +223,7 @@ describe("quota card", () => {
 
     expect(textOf(html)).toContain("sur 50");
     expect(textOf(html)).toContain("Bientôt épuisé");
-    expect(textOf(html)).toContain("Passer au plan supérieur");
+    expect(textOf(html)).toContain("Passer à l'offre supérieure");
     expect(attribute(barOf(html) ?? "", "aria-valuetext")).toBe(
       "41 sur 50 utilisés",
     );

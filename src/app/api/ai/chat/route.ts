@@ -6,15 +6,14 @@ import { after } from "next/server";
 import { z } from "zod";
 
 import { CONVERSATION_HEADER, MAX_HISTORY_MESSAGES, MAX_MESSAGE_LENGTH } from "@/features/ai/config/chat";
-import { isUnlimitedCredits } from "@/features/ai/config/credits";
 import { calculateCredits, getModelConfig } from "@/features/ai/config/models";
 import { getProvider } from "@/features/ai/config/providers";
-import { getCreditBalance, getLatestMessages } from "@/features/ai/queries";
+import { getLatestMessages } from "@/features/ai/queries";
+import { debitCredits, ensureMonthlyAllocation } from "@/features/ai/service";
 import { auth } from "@/features/auth/auth";
 import { getWorkspaceContext } from "@/features/auth/organization/workspace";
-import { aiConversation, aiCreditLedger, aiMessage } from "@/models/ai";
+import { aiConversation, aiMessage } from "@/models/ai";
 import { organization } from "@/models/organization";
-import { subscription } from "@/models/subscription";
 import { db } from "@/shared/lib/DB";
 import { generateId } from "@/shared/utils/helpers";
 
@@ -106,21 +105,13 @@ export async function POST(req: Request) {
       }
     }
 
-    // Check credits
-    const orgSubs = await db
-      .select()
-      .from(subscription)
-      .where(eq(subscription.organizationId, workspace.id))
-      .limit(1);
+    // Check credits. The plan's monthly allocation is granted here, at the first use of the month (and
+    // only the first: it is idempotent), so that a workspace that never paid still has its free credits
+    const credits = await ensureMonthlyAllocation(workspace.id);
+    const unlimited = credits.unlimited;
 
-    const planId = orgSubs[0]?.planId ?? "free";
-    const unlimited = isUnlimitedCredits(planId);
-
-    if (!unlimited) {
-      const balance = await getCreditBalance(workspace.id);
-      if (balance <= 0) {
-        return new Response("Insufficient credits", { status: 402 });
-      }
+    if (!unlimited && credits.total <= 0) {
+      return new Response("Insufficient credits", { status: 402 });
     }
 
     // The first message starts the conversation: the page writes nothing
@@ -200,10 +191,11 @@ export async function POST(req: Request) {
         // way when the balance ran out are the operator's, one bounded answer each.
         try {
           await db.transaction(async (tx) => {
+            // The credits are taken out of the allocation first, then out of the packs bought
             let debit = 0;
             if (!unlimited) {
               await tx.select({ id: organization.id }).from(organization).where(eq(organization.id, orgId)).for("update");
-              debit = Math.min(cost, Math.max(0, await getCreditBalance(orgId, tx)));
+              debit = await debitCredits(tx, orgId, cost, empty ? savedConversationId : assistantMessageId);
             }
 
             if (empty) {
@@ -219,17 +211,6 @@ export async function POST(req: Request) {
                 inputTokens,
                 outputTokens,
                 creditsUsed: unlimited ? cost : debit,
-              });
-            }
-
-            // Deduct credits. With no answer row to point at, an empty answer's debit points at the conversation
-            if (debit > 0) {
-              await tx.insert(aiCreditLedger).values({
-                id: generateId(),
-                organizationId: orgId,
-                amount: -debit,
-                reason: "usage",
-                referenceId: empty ? savedConversationId : assistantMessageId,
               });
             }
           });

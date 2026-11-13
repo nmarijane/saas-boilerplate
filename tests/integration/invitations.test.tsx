@@ -35,6 +35,8 @@ vi.mock("@/features/email/transporter", () => ({
   hasSmtpConfig: true,
 }));
 vi.mock("@/features/auth/guards", async (importOriginal) => importOriginal());
+// What these cases are about is the e-mail, not the plan: the limits of the plans have their own tests (plan-limits.test.ts)
+vi.mock("@/features/plan-limits", () => ({ assertWithinPlan: vi.fn(), assertFreeWorkspaceRoom: vi.fn() }));
 // The translator of the server, built from the message files: the words are the real ones, and a message that is missing throws
 vi.mock("next-intl/server", async () => {
   const { createTranslator } = await import("next-intl");

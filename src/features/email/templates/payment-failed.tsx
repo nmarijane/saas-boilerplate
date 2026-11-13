@@ -3,6 +3,8 @@ import { BaseLayout } from "./base-layout";
 
 interface PaymentFailedEmailProps {
   name: string;
+  /** The salutation, in the language of the mail: "Hi {name}," when left out. */
+  greeting?: string;
   planName: string;
   billingUrl: string;
   previewText?: string;
@@ -40,6 +42,7 @@ const button = {
 
 export function PaymentFailedEmail({
   name,
+  greeting,
   planName,
   billingUrl,
   previewText = "Payment failed",
@@ -50,7 +53,7 @@ export function PaymentFailedEmail({
   return (
     <BaseLayout preview={previewText}>
       <Heading style={h1}>{heading}</Heading>
-      <Text style={text}>Hi {name},</Text>
+      <Text style={text}>{greeting ?? `Hi ${name},`}</Text>
       <Text style={text}>
         {bodyText ??
           `We were unable to process the payment for your ${planName} plan. Please update your payment method to avoid service interruption.`}

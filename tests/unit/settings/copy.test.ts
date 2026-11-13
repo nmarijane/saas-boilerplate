@@ -41,7 +41,12 @@ const FILES = [
   "src/features/api-keys/components/key-status-badge.tsx",
   "src/features/webhooks/components/create-webhook-modal.tsx",
   "src/features/webhooks/components/webhook-list.tsx",
-  "src/features/billing/components/billing-settings.tsx",
+  "src/features/billing/components/plan-card.tsx",
+  "src/features/billing/components/credits-card.tsx",
+  "src/features/billing/components/invoice-list.tsx",
+  "src/features/billing/components/change-plan-dialog.tsx",
+  "src/features/billing/components/cancel-zone.tsx",
+  "src/features/billing/components/top-up-dialog.tsx",
   "src/shared/components/ui/copy-code.tsx",
 ];
 

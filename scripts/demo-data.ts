@@ -1,7 +1,7 @@
 import type { PgDatabase, PgQueryResultHKT } from "drizzle-orm/pg-core";
 import { hashPassword } from "better-auth/crypto";
 import { inArray } from "drizzle-orm";
-import { CREDIT_PLANS } from "../src/features/ai/config/credits";
+import { getPlanById } from "../src/features/billing/plans";
 import * as schema from "../src/models";
 
 type Db = PgDatabase<PgQueryResultHKT, typeof schema>;
@@ -315,12 +315,13 @@ async function writeDemo(
 ): Promise<void> {
   const ago = (ms: number) => new Date(now.getTime() - ms);
   // "This month" is the UTC month of `now`, as the shell counts the credits
-  // (getCreditsUsedThisMonth). What is dated this month is placed between its
+  // (allocationUsed). What is dated this month is placed between its
   // first instant and now: counted back from now ("2 days ago"), it would fall
   // in the previous month when now is the first.
   const monthStart = new Date(
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
   );
+  const period = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
   const thisMonth = (share: number) =>
     new Date(
       monthStart.getTime() +
@@ -412,6 +413,9 @@ async function writeDemo(
       organizationId: ACME,
       status: "active",
       planId: "pro",
+      // A subscription the demo made up: it has no customer at the payment provider, so its billing page lists no invoice
+      stripeSubscriptionId: "sub_demo_acme",
+      billingInterval: "month",
       currentPeriodEnd: new Date(now.getTime() + 18 * DAY),
       createdAt: ago(90 * DAY),
       updatedAt: ago(12 * DAY),
@@ -440,9 +444,11 @@ async function writeDemo(
       {
         id: "demo-credits-allocation",
         organizationId: ACME,
-        amount: 5000,
+        amount: getPlanById("pro")?.limits.aiCredits ?? 0,
         reason: "plan_allocation",
         referenceId: SUBSCRIPTION,
+        bucket: "allocation",
+        period,
         createdAt: monthStart,
       },
       // Northwind is on the free plan, with no subscription to point at: it has the credits of that plan for the month,
@@ -450,8 +456,10 @@ async function writeDemo(
       {
         id: "demo-credits-allocation-northwind",
         organizationId: NORTHWIND,
-        amount: CREDIT_PLANS.free,
+        amount: getPlanById("free")?.limits.aiCredits ?? 0,
         reason: "plan_allocation",
+        bucket: "allocation",
+        period,
         createdAt: monthStart,
       },
       ...CREDIT_USE.map(({ amount, share }, index) => ({
@@ -459,6 +467,8 @@ async function writeDemo(
         organizationId: ACME,
         amount,
         reason: "usage",
+        bucket: "allocation",
+        period,
         createdAt: thisMonth(share),
       })),
     ])

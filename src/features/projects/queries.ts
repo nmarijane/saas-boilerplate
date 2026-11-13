@@ -84,6 +84,13 @@ export const countProjects = cache(async (orgId: string): Promise<number> => {
   return result?.count ?? 0;
 });
 
+/** How many projects a workspace has, read fresh through `reader`: the figure the plan's limit is enforced with (`withPlanLimit`). */
+export async function countProjectsFresh(orgId: string, reader: Pick<typeof db, "select"> = db): Promise<number> {
+  const [result] = await reader.select({ count: count() }).from(project).where(eq(project.organizationId, orgId));
+
+  return result?.count ?? 0;
+}
+
 export async function listRecentProjects(orgId: string, limit = 3): Promise<ProjectSummary[]> {
   const rows = await selectSummaries()
     .where(eq(project.organizationId, orgId))

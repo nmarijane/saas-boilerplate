@@ -1,10 +1,12 @@
 "use client";
 
 import type { FormEvent } from "react";
+import type { LimitInfo } from "@/shared/lib/action-refusal";
 import { useTranslations } from "next-intl";
 import { unstable_rethrow } from "next/navigation";
 import { useId, useState } from "react";
 import { createOrganization } from "@/features/auth/organization/actions";
+import { LimitNotice } from "@/shared/components/data/limit-notice";
 import { Button } from "@/shared/components/ui/button";
 import { whileConfirming } from "@/shared/components/ui/confirm-dialog";
 import {
@@ -50,6 +52,7 @@ function CreateWorkspaceForm({
   const fieldId = useId();
   const [name, setName] = useState("");
   const [failed, setFailed] = useState(false);
+  const [limit, setLimit] = useState<LimitInfo | null>(null);
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -59,6 +62,7 @@ function CreateWorkspaceForm({
 
     onPendingChange(true);
     setFailed(false);
+    setLimit(null);
     let created = false;
     try {
       created = await createWorkspace(
@@ -66,6 +70,7 @@ function CreateWorkspaceForm({
           create: createOrganization,
           switchTo,
           refresh: () => router.refresh(),
+          onLimit: setLimit,
         },
         name,
       );
@@ -96,7 +101,7 @@ function CreateWorkspaceForm({
           label={t("nameLabel")}
           htmlFor={fieldId}
           required
-          error={failed ? t("createFailed") : undefined}
+          error={failed && !limit ? t("createFailed") : undefined}
         >
           {/* read-only while it runs, not disabled: a disabled field drops the focus, which a failure should find where it was */}
           <Input
@@ -111,6 +116,7 @@ function CreateWorkspaceForm({
             className="min-h-11"
           />
         </Field>
+        {limit ? <LimitNotice limit={limit} feature={t("limitFeature")} /> : null}
       </DialogBody>
       <DialogFooter>
         <DialogClose asChild>

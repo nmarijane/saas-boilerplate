@@ -3,13 +3,13 @@ import { verifyPassword } from "better-auth/crypto";
 import { count, eq, sql } from "drizzle-orm";
 import { createTranslator } from "next-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { CREDIT_PLANS } from "@/features/ai/config/credits";
 import {
   getConversations,
-  getCreditBalance,
-  getCreditsUsedThisMonth,
   getMessages,
+  periodOf,
+  readCredits,
 } from "@/features/ai/queries";
+import { allocationUsed } from "@/features/ai/service";
 import { countActiveApiKeys } from "@/features/api-keys/queries";
 import { getWorkspaceActivity } from "@/features/audit/queries";
 import {
@@ -17,6 +17,7 @@ import {
   getOrganizationMembers,
   getUserOrganizations,
 } from "@/features/auth/organization/queries";
+import { getPlanById } from "@/features/billing/plans";
 import { getWorkspacePlan } from "@/features/billing/queries";
 import { getUnreadCount } from "@/features/notifications/queries";
 import { countProjects, listProjects } from "@/features/projects/queries";
@@ -169,7 +170,7 @@ describe("the demo workspace", () => {
     const camille = await userIdOf("camille@example.com");
     expect(await countProjects(acme)).toBe(12);
     expect(await countMembers(acme)).toBe(3);
-    expect(await getCreditsUsedThisMonth(acme, NOW)).toBe(4120);
+    expect(await allocationUsed(acme, NOW)).toBe(4120);
     expect(await getUnreadCount(camille)).toBe(2);
     expect(await getWorkspaceActivity(acme)).toHaveLength(5);
     // The activity query stops at five lines: the rows say whether there are more
@@ -431,6 +432,7 @@ describe("the demo workspace", () => {
     const monthStart = new Date(
       Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
     );
+    const freeCredits = getPlanById("free")!.limits.aiCredits!;
 
     beforeEach(async () => {
       await seedDemo(testDb, now);
@@ -439,8 +441,8 @@ describe("the demo workspace", () => {
     it("grants 5,000 credits on the first and consumes 4,120 of them since", async () => {
       const acme = await orgIdOf("acme");
 
-      expect(await getCreditsUsedThisMonth(acme, now)).toBe(4120);
-      expect(await getCreditBalance(acme)).toBe(880);
+      expect(await allocationUsed(acme, now)).toBe(4120);
+      expect((await readCredits(acme, periodOf(now))).allocation).toBe(880);
 
       const ledger = await testDb
         .select()
@@ -462,15 +464,15 @@ describe("the demo workspace", () => {
     it("gives Northwind the credits of the free plan for the month, none of them used", async () => {
       const northwind = await orgIdOf("northwind");
 
-      expect(await getCreditBalance(northwind)).toBe(CREDIT_PLANS.free);
-      expect(await getCreditsUsedThisMonth(northwind, now)).toBe(0);
+      expect((await readCredits(northwind, periodOf(now))).allocation).toBe(freeCredits);
+      expect(await allocationUsed(northwind, now)).toBe(0);
 
       const ledger = await testDb
         .select()
         .from(aiCreditLedger)
         .where(eq(aiCreditLedger.organizationId, northwind));
       expect(ledger).toHaveLength(1);
-      expect(ledger[0]).toMatchObject({ amount: CREDIT_PLANS.free, reason: "plan_allocation", referenceId: null, createdAt: monthStart });
+      expect(ledger[0]).toMatchObject({ amount: freeCredits, reason: "plan_allocation", referenceId: null, createdAt: monthStart });
     });
   });
 });

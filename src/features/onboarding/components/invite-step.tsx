@@ -2,9 +2,12 @@
 
 import { Plus, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useState } from "react";
+import { unstable_rethrow } from "next/navigation";
+import { useEffect, useState } from "react";
 import { authClient } from "@/features/auth/auth-client";
 import { inviteMember } from "@/features/auth/organization/actions";
+import { getLimitStatusAction } from "@/features/plan-limits-actions";
+import { PlanLock } from "@/shared/components/data/plan-lock";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { PageAlert } from "@/shared/components/ui/page-alert";
@@ -16,6 +19,7 @@ import {
   SelectValue,
 } from "@/shared/components/ui/select";
 import { toast } from "@/shared/components/ui/sonner";
+import { reportHandledError } from "@/shared/utils/report-error";
 import { sendInvites } from "../send-invites";
 
 interface InviteEntry {
@@ -90,7 +94,7 @@ export function InviteRow({ number, invite, removable, onEmail, onRole, onRemove
 
 // What the step tells above its buttons when some rows are still there after a try: an alert,
 // announced when it appears, and nothing at rest.
-export function InviteProblem({ problem }: { problem: "failed" | "invalid" | null }) {
+export function InviteProblem({ problem }: { problem: "failed" | "invalid" | "limit" | null }) {
   const t = useTranslations("onboarding.invite");
 
   return problem ? <PageAlert tone="danger">{t(problem)}</PageAlert> : null;
@@ -107,7 +111,27 @@ export function InviteStep({ onComplete, onBack, isCompleting }: InviteStepProps
   ]);
   const [isSending, setIsSending] = useState(false);
   // Why some rows are still there after a try: what the person is told above the buttons
-  const [problem, setProblem] = useState<"failed" | "invalid" | null>(null);
+  const [problem, setProblem] = useState<"failed" | "invalid" | "limit" | null>(null);
+  // The plan has no seat for anyone else: the step says so before the person types, with Later as the way on
+  const [locked, setLocked] = useState<{ includedIn: string | null } | null>(null);
+  const orgId = activeOrg?.data?.id;
+
+  useEffect(() => {
+    if (!orgId) {
+      return;
+    }
+
+    getLimitStatusAction({ orgId, limitKey: "members" })
+      .then((answer) => {
+        if (answer.success && answer.data.reached) {
+          setLocked({ includedIn: answer.data.includedIn });
+        }
+      })
+      .catch((error: unknown) => {
+        unstable_rethrow(error);
+        reportHandledError(error);
+      });
+  }, [orgId]);
 
   const addInvite = () => {
     setInvites((prev) => [...prev, { email: "", role: "member" }]);
@@ -159,6 +183,30 @@ export function InviteStep({ onComplete, onBack, isCompleting }: InviteStepProps
     }
     onComplete();
   };
+
+  if (locked) {
+    return (
+      <div className="space-y-4">
+        <PlanLock
+          variant="card"
+          feature={t("invite.lockFeature")}
+          planName={locked.includedIn ?? undefined}
+          description={t("invite.lockDescription")}
+          note={t("invite.lockNote")}
+        />
+        <div className="flex gap-2 pt-2">
+          {onBack ? (
+            <Button type="button" variant="outline" onClick={onBack} className="flex-1">
+              {tCommon("back")}
+            </Button>
+          ) : null}
+          <Button type="button" onClick={onComplete} disabled={isCompleting} className="flex-1">
+            {isCompleting ? tCommon("loading") : t("invite.later")}
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

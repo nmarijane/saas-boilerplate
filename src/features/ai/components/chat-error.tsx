@@ -4,6 +4,7 @@ import type { ChatFailure } from "@/features/ai/chat-transport";
 import { useTranslations } from "next-intl";
 import { Button } from "@/shared/components/ui/button";
 import { PageAlert } from "@/shared/components/ui/page-alert";
+import { TextLink } from "@/shared/components/ui/text-link";
 import { Link } from "@/shared/lib/i18n-navigation";
 
 interface ChatErrorProps {
@@ -28,7 +29,6 @@ interface ChatErrorProps {
 export function ChatError({ failure, upgradeHref, onReload, onRetry }: ChatErrorProps) {
   const t = useTranslations("ai");
   const tCommon = useTranslations("common");
-  const tQuotas = useTranslations("quotas");
 
   if (failure === "credits") {
     return (
@@ -37,9 +37,15 @@ export function ChatError({ failure, upgradeHref, onReload, onRetry }: ChatError
         title={t("errors.credits.title")}
         action={
           upgradeHref ? (
-            <Button asChild variant="outline" size="sm">
-              <Link href={upgradeHref}>{tQuotas("upgrade")}</Link>
-            </Button>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              {/* The packs open on the billing page: the link says it by its address (the page opens them) */}
+              <Button asChild variant="outline" size="sm">
+                <Link href={`${upgradeHref}?topup=1`}>{t("errors.credits.topUp")}</Link>
+              </Button>
+              <TextLink asChild className="tap-target">
+                <Link href={upgradeHref}>{t("errors.credits.changePlan")}</Link>
+              </TextLink>
+            </div>
           ) : undefined
         }
       >

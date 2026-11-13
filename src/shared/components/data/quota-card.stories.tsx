@@ -177,7 +177,7 @@ export const LongFrenchLabel: Story = {
     const card = canvasElement.querySelector<HTMLElement>("[data-slot='card']");
 
     await expect(canvas.getByText("Bientôt épuisé")).toBeVisible();
-    await expect(canvas.getByRole("link", { name: "Passer au plan supérieur" })).toBeVisible();
+    await expect(canvas.getByRole("link", { name: "Passer à l'offre supérieure" })).toBeVisible();
     // The thousands are grouped by a narrow space, which a plain one does not equal
     const valueText = canvas.getByRole("progressbar").getAttribute("aria-valuetext") ?? "";
     await expect(valueText.replaceAll(/\s/g, " ")).toBe("4 100 sur 5 000 utilisés");

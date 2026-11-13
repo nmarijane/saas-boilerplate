@@ -84,9 +84,30 @@ Workspaces with owner, admin and member roles. Switch between them from the side
   </picture>
 </p>
 
+## Purchase flow
+
+Public prices, a plan chosen after sign-up, an embedded Stripe payment in your brand, and a Billing page: everything between "I want the Pro plan" and an invoice. The plans, their prices, limits, trial and monthly AI credits are written once, in `src/features/billing/plans.ts`.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/prices-desktop-dark.png">
+  <img src="docs/screenshots/prices-desktop-light.png" alt="The public prices: a monthly and yearly toggle, three plan cards with the recommended one ringed in the brand color, each with its price, one button and what it includes." width="100%">
+</picture>
+
+- **Prices** (`/pricing`): monthly or yearly, a recommended plan, a comparison table and a FAQ. A visitor goes to sign-up with the plan and the period kept; a signed-in admin goes to payment; a subscriber goes to their plan.
+- **Plan choice** (`/choose-plan`), right after the workspace is made: pay, or continue on the free plan. A plan picked before signing up is resumed on its own.
+- **Payment** (`/checkout/<session>`): the order on the left, Stripe's embedded form on the right (or Stripe's hosted page when no publishable key is set). A free trial of the recommended plan, once per owner. The app waits for the webhook, then says "Your plan is active".
+- **Billing**: the plan and its renewal, the quotas and the credits, the invoices, "Change plan" with the proration shown before you confirm, "Top up" for packs of credits, and a confirmed cancellation (the owner's).
+- **Limits are enforced on the server**: projects, members, storage and free workspaces answer a typed `limit_reached` error, the pages show "Included in the Pro plan", and a webhook delivered twice, late or out of order changes nothing it should not.
+- **Set up with your own Stripe test keys**: `npm run stripe:catalog` creates the products and prices; see [The shop](docs/SETUP.md#the-shop). The tests use a mocked Stripe client and signed payloads.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/billing-desktop-dark.png">
+  <img src="docs/screenshots/billing-desktop-light.png" alt="The billing page of a workspace on the Pro plan: its price and renewal date, the usage cards with the AI credits left this month, and the invoices." width="100%">
+</picture>
+
 ## AI assistant
 
-A chat that works with OpenAI, Anthropic, Google or Groq, and a monthly credit balance for each workspace, tied to its plan (a new workspace starts with none: the flow that sells a plan, which the boilerplate does not have yet, is where its credits are allocated). Ollama is wired as a provider, but no model of the list runs on it yet: to use it, add one to the model list (`src/features/ai/config/models.ts`).
+A chat that works with OpenAI, Anthropic, Google or Groq, and a monthly credit balance for each workspace, tied to its plan (granted at the first use of the month, never accumulated; bought packs never expire). Ollama is wired as a provider, but no model of the list runs on it yet: to use it, add one to the model list (`src/features/ai/config/models.ts`).
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/assistant-desktop-dark.png">

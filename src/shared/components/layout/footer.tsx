@@ -4,6 +4,7 @@ import { Link } from "@/shared/lib/i18n-navigation";
 
 export function Footer() {
   const tMarketing = useTranslations("marketing");
+  const tPricing = useTranslations("pricing");
   const tLegal = useTranslations("legal");
 
   return (
@@ -20,7 +21,7 @@ export function Footer() {
             href="/pricing"
             className="hover:text-foreground transition-colors"
           >
-            {tMarketing("pricing.title")}
+            {tPricing("title")}
           </Link>
           <Link
             href="/changelog"

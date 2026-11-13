@@ -1,4 +1,5 @@
 import type { AssignableRole } from "./permissions";
+import type { LimitInfo } from "@/shared/lib/action-refusal";
 import type { ActionResult } from "@/shared/lib/safe-action";
 import { unstable_rethrow } from "next/navigation";
 import { z } from "zod";
@@ -12,8 +13,8 @@ import { reportHandledError } from "@/shared/utils/report-error";
 
 const emailSchema = z.email();
 
-/** How an invitation ended: it is on its way, the address is not one (nothing was sent), or the server did not take it. */
-export type InviteOutcome = "invited" | "invalid" | "failed";
+/** How an invitation ended: it is on its way, the address is not one (nothing was sent), the plan has no seat left, or the server did not take it. */
+export type InviteOutcome = "invited" | "invalid" | "failed" | "limit";
 
 interface InviteMemberDeps {
   /** `inviteMember`: sends the invitation, and refuses when the caller may not invite or the input is wrong. */
@@ -25,6 +26,8 @@ interface InviteMemberDeps {
   }) => Promise<ActionResult<unknown>>;
   /** Says the invitation is on its way (a toast): once it is, and not before. */
   notify: (email: string) => void;
+  /** The plan has no seat left: told with where to go from there. */
+  onLimit?: (limit: LimitInfo) => void;
 }
 
 /**
@@ -48,6 +51,11 @@ export async function inviteMemberFlow(
   try {
     const answer = await deps.invite({ orgId: input.orgId, email, role: input.role, locale: input.locale });
     if (!answer.success) {
+      if (answer.error === "limit_reached" && answer.limit) {
+        deps.onLimit?.(answer.limit);
+        return "limit";
+      }
+
       return "failed";
     }
   } catch (error) {

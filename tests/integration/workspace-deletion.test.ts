@@ -167,6 +167,6 @@ describe("deleting a workspace", () => {
   it("names no feature: the cleanups come from the registry", () => {
     const action = readFileSync(join(__dirname, "../../src/features/auth/organization/actions.ts"), "utf8");
 
-    expect(action).not.toMatch(/@\/features\/(?!auth|email|events|registry)[\w-]+/);
+    expect(action).not.toMatch(/@\/features\/(?!auth|email|events|plan-limits|registry)[\w-]+/);
   });
 });

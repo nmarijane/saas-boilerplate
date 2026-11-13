@@ -1,6 +1,7 @@
 import type { WorkspaceScope } from "@/shared/shell/contract";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getCreditsUsedThisMonth } from "@/features/ai/queries";
+import { periodOf } from "@/features/ai/queries";
+import { allocationUsed } from "@/features/ai/service";
 import { aiShell } from "@/features/ai/shell";
 import { countActiveApiKeys } from "@/features/api-keys/queries";
 import { apiKeysShell } from "@/features/api-keys/shell";
@@ -71,6 +72,8 @@ async function credit(orgId: string, amount: number, createdAt: Date) {
     organizationId: orgId,
     amount,
     reason: amount < 0 ? "usage" : "plan_allocation",
+    bucket: "allocation",
+    period: periodOf(createdAt),
     createdAt,
   });
 }
@@ -137,13 +140,13 @@ describe("what the home reads of a workspace", () => {
       await seedUpload(OWNER, { organizationId: null, size: 9_000_000 }); // upload
 
       expect(await countMembers(ORG)).toBe(2);
-      expect(await getCreditsUsedThisMonth(ORG, NOW)).toBe(300);
+      expect(await allocationUsed(ORG, NOW)).toBe(300);
       expect(await getStorageUsedMb(ORG)).toBe(3); // upload
     });
 
     it("reads zero from a workspace that has nothing yet, not nothing", async () => {
       expect(await countMembers(ORG)).toBe(0);
-      expect(await getCreditsUsedThisMonth(ORG, NOW)).toBe(0);
+      expect(await allocationUsed(ORG, NOW)).toBe(0);
       expect(await getStorageUsedMb(ORG)).toBe(0); // upload
       expect(await countActiveApiKeys(ORG)).toBe(0);
     });
@@ -154,9 +157,9 @@ describe("what the home reads of a workspace", () => {
       await credit(ORG, -40, new Date("2026-11-30T23:59:59.000Z"));
 
       // 04:30 on 1 November in UTC is still the evening of 31 October at UTC-5: the month is the UTC one
-      expect(await getCreditsUsedThisMonth(ORG, new Date("2026-10-31T23:30:00.000-05:00"))).toBe(60);
+      expect(await allocationUsed(ORG, new Date("2026-10-31T23:30:00.000-05:00"))).toBe(60);
       // Once a month is over, its use is no longer this month's
-      expect(await getCreditsUsedThisMonth(ORG, new Date("2026-12-01T00:00:00.000Z"))).toBe(0);
+      expect(await allocationUsed(ORG, new Date("2026-12-01T00:00:00.000Z"))).toBe(0);
     });
 
     it("reads the credits of the month the clock is in when it is not given", async () => {
@@ -164,7 +167,7 @@ describe("what the home reads of a workspace", () => {
       await credit(ORG, -7, new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)));
       await credit(ORG, -9, new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 15)));
 
-      expect(await getCreditsUsedThisMonth(ORG)).toBe(7);
+      expect(await allocationUsed(ORG)).toBe(7);
     });
 
     // upload:start

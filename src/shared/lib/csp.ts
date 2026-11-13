@@ -29,6 +29,7 @@ export function contentSecurityPolicy({ nonce, development = false }: PolicyOpti
       "'strict-dynamic'",
       // Where `'strict-dynamic'` is not understood
       "https://js.stripe.com",
+      "https://checkout.stripe.com",
       ...(development ? ["'unsafe-eval'"] : []),
     ],
     // The components set `style` attributes (Radix, the toasts), which a nonce does not allow: styles keep
@@ -37,8 +38,8 @@ export function contentSecurityPolicy({ nonce, development = false }: PolicyOpti
     // A person's picture is an https address (src/shared/utils/avatar-url.ts)
     "img-src": ["'self'", "data:", "blob:", "https:"],
     "font-src": ["'self'"],
-    "connect-src": ["'self'", "https://api.stripe.com", "https://*.sentry.io", ...(development ? ["ws:", "wss:"] : [])],
-    "frame-src": ["https://js.stripe.com", "https://hooks.stripe.com"],
+    "connect-src": ["'self'", "https://api.stripe.com", "https://checkout.stripe.com", "https://*.sentry.io", ...(development ? ["ws:", "wss:"] : [])],
+    "frame-src": ["https://js.stripe.com", "https://*.js.stripe.com", "https://hooks.stripe.com", "https://checkout.stripe.com"],
     "frame-ancestors": ["'none'"],
     "object-src": ["'none'"],
     "base-uri": ["'self'"],

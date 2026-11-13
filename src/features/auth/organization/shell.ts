@@ -1,9 +1,9 @@
 import type { FeatureShell } from "@/shared/shell/contract";
 import { UserPlusIcon, UsersIcon } from "lucide-react";
-import { countMembers } from "./queries";
+import { countMembers, countSeats } from "./queries";
 
 // What the organization adds to the shell: the Team tab of the settings, the
-// members counted against the limit of the plan (shown, not enforced), and the
+// members counted against the limit of the plan (shown, and enforced when someone is invited), and the
 // first step that asks an admin to invite someone. The team is more than the
 // person who made the workspace: the step is done from two members.
 export const organizationShell: FeatureShell = {
@@ -17,6 +17,7 @@ export const organizationShell: FeatureShell = {
       order: 20,
     },
   ],
+  limits: [{ limitKey: "members", used: countSeats }],
   quotas: [
     {
       id: "members",
