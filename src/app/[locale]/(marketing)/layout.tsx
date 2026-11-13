@@ -48,12 +48,13 @@ function MarketingHeader() {
             </Link>
           </nav>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <ThemeToggle />
           <Button variant="ghost" size="sm" asChild>
             <Link href="/sign-in">{t("auth.signIn")}</Link>
           </Button>
-          <Button variant="outline" size="sm" asChild>
+          {/* A phone is 390 px wide: four controls do not fit in a row whatever the font, and the page would scroll sideways. The sign-up stays. */}
+          <Button variant="outline" size="sm" className="hidden sm:inline-flex" asChild>
             <Link href="/waitlist">{t("waitlist.joinButton")}</Link>
           </Button>
           <Button size="sm" asChild>

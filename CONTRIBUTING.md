@@ -161,8 +161,39 @@ All user-facing strings must be added to both `src/locales/en.json` and `src/loc
 
 6. **Claude Code AI reviewer** will automatically review your PR for security, quality, and convention adherence. Address its comments or explain why you disagree.
 
-7. **All CI checks must pass** before merge:
-   - Lint, typecheck, test, build, Storybook, audit
+7. **All CI checks must pass** before merge (what each one runs, and how to run it on your machine, is in [What the CI runs](#what-the-ci-runs)):
+   - Lint, typecheck, tests, build, Storybook build and plays, end-to-end tests, tests on PostgreSQL, schema and dead code, audit
+
+### What the CI runs
+
+Every job of `.github/workflows/ci.yml` is one command you can run yourself, in the same order of cost. A new push cancels the run it replaces.
+
+| Job | What it checks | Run it locally |
+|-----|----------------|----------------|
+| Lint | ESLint | `npm run lint` |
+| Type Check | TypeScript | `npm run check:types` |
+| Tests | Unit and integration tests over PGlite, with coverage | `npx vitest run --coverage` |
+| Build | The production build | `npm run build` |
+| Storybook Build | Every story compiles | `npx storybook build --quiet` |
+| Storybook Plays | The `play` function of every story, in Chromium, at the viewport the story asks for | `npm run test:stories` |
+| End-to-End Tests | The browser tests of `tests/e2e`; the script builds the app, seeds a database of its own and serves it on port 3090 | `npm run test:e2e` |
+| Tests on PostgreSQL | The integration tests over a real PostgreSQL, including those that need two connections at once (row locks) | `npm run test:postgres` with `DATABASE_URL` set (below) |
+| Schema and Dead Code | The migrations agree with each other (`drizzle-kit check`), and nothing is unused (`knip`) | `npm run check:schema` and `npm run check:deps` |
+| Security Audit | Known vulnerabilities of the dependencies | `npm audit --audit-level=high` |
+
+The first run of `npm run test:stories` and `npm run test:e2e` needs the browser: `npx playwright install chromium` (`--with-deps` on Linux). In CI it is cached.
+
+**Tests on PostgreSQL.** The tests run over PGlite by default: one connection, in memory, a new database for each file. A test that needs two connections (a row lock that makes one transaction wait for another) is skipped there, under a name that says so (`... (needs real PostgreSQL: skipped on PGlite)`), and runs in the PostgreSQL job. To run them yourself, start a throwaway database and point `DATABASE_URL` at it:
+
+```bash
+docker run --rm -d --name boilerplate-test-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=test -p 127.0.0.1:5433:5432 postgres:16-alpine
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5433/test npm run test:postgres
+docker stop boilerplate-test-db
+```
+
+The run **empties that database** before each test file: never point it at a database that holds anything. It only happens with `npm run test:postgres` (`TEST_POSTGRES=1`): a `DATABASE_URL` in your environment alone changes nothing for `npm test`. To write a test that needs real PostgreSQL, use `describeOnPostgres` from `tests/helpers/postgres.ts`; `tests/integration/postgres-concurrency.test.ts` shows how to make two calls meet on a lock.
+
+**Dead code.** `knip.config.ts` says what is kept on purpose (the extension points of the kit, with the reason). A new unused file, export or dependency fails the job: delete it, or add it there with a comment saying why it stays.
 
 ### What Gets Merged
 

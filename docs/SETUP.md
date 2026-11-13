@@ -25,7 +25,7 @@ Update `README.md`:
 ### CI/CD (works automatically)
 
 The GitHub Actions workflows (`.github/workflows/`) are included. Once you push to GitHub:
-- **Lint, typecheck, test, build, storybook, audit** — work immediately, no config needed
+- **Lint, typecheck, test, build, storybook (build and plays), end-to-end tests, tests on PostgreSQL, schema and dead code, audit** — work immediately, no config needed and no secret (the PostgreSQL job starts its own database as a service). What each job runs, and the command to run it on your machine, is in the table "What the CI runs" of `CONTRIBUTING.md`; in short: `npm run lint`, `npm run check:types`, `npx vitest run`, `npm run build`, `npm run test:stories`, `npm run test:e2e`, `npm run test:postgres` (with a throwaway `DATABASE_URL`: it empties it), `npm run check:schema`, `npm run check:deps`
 - **Dependabot** — works immediately, sends weekly PRs for outdated deps
 - **Coverage badge** — updates automatically on push to main; the CI commits it to a dedicated `badges` branch, so `main` can stay protected
 - **Claude Code review** — requires setup: run `claude /install-github-app` in your terminal, or add `ANTHROPIC_API_KEY` to your repo secrets
@@ -201,7 +201,7 @@ The `twoFactor()` plugin of Better Auth is off. It has no page to ask for the co
 
 ## Phase 3: Remove Unused Features
 
-A feature that appears in the app shell (a link, a quota, a first step of the home) has a `shell.ts` in its folder of `src/features/`, and `src/features/registry.ts` lists those features. Removing one is its folder and, if it has a `shell.ts`, its line in the registry, then the few files outside the folder that name it. Before the first step, run `npm run check:deps` and keep its output: step 10 compares with it. To remove a feature:
+A feature that appears in the app shell (a link, a quota, a first step of the home) has a `shell.ts` in its folder of `src/features/`, and `src/features/registry.ts` lists those features. Removing one is its folder and, if it has a `shell.ts`, its line in the registry, then the few files outside the folder that name it. Before the first step, run `npm run check:deps`: it exits 0 and prints nothing (`knip.config.ts` keeps on purpose what no page calls yet), so what it lists in step 10 is what the removal left. To remove a feature:
 
 1. Delete its directory from `src/features/`. Its `shell.ts` goes with it.
 2. If it has a `shell.ts`, delete its import and its entry in `FEATURES`, in `src/features/registry.ts`.
@@ -212,7 +212,7 @@ A feature that appears in the app shell (a link, a quota, a first step of the ho
 7. Edit what its scenario below lists: the demo data, the test helpers and the shared tests, which the grep does not all find.
 8. Run `npx eslint . --fix`: it removes the imports that nothing uses any more. Then run `npm run lint` and `npm run check:types`, and remove by hand what they still list: a variable, a constant or a helper function that only the removed lines used, and each `await testDb.delete(<table>)` that empties a removed table, in the `beforeEach` of a test or in a case (`check:types` says `has no exported member '<table>'`). Run `npx eslint . --fix` once more.
 9. If the feature had a model, run `npm run db:generate`. It writes the migration that drops the feature's tables.
-10. Run `npm run check:deps` again and compare it with the run you kept. What it lists now and did not then is what the feature alone used, such as `stripe` after billing or `@aws-sdk/client-s3` after upload: remove it with `npm uninstall <name>`. A removal adds no other finding.
+10. Run `npm run check:deps` again. What it lists is what the feature alone used, such as `stripe` after billing or `@aws-sdk/client-s3` after upload: remove it with `npm uninstall <name>`. A removal adds no other finding. An export or a file that `knip.config.ts` keeps for the feature goes from that file too.
 
 The messages of a removed feature can stay in `src/locales/en.json` and `fr.json`: an unused key fails nothing. So can its event names (`payment.failed`, `project.created`...) in `src/features/events/types.ts` and `src/features/webhooks/available-events.ts`, which nothing emits any more. To take the events out, delete their names from both files, their messages (`activity.<group>` and `webhooks.event.<group>`) from both locale files, and the cases that name them in the tests (`grep -rn "<group>\." tests`).
 

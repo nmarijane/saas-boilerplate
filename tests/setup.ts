@@ -1,21 +1,22 @@
-import { readdirSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import type { PgliteDatabase } from "drizzle-orm/pglite";
 import { PGlite } from "@electric-sql/pglite";
-import { drizzle } from "drizzle-orm/pglite";
-import { beforeAll, vi } from "vitest";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { drizzle as drizzlePglite } from "drizzle-orm/pglite";
+import { Pool } from "pg";
+import { afterAll, beforeAll, vi } from "vitest";
 import * as schema from "@/models";
+import { onRealPostgres } from "./helpers/postgres";
+import { migrationStatements } from "./migrations";
 
-// Create in-memory PGlite instance (must be before vi.mock since mocks are hoisted)
-const client = new PGlite();
-export const testDb = drizzle(client, { schema });
-
-// Read all migration SQL files in order
-const migrationsDir = resolve(__dirname, "../migrations");
-const migrationSQL = readdirSync(migrationsDir)
-  .filter((f) => f.endsWith(".sql"))
-  .sort()
-  .map((f) => readFileSync(resolve(migrationsDir, f), "utf-8"))
-  .join("\n--> statement-breakpoint\n");
+// The tests run over PGlite, in memory, one database per test file. `npm run test:postgres` runs them over a real
+// PostgreSQL instead (DATABASE_URL, a database that the run empties before each test file): the tests that
+// need two connections at once (tests/helpers/postgres.ts) run there, and are skipped on PGlite, which has one.
+// Create the client before vi.mock, since mocks are hoisted.
+const client = onRealPostgres ? null : new PGlite();
+const pool = onRealPostgres ? new Pool({ connectionString: process.env.DATABASE_URL, max: 10 }) : null;
+// Both are Drizzle databases over the same schema; the tests use what they have in common (`$client` is the PGlite
+// one: the few tests that read it are about PGlite, and the types say so)
+export const testDb = (pool ? drizzle({ client: pool, schema }) : drizzlePglite({ client: client!, schema })) as PgliteDatabase<typeof schema> & { $client: PGlite };
 
 // Mock modules — vi.mock calls are hoisted by Vitest, so testDb is available
 vi.mock("@/shared/lib/DB", () => ({
@@ -66,14 +67,25 @@ vi.mock("@/features/events/emitter", () => ({
   emitEvent: vi.fn().mockResolvedValue(undefined),
 }));
 
-// Apply migration before all tests
-beforeAll(async () => {
-  const statements = migrationSQL
-    .split("--> statement-breakpoint")
-    .map((s) => s.trim())
-    .filter(Boolean);
+afterAll(async () => {
+  await pool?.end();
+});
 
-  for (const statement of statements) {
-    await client.exec(statement);
+// Apply the migrations before the tests of each file. PGlite is new for each file; a real PostgreSQL is one database
+// for the whole run (the files go one after the other), so each file empties it and migrates it again, to start from
+// what a new PGlite is.
+beforeAll(async () => {
+  if (pool) {
+    await pool.query("drop schema if exists public cascade");
+    await pool.query("create schema public");
+    for (const statement of migrationStatements) {
+      await pool.query(statement);
+    }
+
+    return;
+  }
+
+  for (const statement of migrationStatements) {
+    await client!.exec(statement);
   }
 });

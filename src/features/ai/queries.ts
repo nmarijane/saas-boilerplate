@@ -57,7 +57,8 @@ export async function getLatestMessages(conversationId: string, limit: number) {
  */
 export async function getCreditBalance(orgId: string, reader: Pick<typeof db, "select"> = db): Promise<number> {
   const result = await reader
-    .select({ total: sql<number>`COALESCE(SUM(${aiCreditLedger.amount}), 0)` })
+    // The SUM of an integer is a bigint: PostgreSQL sends it as a string, so it is read as a number here
+    .select({ total: sql<number>`COALESCE(SUM(${aiCreditLedger.amount}), 0)`.mapWith(Number) })
     .from(aiCreditLedger)
     .where(eq(aiCreditLedger.organizationId, orgId));
   return result[0]?.total ?? 0;
@@ -98,8 +99,8 @@ export async function getUsageStats(orgId: string, days = 30) {
   return db
     .select({
       date: sql<string>`DATE(${aiMessage.createdAt})`.as("date"),
-      messages: sql<number>`COUNT(*)`.as("messages"),
-      credits: sql<number>`COALESCE(SUM(${aiMessage.creditsUsed}), 0)`.as("credits"),
+      messages: sql<number>`COUNT(*)`.mapWith(Number).as("messages"),
+      credits: sql<number>`COALESCE(SUM(${aiMessage.creditsUsed}), 0)`.mapWith(Number).as("credits"),
     })
     .from(aiMessage)
     .innerJoin(aiConversation, eq(aiMessage.conversationId, aiConversation.id))

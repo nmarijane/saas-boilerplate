@@ -10,6 +10,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Every job reads the code and nothing else; the one that needs more says so (test: the coverage badge)
+permissions:
+  contents: read
+
 env:
   NODE_VERSION: "22"
   SKIP_ENV_VALIDATION: "true"
@@ -116,3 +120,117 @@ jobs:
       - run: npm ci
       - name: Check for known vulnerabilities
         run: npm audit --audit-level=high
+
+  hygiene:
+    name: Schema and Dead Code
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      # The migrations are consistent with each other (no two branches of the history, no snapshot missing)
+      - run: npm run check:schema
+      # Fails on anything unused: files, exports, dependencies (knip.config.ts says what is kept on purpose)
+      - run: npm run check:deps
+
+  stories:
+    name: Storybook Plays
+    # Playwright's browsers are built for this release; `ubuntu-latest` moves ahead of them
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - id: browsers
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - if: steps.browsers.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+      # The browser is cached, the system libraries it needs are not
+      - if: steps.browsers.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+      # The play function of every story, in Chromium, at the viewport the story asks for
+      - run: npm run test:stories
+
+  e2e:
+    name: End-to-End Tests
+    # Playwright's browsers are built for this release; `ubuntu-latest` moves ahead of them
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - id: browsers
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - if: steps.browsers.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+      - if: steps.browsers.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+      - uses: actions/cache@v5
+        with:
+          path: .next/cache
+          key: nextjs-e2e-${{ hashFiles('package-lock.json') }}-${{ hashFiles('**/*.ts', '**/*.tsx') }}
+          restore-keys: nextjs-e2e-${{ hashFiles('package-lock.json') }}-
+      # Builds the app, seeds a database of its own (PGlite, in .e2e) and serves it: no service, no secret
+      - run: npm run test:e2e
+        env:
+          # The server of the tests validates its environment, as a production server does
+          SKIP_ENV_VALIDATION: ""
+      - name: Upload the Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
+  postgres:
+    name: Tests on PostgreSQL
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # The database the run empties: a service that lives for this job only
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      # The integration tests over a real PostgreSQL instead of PGlite; the tests that need two connections at once
+      # (row locks) are skipped on PGlite and run here
+      - run: npm run test:postgres
