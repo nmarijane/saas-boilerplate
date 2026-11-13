@@ -139,7 +139,8 @@ jobs:
 
   stories:
     name: Storybook Plays
-    runs-on: ubuntu-latest
+    # Playwright's browsers are built for this release; `ubuntu-latest` moves ahead of them
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
@@ -163,7 +164,8 @@ jobs:
 
   e2e:
     name: End-to-End Tests
-    runs-on: ubuntu-latest
+    # Playwright's browsers are built for this release; `ubuntu-latest` moves ahead of them
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
