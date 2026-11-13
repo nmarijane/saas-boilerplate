@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { ThemeProvider } from "next-themes";
+import { headers } from "next/headers";
 import { Toaster } from "@/shared/components/ui/sonner";
 import { APP_NAME } from "@/shared/config/app";
 import { routing } from "@/shared/lib/i18n-routing";
@@ -30,6 +31,10 @@ export default async function LocaleLayout({
 }) {
   const { locale } = await params;
   const messages = await getMessages();
+  // The nonce of the request (src/proxy.ts): the script that sets the theme before the first paint is
+  // written by next-themes, not by Next, and must carry it. Reading it also makes every page of the app
+  // rendered per request, which a policy with a nonce needs (src/shared/lib/csp.ts).
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
 
   return (
     <html
@@ -43,6 +48,7 @@ export default async function LocaleLayout({
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
+          nonce={nonce}
         >
           <NextIntlClientProvider messages={messages}>
             {children}

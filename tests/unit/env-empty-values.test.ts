@@ -56,3 +56,73 @@ describe("the validated environment", () => {
     );
   });
 });
+
+describe("the secret of Better Auth in the environment", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+    vi.resetModules();
+  });
+
+  const silent = () => vi.spyOn(console, "error").mockImplementation(() => {});
+
+  // No default: a secret that the code supplies is one that everybody has
+  it("has no default: unset, it is undefined in development", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    const env = await loadEnv({ BETTER_AUTH_SECRET: "" });
+
+    expect(env.BETTER_AUTH_SECRET).toBeUndefined();
+  });
+
+  it("is required by a production server", async () => {
+    silent();
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("NEXT_PHASE", "");
+
+    await expect(loadEnv({ BETTER_AUTH_SECRET: "" })).rejects.toThrow("Invalid environment variables");
+  });
+
+  it("is not required to build: a build has none of the secrets", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("NEXT_PHASE", "phase-production-build");
+
+    await expect(loadEnv({ BETTER_AUTH_SECRET: "" })).resolves.toBeDefined();
+  });
+
+  it("is refused when it is too short to be one, wherever it runs", async () => {
+    silent();
+    vi.stubEnv("NODE_ENV", "development");
+
+    await expect(loadEnv({ BETTER_AUTH_SECRET: "your-secret-key-change-me" })).rejects.toThrow("Invalid environment variables");
+  });
+
+  it("is accepted at 32 characters", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("NEXT_PHASE", "");
+
+    const env = await loadEnv({ BETTER_AUTH_SECRET: "a".repeat(32) });
+    expect(env.BETTER_AUTH_SECRET).toBe("a".repeat(32));
+  });
+});
+
+describe("tRUST_PROXY in the environment", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+    vi.resetModules();
+  });
+
+  it.each(["vercel", "none", "1", "2"])("accepts %s", async (value) => {
+    await expect(loadEnv({ TRUST_PROXY: value })).resolves.toMatchObject({ TRUST_PROXY: value });
+  });
+
+  it.each(["true", "0", "yes", "cloudflare", "100"])("refuses %s: a typo must not leave the app trusting nobody, or somebody, by accident", async (value) => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await expect(loadEnv({ TRUST_PROXY: value })).rejects.toThrow("Invalid environment variables");
+  });
+
+  it("is unset when set to nothing", async () => {
+    expect((await loadEnv({ TRUST_PROXY: "" })).TRUST_PROXY).toBeUndefined();
+  });
+});

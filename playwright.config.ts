@@ -52,6 +52,10 @@ export default defineConfig({
       NEXT_PUBLIC_APP_URL: ORIGIN,
       // The seed and the server read the same clock: the dates of the demo are relative to it
       TZ: "UTC",
+      // One reverse proxy in front of the app, as in production: the address of the client is the one
+      // entry of X-Forwarded-For (Next fills it from the socket when a request has none), and a test that sets
+      // the header (tests/e2e/support.ts) is a client of its own
+      TRUST_PROXY: "1",
       // A production server refuses the default secret of Better Auth: this one is drawn for the run
       BETTER_AUTH_SECRET: AUTH_SECRET,
       // No assistant provider: a key in the environment of the machine would put a chat where the tests of

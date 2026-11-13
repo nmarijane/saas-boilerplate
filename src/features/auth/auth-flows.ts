@@ -69,10 +69,8 @@ export interface PasswordResetClient {
     email: string;
     redirectTo: string;
   }) => Promise<Answer>;
-  resetPassword: (input: {
-    newPassword: string;
-    token: string;
-  }) => Promise<Answer>;
+  /** Sets the new password. The token of the link is not an argument: the server has it (reset-token.ts). */
+  resetPassword: (input: { newPassword: string }) => Promise<Answer>;
 }
 
 /** The message the form tells when a flow did not go through: a key of the message files, from their root. */
@@ -209,23 +207,20 @@ export function requestPasswordResetFlow(
 }
 
 /**
- * Sets the new password, with the token of the link. It does not sign the
+ * Sets the new password; the server holds the token of the link. It does not sign the
  * person in: they sign in with the password they have just chosen. A password
  * that fails a rule of the strength meter (the one sign-up asks) is not sent:
  * the flow refuses it, with the message the form tells under the field.
  */
 export async function resetPasswordFlow(
   client: Pick<PasswordResetClient, "resetPassword">,
-  input: { newPassword: string; token: string },
+  input: { newPassword: string },
 ): Promise<FlowResult> {
   if (!isPasswordStrong(input.newPassword)) {
     return { ok: false, messageKey: "auth.passwordTooWeak" };
   }
 
   return attempt(() =>
-    client.resetPassword({
-      newPassword: input.newPassword,
-      token: input.token,
-    }),
+    client.resetPassword({ newPassword: input.newPassword }),
   );
 }

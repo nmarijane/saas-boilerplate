@@ -1,7 +1,7 @@
 "use client";
 
 import type { OrgRole } from "@/shared/types";
-import { EllipsisIcon, LogOutIcon, UserMinusIcon } from "lucide-react";
+import { CrownIcon, EllipsisIcon, LogOutIcon, UserMinusIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { unstable_rethrow } from "next/navigation";
 import { useId, useRef, useState } from "react";
@@ -9,6 +9,7 @@ import {
   changeRole,
   leaveWorkspace,
   removeMember,
+  transferOwnership,
 } from "@/features/auth/organization/actions";
 import {
   Avatar,
@@ -36,6 +37,7 @@ import {
   ASSIGNABLE_ROLES,
   canLeaveWorkspace,
   canManageMember,
+  canTransferOwnership,
   isAssignableRole,
 } from "../permissions";
 import { RoleBadge } from "./role-badge";
@@ -186,6 +188,8 @@ interface MemberRowProps {
   manageable: boolean;
   /** This row is the viewer's own, and offers them to leave (`canLeaveWorkspace`): the server refuses the owner again. */
   leavable: boolean;
+  /** The viewer owns the workspace and may hand it over to this member (`canTransferOwnership`): the server asks for the owner again. */
+  transferable: boolean;
   /** Some row of the list has a menu: this one, which has none, keeps the room of one, so that the roles line up. */
   reserveMenu: boolean;
   /** Puts the focus on the list: where it goes when the row it was on is gone. */
@@ -206,6 +210,7 @@ function MemberRow({
   member,
   manageable,
   leavable,
+  transferable,
   reserveMenu,
   focusList,
 }: MemberRowProps) {
@@ -213,6 +218,7 @@ function MemberRow({
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [removing, setRemoving] = useState(false);
+  const [handingOver, setHandingOver] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
   const changing = useRef(false);
   const removed = useRef(false);
@@ -260,6 +266,18 @@ function MemberRow({
 
     removed.current = true;
     toast.success(t("removed", { name }));
+    router.refresh();
+  };
+
+  // Handing the workspace over asks first: the viewer becomes an admin at once, and only an owner can undo it.
+  // Once it is done the page is read again, and the viewer's own row and menu tell what they now are.
+  const handOver = async () => {
+    const answer = await transferOwnership({ orgId, memberId: member.id });
+    if (!answer.success) {
+      throw new Error(answer.error);
+    }
+
+    toast.success(t("ownerChanged", { name }));
     router.refresh();
   };
 
@@ -320,6 +338,12 @@ function MemberRow({
                     ))}
                   </DropdownMenuRadioGroup>
                   <DropdownMenuSeparator />
+                  {transferable ? (
+                    <DropdownMenuItem className={itemStyles} onSelect={() => setHandingOver(true)}>
+                      <CrownIcon aria-hidden="true" />
+                      {t("makeOwner")}
+                    </DropdownMenuItem>
+                  ) : null}
                   <DropdownMenuItem
                     variant="destructive"
                     className={itemStyles}
@@ -340,6 +364,17 @@ function MemberRow({
                 onCloseAutoFocus={restoreFocus}
                 onConfirm={remove}
               />
+              {transferable ? (
+                <ConfirmDialog
+                  open={handingOver}
+                  onOpenChange={setHandingOver}
+                  title={t("makeOwnerTitle", { name })}
+                  description={t("makeOwnerDescription", { name })}
+                  confirmLabel={t("makeOwnerConfirm")}
+                  onCloseAutoFocus={restoreFocus}
+                  onConfirm={handOver}
+                />
+              ) : null}
             </>
           ) : leavable ? (
             <LeaveMenu orgId={orgId} name={name} />
@@ -380,19 +415,21 @@ export function MembersList({
     member,
     manageable: canManageMember(viewer, member),
     leavable: canLeaveWorkspace(viewer, member),
+    transferable: canTransferOwnership(viewer, member),
   }));
   const anyMenu = rows.some(({ manageable, leavable }) => manageable || leavable);
 
   return (
     <div ref={container} tabIndex={-1} className="focus:outline-hidden">
       <List aria-labelledby={labelledBy}>
-        {rows.map(({ member, manageable, leavable }) => (
+        {rows.map(({ member, manageable, leavable, transferable }) => (
           <MemberRow
             key={member.id}
             orgId={orgId}
             member={member}
             manageable={manageable}
             leavable={leavable}
+            transferable={transferable}
             reserveMenu={anyMenu}
             focusList={() => container.current?.focus()}
           />

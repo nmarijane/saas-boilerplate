@@ -7,12 +7,21 @@ import { z } from "zod";
 import { requireRole } from "@/features/auth/guards";
 import { emitEvent } from "@/features/events/emitter";
 import { webhookEndpoint } from "@/models/webhook";
+import { SECRET_PREFIXES } from "@/shared/config/app";
 import { db } from "@/shared/lib/DB";
 import { generateId } from "@/shared/utils/helpers";
+import { ENDPOINT_URL_MAX, isAllowedEndpointUrl } from "./endpoint-url";
 import { eventsSchema } from "./events-schema";
+import { isNonPublicAddressLiteral } from "./outbound";
 
 const createWebhookSchema = z.object({
-  url: z.string().url(),
+  // https only (http://localhost in development); where it leads is checked at each delivery (outbound.ts)
+  url: z
+    .string()
+    .max(ENDPOINT_URL_MAX)
+    .refine((value) => isAllowedEndpointUrl(value), { message: "The address must be an https URL" })
+    // An address written as numbers that is not public is refused here, without resolving anything (a name is checked at delivery)
+    .refine((value) => !isNonPublicAddressLiteral(value), { message: "The address must be public" }),
   events: eventsSchema,
 });
 
@@ -25,7 +34,7 @@ export async function createWebhookEndpointAction(
   const { session } = await requireRole(orgId, "admin");
   const parsed = createWebhookSchema.parse(input);
   const id = generateId();
-  const secret = `whsec_${randomBytes(24).toString("base64url")}`;
+  const secret = `${SECRET_PREFIXES.webhookSecret}${randomBytes(24).toString("base64url")}`;
 
   await db.insert(webhookEndpoint).values({
     id,

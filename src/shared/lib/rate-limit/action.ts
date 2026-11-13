@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { limitKeyOf } from "../client-ip";
 import { getRateLimiter } from "./index";
 import "server-only";
 
@@ -15,8 +16,7 @@ export async function enforceActionRateLimit(key: string, limit: number, windowS
   }
 }
 
-/** Client IP, resolved like the proxy: first x-forwarded-for entry. */
+/** Client IP, resolved like the proxy: from the header that `TRUST_PROXY` names, or "unknown" (one shared bucket). */
 export async function getClientIp() {
-  const requestHeaders = await headers();
-  return requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  return limitKeyOf(await headers());
 }

@@ -38,7 +38,9 @@ describe("webhook actions", () => {
 
       expect(result).toHaveProperty("id");
       expect(result).toHaveProperty("secret");
-      expect(result.secret).toMatch(/^whsec_/);
+      // The app's own prefix: Stripe's `whsec_` makes a secret of the app look like a Stripe one
+      expect(result.secret).toMatch(/^sb_whsec_/);
+      expect(result.secret).not.toMatch(/^whsec_/);
     });
 
     it("persists the endpoint in the database", async () => {
@@ -77,6 +79,28 @@ describe("webhook actions", () => {
           events: ["payment.succeeded"],
         }),
       ).rejects.toThrow();
+    });
+
+    // https only: a plain address would send the signed body in the clear, and `http://localhost` is for development
+    it.each(["http://example.com/hook", "http://localhost:3000/hook", "https://user:pass@example.com/hook", "ftp://example.com/hook", `https://example.com/${"a".repeat(2100)}`])(
+      "rejects %s, and writes nothing",
+      async (url) => {
+        await expect(createWebhookEndpointAction(ORG_ID, { url, events: ["payment.succeeded"] })).rejects.toThrow();
+        expect(await getWebhookEndpointsForOrg(ORG_ID)).toEqual([]);
+      },
+    );
+
+    // An address written as numbers is checked when the endpoint is made, with nothing resolved
+    it.each(["https://127.0.0.1/hook", "https://10.0.0.1/hook", "https://169.254.169.254/latest", "https://[::1]/hook", "https://2130706433/hook", "https://[fd00:ec2::254]/"])(
+      "rejects the non-public address literal %s, and writes nothing",
+      async (url) => {
+        await expect(createWebhookEndpointAction(ORG_ID, { url, events: ["payment.succeeded"] })).rejects.toThrow();
+        expect(await getWebhookEndpointsForOrg(ORG_ID)).toEqual([]);
+      },
+    );
+
+    it("accepts an address literal that is public", async () => {
+      await expect(createWebhookEndpointAction(ORG_ID, { url: "https://93.184.216.34/hook", events: ["payment.succeeded"] })).resolves.toHaveProperty("id");
     });
 
     it("rejects empty events array", async () => {

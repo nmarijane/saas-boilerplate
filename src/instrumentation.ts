@@ -2,6 +2,10 @@ import * as Sentry from "@sentry/nextjs";
 
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
+    // A production server that is configured wrongly does not start (production-config.ts)
+    const { refuseToStartMisconfigured } = await import("./shared/lib/production-config");
+    refuseToStartMisconfigured();
+
     await import("../sentry.server.config");
 
     // App logs, and with them the dev e-mail fallback that prints verification and reset links,

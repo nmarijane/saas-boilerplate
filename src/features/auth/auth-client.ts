@@ -1,6 +1,6 @@
 "use client";
 
-import { organizationClient, twoFactorClient } from "better-auth/client/plugins";
+import { organizationClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 
 // No base URL: the client calls the origin of the page it runs in, which is
@@ -8,10 +8,7 @@ import { createAuthClient } from "better-auth/react";
 // environment at build time) is the wrong origin on any other port, and on a
 // preview deployment.
 export const authClient = createAuthClient({
-  plugins: [
-    organizationClient(),
-    twoFactorClient(),
-  ],
+  plugins: [organizationClient()],
 });
 
 export const {

@@ -63,6 +63,14 @@ describe("the e2e:serve script", () => {
     expect(step?.env).toHaveProperty("DATABASE_URL", "");
   });
 
+  // A production server refuses the local database (production-config.ts): the tests serve a production build
+  // over a throwaway one, and say so by name, for the server only (a build and a seed are not production servers)
+  it("lets only the server run a production build on the local database", () => {
+    expect(start?.env.ALLOW_PGLITE_IN_PRODUCTION).toBe("1");
+    expect(build?.env).not.toHaveProperty("ALLOW_PGLITE_IN_PRODUCTION");
+    expect(seed?.env).not.toHaveProperty("ALLOW_PGLITE_IN_PRODUCTION");
+  });
+
   it("builds on a database in memory, and seeds and serves one directory under the folder it wipes", () => {
     expect(build?.env.PGLITE_DATA_DIR).toBe("memory://");
     expect(seed?.env.PGLITE_DATA_DIR).toBe(start?.env.PGLITE_DATA_DIR);
@@ -96,6 +104,14 @@ describe("the Playwright config of the end-to-end tests", () => {
 
     expect(secret).toMatch(/^[0-9a-f]{64}$/);
     expect(process.env.E2E_AUTH_SECRET).toBe(secret);
+  });
+
+  // The limit by address reads the client from X-Forwarded-For only when a proxy is trusted (client-ip.ts):
+  // the tests that give themselves an address (tests/e2e/support.ts) need that to be a client of their own
+  it("trusts one proxy, as a deployment behind one does, so that a test can be a client of its own", () => {
+    for (const { webServer } of [config, screenshots]) {
+      expect(webServer && !Array.isArray(webServer) ? webServer.env?.TRUST_PROXY : undefined).toBe("1");
+    }
   });
 
   it("never reuses a server: a leftover one would hold another database", () => {

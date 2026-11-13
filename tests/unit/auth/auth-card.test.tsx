@@ -74,8 +74,17 @@ type Locale = "en" | "fr";
 const ROOT = resolve(import.meta.dirname, "../../..");
 const CENTER = "src/app/[locale]/(auth)/(center)";
 
-/** The page that takes the new password, as the reset link of the email lands on it. */
-function resetPage(locale: Locale, query: Record<string, string | string[] | undefined>) {
+// Whether the proxy has kept a token in the cookie (the page learns that one is waiting, not what it is)
+const jar = vi.hoisted(() => ({ waiting: false }));
+vi.mock("next/headers", () => ({
+  cookies: async () => ({ has: (name: string) => name === "reset_token" && jar.waiting }),
+  headers: async () => new Headers(),
+}));
+
+/** The page that takes the new password, as the reset link of the email lands on it: a token is waiting unless it says not. */
+function resetPage(locale: Locale, query: Record<string, string | string[] | undefined>, waiting = true) {
+  jar.waiting = waiting;
+
   return ResetPasswordPage({
     params: Promise.resolve({ locale }),
     searchParams: Promise.resolve(query),
@@ -105,7 +114,7 @@ const PAGES: Record<string, (locale: Locale) => Promise<ReactNode> | ReactNode> 
   "sign-up": (locale) => signUpPage(locale),
   "forgot-password": () => <ForgotPasswordPage />,
   "verify-email": (locale) => verifyPage(locale),
-  "reset-password": (locale) => resetPage(locale, { token: "tok_123" }),
+  "reset-password": (locale) => resetPage(locale, {}),
   // An id that leads to no invitation: the card that says the link no longer works
   "accept-invitation": (locale) =>
     AcceptInvitationPage({ params: Promise.resolve({ locale, invitationId: "no-such-invitation" }) }),
@@ -113,8 +122,8 @@ const PAGES: Record<string, (locale: Locale) => Promise<ReactNode> | ReactNode> 
 
 /** The same page when the link of the email is dead: no token, or the error Better Auth redirects with. */
 const DEAD_LINKS: Record<string, (locale: Locale) => Promise<ReactNode>> = {
-  "reset-password, no token": (locale) => resetPage(locale, {}),
-  "reset-password, error": (locale) => resetPage(locale, { error: "INVALID_TOKEN" }),
+  "reset-password, no token": (locale) => resetPage(locale, {}, false),
+  "reset-password, error": (locale) => resetPage(locale, { error: "INVALID_TOKEN" }, false),
 };
 
 async function pageHtml(page: (locale: Locale) => Promise<ReactNode> | ReactNode, locale: Locale) {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireApiAuth } from "@/features/auth/api-auth";
 import { markAllRead, markAsRead } from "@/features/notifications/actions";
+import { listWindowOf } from "@/features/notifications/list-window";
 import { getNotifications, getUnreadCount } from "@/features/notifications/queries";
 
 export async function GET(request: Request) {
@@ -17,10 +18,10 @@ export async function GET(request: Request) {
       return NextResponse.json({ count });
     }
 
-    const limit = Number(searchParams.get("limit")) || 20;
-    const offset = Number(searchParams.get("offset")) || 0;
+    // The window is the client's word: clamped (list-window.ts)
+    const window = listWindowOf(searchParams.get("limit"), searchParams.get("offset"));
 
-    const notifications = await getNotifications(userId, { limit, offset });
+    const notifications = await getNotifications(userId, window);
     return NextResponse.json({ notifications });
   } catch {
     return NextResponse.json(

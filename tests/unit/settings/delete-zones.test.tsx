@@ -46,7 +46,7 @@ vi.mock("@/shared/components/ui/confirm-dialog", async (importOriginal) => ({
 type Locale = "en" | "fr";
 
 interface Asked {
-  onConfirm: () => Promise<void>;
+  onConfirm: (password?: string) => Promise<void>;
   [key: string]: unknown;
 }
 
@@ -71,12 +71,12 @@ function deferred<T>() {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.mocked(deleteAccount).mockResolvedValue({ success: true, data: undefined });
+  vi.mocked(deleteAccount).mockResolvedValue({ success: true, data: { deleted: true } });
   vi.mocked(deleteOrganization).mockResolvedValue({ success: true, data: { deleted: true } });
 });
 
 describe("the zone that deletes the account", () => {
-  const zone = (locale: Locale = "en") => render(<DeleteAccountZone />, locale);
+  const zone = (locale: Locale = "en", needsPassword = false) => render(<DeleteAccountZone needsPassword={needsPassword} />, locale);
 
   it("is one sentence on the danger background and the one destructive button", () => {
     const { html } = zone();
@@ -130,13 +130,13 @@ describe("the zone that deletes the account", () => {
   // The answer of the action carries this page rendered again for someone who is
   // no longer signed in: a navigation started at once replaces it before it shows.
   it("leaves the moment the server has answered, with nothing awaited in between", async () => {
-    const answer = deferred<{ success: true; data: undefined }>();
+    const answer = deferred<{ success: true; data: { deleted: true } }>();
     vi.mocked(deleteAccount).mockReturnValue(answer.promise);
     const { asked } = zone();
 
     const confirming = asked.onConfirm();
     expect(router.push).not.toHaveBeenCalled();
-    answer.resolve({ success: true, data: undefined });
+    answer.resolve({ success: true, data: { deleted: true } });
     // One turn of the microtask queue: the continuation after the answer has run
     await Promise.resolve();
 
@@ -149,6 +149,40 @@ describe("the zone that deletes the account", () => {
 
     await expect(zone().asked.onConfirm()).rejects.toThrow("Failed to delete account");
 
+    expect(router.push).not.toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  // An account with a password asks for it again, and the server checks it
+  it("asks for the password again when the account has one, and sends it", async () => {
+    const { asked } = zone("en", true);
+
+    expect(asked).toMatchObject({ passwordLabel: "Current password" });
+    await asked.onConfirm("correct horse");
+
+    expect(deleteAccount).toHaveBeenCalledExactlyOnceWith({ password: "correct horse" });
+  });
+
+  it("asks for no password when the account has none (it signs in through a provider), and sends none", async () => {
+    const { asked } = zone("en", false);
+
+    expect(asked.passwordLabel).toBeUndefined();
+    await asked.onConfirm("");
+
+    expect(deleteAccount).toHaveBeenCalledExactlyOnceWith(undefined);
+  });
+
+  it.each([
+    [{ deleted: false, reason: "wrong-password" }, "That password is not right."],
+    [{ deleted: false, reason: "recent-sign-in-required" }, "For your security, sign out and sign in again, then delete your account."],
+    [{ deleted: false, reason: "workspace-has-members", workspace: "Acme" }, "You own Acme, which has other members. Hand it over first: on its Team page, open the menu of a member and choose Make owner. Or remove the other members."],
+    [{ deleted: false, reason: "workspace-kept", messageKey: "billing.deleteWorkspaceFailed" }, "A workspace you own could not be cleaned up, so nothing was deleted. Try again, or delete it from its settings."],
+  ] as const)("keeps the dialog open and says why when the server keeps the account: %j", async (outcome, message) => {
+    vi.mocked(deleteAccount).mockResolvedValue({ success: true, data: outcome });
+
+    await expect(zone().asked.onConfirm("x")).rejects.toThrow(outcome.reason);
+
+    expect(toast.error).toHaveBeenCalledExactlyOnceWith(message);
     expect(router.push).not.toHaveBeenCalled();
     expect(toast.success).not.toHaveBeenCalled();
   });

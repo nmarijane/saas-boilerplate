@@ -195,6 +195,48 @@ describe("scrubbing a request body on the server", () => {
     });
   });
 
+  // A server action's body is the list of its arguments: the reset form's and the account deletion's, as they are sent
+  it.each([
+    ["the reset form", [{ newPassword: "hunter2-new" }], "hunter2-new"],
+    ["the reset form, as the JSON it is sent in", '[{"newPassword":"hunter2-new"}]', "hunter2-new"],
+    ["the account deletion", [{ password: "hunter2-old" }], "hunter2-old"],
+    ["the account deletion, as JSON", '[{"password":"hunter2-old"}]', "hunter2-old"],
+    ["arguments nested in a list", [[{ currentPassword: "hunter2-old" }]], "hunter2-old"],
+    ["an object nested in an argument", [{ input: { password: "p2-nested" } }], "p2-nested"],
+    ["the same, as JSON", '[{"input":{"password":"p2-nested"}}]', "p2-nested"],
+    ["objects nested deeper", { a: { b: [{ c: { newPassword: "p2-deep" } }] } }, "p2-deep"],
+  ])("removes the password from the body of %s", (_, data, secret) => {
+    const sent = scrubServerEvent({ message: "boom", request: { data } });
+
+    expect(JSON.stringify(sent)).not.toContain(secret);
+  });
+
+  it("keeps the other arguments of an action", () => {
+    const sent = scrubServerEvent({ request: { data: [{ name: "Camille", password: "p" }, "plain"] } }) as { request: { data: unknown } };
+
+    expect(sent.request.data).toEqual([{ name: "Camille" }, "plain"]);
+  });
+
+  // The SDK attaches the cookies of the request to every event: the session's, and the token of a reset link while it waits
+  it("drops the cookies of the request, parsed and as a header, whatever the case of the header", () => {
+    const event = {
+      message: "boom",
+      request: {
+        url: "/en/reset-password",
+        cookies: { reset_token: "RESETTOKEN123", session: "s" },
+        headers: { cookie: "reset_token=RESETTOKEN123; session=s", Cookie: "reset_token=RESETTOKEN123", "user-agent": "test" },
+      },
+    };
+
+    const sent = scrubServerEvent(event) as { request: { headers: Record<string, string>; cookies?: unknown } };
+
+    expect(JSON.stringify(sent)).not.toContain("RESETTOKEN123");
+    expect(sent.request.cookies).toBeUndefined();
+    expect(sent.request.headers).toEqual({ "user-agent": "test" });
+    // What it was given is not changed
+    expect(event.request.cookies.reset_token).toBe("RESETTOKEN123");
+  });
+
   it("does not change what it was given", () => {
     const event = { request: { data: { ...body } } };
 
@@ -226,11 +268,22 @@ describe("the hooks the reporter is started with", () => {
       vi.stubEnv(name, value);
     }
     const init = vi.fn();
-    vi.doMock("@sentry/nextjs", () => ({ init, captureRouterTransitionStart: vi.fn() }));
+    vi.doMock("@sentry/nextjs", () => ({
+      init,
+      captureRouterTransitionStart: vi.fn(),
+      httpIntegration: (options: unknown) => ({ name: "Http", options }),
+    }));
     await import(/* @vite-ignore */ path);
 
     return init.mock.calls[0]?.[0] as Record<string, unknown> | undefined;
   }
+
+  // The SDK keeps up to 10 kB of the body of an incoming request and attaches it to events, whatever sendDefaultPii says
+  it("starts the server with no incoming request body, and no span for each incoming request", async () => {
+    const options = await startedWith("../../sentry.server.config", { SENTRY_DSN: "https://key@example.ingest.sentry.io/1" });
+
+    expect(options?.integrations).toEqual([{ name: "Http", options: { disableIncomingRequestSpans: true, maxIncomingRequestBodySize: "none" } }]);
+  });
 
   it.each(CONFIGS)("scrub the events, the transactions and the breadcrumbs sent from %s", async (_, path, env) => {
     const options = await startedWith(path, env);

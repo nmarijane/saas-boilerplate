@@ -1,11 +1,25 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 import { DEV_APP_URL } from "@/shared/config/app";
+import { TRUST_PROXY_PATTERN } from "@/shared/lib/client-ip";
+
+/** Whether this is a production server: not the build, which has none of the secrets (production-config.ts). */
+const servesProduction = () =>
+  process.env.NODE_ENV === "production" && process.env.NEXT_PHASE !== "phase-production-build";
 
 export const env = createEnv({
   server: {
     DATABASE_URL: z.string().url().optional(),
-    BETTER_AUTH_SECRET: z.string().default("dev-secret-change-in-production"),
+    // No default: a secret that the code supplies is a secret that everyone has. Required in
+    // production (Better Auth refuses to start without it as well), optional in development,
+    // where Better Auth uses a throwaway one. Generate it with `openssl rand -hex 32`.
+    BETTER_AUTH_SECRET: z
+      .string()
+      .min(32, "BETTER_AUTH_SECRET must be at least 32 characters (openssl rand -hex 32)")
+      .optional()
+      .refine((secret) => secret !== undefined || !servesProduction(), {
+        message: "BETTER_AUTH_SECRET is required in production (openssl rand -hex 32)",
+      }),
     BETTER_AUTH_URL: z.string().url().default(DEV_APP_URL),
     STRIPE_SECRET_KEY: z.string().default(""),
     STRIPE_WEBHOOK_SECRET: z.string().default(""),
@@ -20,6 +34,10 @@ export const env = createEnv({
     S3_REGION: z.string().optional(),
     S3_ACCESS_KEY: z.string().optional(),
     S3_SECRET_KEY: z.string().optional(),
+    // Which header the address of the client is read from (src/shared/lib/client-ip.ts)
+    TRUST_PROXY: z.string().regex(TRUST_PROXY_PATTERN, "TRUST_PROXY must be `vercel`, `none` or the number of reverse proxies in front of the app").optional(),
+    // Lets a production server run on the local database (production-config.ts): the e2e tests only
+    ALLOW_PGLITE_IN_PRODUCTION: z.literal("1").optional(),
     // Rate limiting
     RATE_LIMIT_ADAPTER: z.enum(["memory", "redis", "upstash"]).default("memory"),
     REDIS_URL: z.string().url().optional(),
@@ -68,6 +86,8 @@ export const env = createEnv({
     S3_ACCESS_KEY: process.env.S3_ACCESS_KEY,
     S3_SECRET_KEY: process.env.S3_SECRET_KEY,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+    TRUST_PROXY: process.env.TRUST_PROXY,
+    ALLOW_PGLITE_IN_PRODUCTION: process.env.ALLOW_PGLITE_IN_PRODUCTION,
     RATE_LIMIT_ADAPTER: process.env.RATE_LIMIT_ADAPTER,
     REDIS_URL: process.env.REDIS_URL,
     UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,

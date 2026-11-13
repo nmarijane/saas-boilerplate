@@ -1,6 +1,7 @@
 import type { EventName } from "@/features/events/types";
 import { unstable_rethrow } from "next/navigation";
 import { reportHandledError } from "@/shared/utils/report-error";
+import { isAllowedEndpointUrl } from "./endpoint-url";
 
 // What the webhook endpoints do with the answer of the server, as plain
 // functions: the server and the page are given, so that a test calls them with a
@@ -22,17 +23,13 @@ export type ToggleEndpoint = (
 ) => Promise<void>;
 
 /**
- * Whether a text is the address of an endpoint: a web address, with its scheme,
- * as the events are delivered by a request over the web. Any other scheme is
- * not one a request can be sent to.
+ * Whether a text is the address of an endpoint: an `https:` address, with its
+ * scheme, as the events are delivered by a request over the web (`http://localhost`
+ * too, in development). The server checks it again, and checks where it leads
+ * when an event is delivered (`outbound.ts`).
  */
 export function isEndpointUrl(text: string): boolean {
-  try {
-    const { protocol } = new URL(text);
-    return protocol === "https:" || protocol === "http:";
-  } catch {
-    return false;
-  }
+  return isAllowedEndpointUrl(text);
 }
 
 interface CreateEndpointDeps {

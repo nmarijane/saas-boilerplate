@@ -16,9 +16,9 @@ function addressOf(testId: string): string {
  * `test`, with a client address of its own for each test. The server of these tests is a
  * production one, and Better Auth limits signing in to three attempts in ten seconds for one
  * address (a fourth is refused with a 429, which the form tells to wait): the tests run side
- * by side from one machine, and sign in more often than that. The server takes the address
- * from `X-Forwarded-For`, as it does behind a proxy, so a test that sets it is another
- * client, with a limit of its own.
+ * by side from one machine, and sign in more often than that. The server trusts one proxy
+ * (`TRUST_PROXY=1` in playwright.config.ts) and takes the address from `X-Forwarded-For`, as
+ * it does behind one, so a test that sets it is another client, with a limit of its own.
  */
 export const test = base.extend({
   context: async ({ context }, use, testInfo) => {

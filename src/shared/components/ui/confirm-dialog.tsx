@@ -16,6 +16,7 @@ import {
 } from "@/shared/components/ui/dialog";
 import { Field } from "@/shared/components/ui/field";
 import { Input } from "@/shared/components/ui/input";
+import { PasswordInput } from "@/shared/components/ui/password-input";
 import { toast } from "@/shared/components/ui/sonner";
 import { reportHandledError } from "@/shared/utils/report-error";
 
@@ -109,12 +110,19 @@ interface ConfirmDialogProps {
    */
   requireText?: string;
   /**
+   * Asks for the user's password before they can confirm, under this label ("Current
+   * password"): for an act that a stolen session must not be able to do. The button
+   * stays disabled until something is typed, and `onConfirm` is given it; the server
+   * is the one that checks it.
+   */
+  passwordLabel?: string;
+  /**
    * Runs when the user confirms. While a returned promise is pending the
    * button shows it and the dialog cannot be dismissed; the dialog closes once
    * the promise is fulfilled. If it rejects, the dialog stays open and an error
    * toast says so: handle a failure you can explain yourself before it gets there.
    */
-  onConfirm: () => void | Promise<void>;
+  onConfirm: (password: string) => void | Promise<void>;
   /**
    * Called when the dialog has closed, to say where the focus goes. Radix gives
    * it back to the `Trigger` of a dialog, and this one has none (it is
@@ -134,6 +142,7 @@ function ConfirmDialog({
   cancelLabel,
   tone = "neutral",
   requireText,
+  passwordLabel,
   onConfirm,
   onCloseAutoFocus,
 }: ConfirmDialogProps) {
@@ -157,9 +166,10 @@ function ConfirmDialog({
           cancelLabel={cancelLabel ?? t("cancel")}
           tone={tone}
           requireText={requireText}
+          passwordLabel={passwordLabel}
           pending={pending}
-          onConfirm={() =>
-            void confirmThenClose(onConfirm, {
+          onConfirm={(password) =>
+            void confirmThenClose(() => onConfirm(password), {
               setPending,
               close: () => onOpenChange(false),
               errorMessage: t("error"),
@@ -173,11 +183,11 @@ function ConfirmDialog({
 
 interface ConfirmContentProps extends Pick<
   ConfirmDialogProps,
-  "title" | "description" | "confirmLabel" | "tone" | "requireText"
+  "title" | "description" | "confirmLabel" | "tone" | "requireText" | "passwordLabel"
 > {
   cancelLabel: string;
   pending: boolean;
-  onConfirm: () => void;
+  onConfirm: (password: string) => void;
 }
 
 // What is in the dialog. What the user has typed lives here, with the content,
@@ -192,12 +202,15 @@ function ConfirmContent({
   cancelLabel,
   tone,
   requireText,
+  passwordLabel,
   pending,
   onConfirm,
 }: ConfirmContentProps) {
   const t = useTranslations("common");
   const fieldId = React.useId();
+  const passwordId = React.useId();
   const [typed, setTyped] = React.useState("");
+  const [password, setPassword] = React.useState("");
 
   return (
     <>
@@ -223,6 +236,16 @@ function ConfirmContent({
           />
         </Field>
       ) : null}
+      {passwordLabel ? (
+        <Field label={passwordLabel} htmlFor={passwordId}>
+          <PasswordInput
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            readOnly={pending}
+            autoComplete="current-password"
+          />
+        </Field>
+      ) : null}
       <DialogFooter>
         <DialogClose asChild>
           <Button variant="outline" disabled={pending}>
@@ -232,8 +255,8 @@ function ConfirmContent({
         <Button
           variant={confirmVariant(tone)}
           loading={pending}
-          disabled={!confirmationReady(typed, requireText)}
-          onClick={onConfirm}
+          disabled={!confirmationReady(typed, requireText) || (passwordLabel !== undefined && password === "")}
+          onClick={() => onConfirm(password)}
         >
           {confirmLabel}
         </Button>

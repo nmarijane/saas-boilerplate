@@ -1,5 +1,4 @@
 import { createAuthClient } from "better-auth/client";
-import { symmetricDecrypt } from "better-auth/crypto";
 import { and, eq, like } from "drizzle-orm";
 import { afterAll, describe, expect, it, vi } from "vitest";
 import { auth } from "@/features/auth/auth";
@@ -7,7 +6,8 @@ import { signInFlow, socialSignInFlow } from "@/features/auth/auth-flows";
 import { createWorkspace } from "@/features/auth/organization/create-workspace";
 import { verifiedAddress } from "@/features/auth/verification";
 import { changePasswordFlow } from "@/features/settings/account-flows";
-import { invitation, organization, organizationMember, session, twoFactor, user } from "@/models";
+import { invitation, organization, organizationMember, session, user } from "@/models";
+import { MAX_OWNED_WORKSPACES } from "@/shared/config/app";
 import { testDb } from "../setup";
 
 /**
@@ -172,6 +172,27 @@ describe("better auth against the drizzle schema", () => {
     expect(listed.members.map((member) => [member.userId, member.role])).toEqual([[owner.id, "owner"]]);
   });
 
+  // Each workspace is rows, a plan and a place for files: an account that makes them without end fills the database
+  it("lets a person own a limited number of workspaces, and counts only the ones they own", async () => {
+    const owner = await registerUser("hoarder@example.com");
+    const other = await registerUser("not-a-hoarder@example.com");
+    const make = (headers: Headers, slug: string) => auth.api.createOrganization({ headers, body: { name: slug, slug } });
+
+    // Joined, not owned: does not count
+    const theirs = await make(other.headers, "theirs");
+    await testDb.insert(organizationMember).values({ id: "joined-1", organizationId: theirs.id, userId: owner.id, role: "member", createdAt: new Date() });
+
+    for (let made = 0; made < MAX_OWNED_WORKSPACES; made += 1) {
+      await make(owner.headers, `hoard-${made}`);
+    }
+    await expect(make(owner.headers, "one-too-many")).rejects.toMatchObject({ status: "FORBIDDEN" });
+
+    const owned = await testDb.select().from(organizationMember).where(and(eq(organizationMember.userId, owner.id), eq(organizationMember.role, "owner")));
+    expect(owned).toHaveLength(MAX_OWNED_WORKSPACES);
+    // The limit is the person's, not the app's
+    await expect(make(other.headers, "still-fine")).resolves.toMatchObject({ slug: "still-fine" });
+  });
+
   it("invites a member, who then joins the organization", async () => {
     const inviter = await registerUser("inviter@example.com");
     const created = await auth.api.createOrganization({
@@ -235,30 +256,17 @@ describe("better auth against the drizzle schema", () => {
     expect(full?.members.map((member) => member.userId)).toEqual([person.id]);
   });
 
-  it("enables two-factor authentication", async () => {
+  // The plugin has no page to ask for the code at sign-in yet, and a person who turned it on would be locked
+  // out of nothing and protected by nothing: it is off (docs/SETUP.md, "Two-factor authentication"), and
+  // its table and the user's column stay for the project that turns it on again
+  it("has no two-factor routes: the plugin is off", async () => {
     const person = await registerUser("two-factor@example.com");
 
-    const enabled = await auth.api.enableTwoFactor({
-      headers: person.headers,
-      body: { password: PASSWORD },
-    });
-    expect(enabled).toMatchObject({ method: "totp", backupCodes: expect.arrayContaining([expect.any(String)]) });
-
-    const [pending] = await testDb.select().from(twoFactor).where(eq(twoFactor.userId, person.id));
-    expect(pending.verified).toBe(false);
-    expect(pending.secret).not.toBe("");
-    expect(pending.backupCodes).not.toBe("");
-
-    // Prove the authenticator app is set up: answer with a code from the stored secret.
-    const context = await auth.$context;
-    const secret = await symmetricDecrypt({ key: context.secretConfig, data: pending.secret });
-    const { code } = await auth.api.generateTOTP({ body: { secret } });
-    await auth.api.verifyTOTP({ headers: person.headers, body: { code } });
-
-    const [confirmed] = await testDb.select().from(twoFactor).where(eq(twoFactor.userId, person.id));
-    expect(confirmed.verified).toBe(true);
-    const [owner] = await testDb.select().from(user).where(eq(user.id, person.id));
-    expect(owner.twoFactorEnabled).toBe(true);
+    expect(Object.keys(auth.api).filter((name) => /twoFactor|TOTP|backupCode/i.test(name))).toEqual([]);
+    for (const path of ["/two-factor/enable", "/two-factor/verify-totp", "/two-factor/generate-backup-codes"]) {
+      expect((await http("POST", path, { body: { password: PASSWORD }, cookie: person.cookie })).status, path).toBe(404);
+    }
+    expect((auth.options.plugins ?? []).map((plugin) => plugin.id)).toEqual(["organization"]);
   });
 
   it("never takes isAdmin from the request: requireAdmin trusts it", async () => {
@@ -275,6 +283,28 @@ describe("better auth against the drizzle schema", () => {
     expect(updated).toMatchObject({ isAdmin: false, onboardingCompleted: true });
     const current = await auth.api.getSession({ headers: person.headers });
     expect(current?.user).toMatchObject({ isAdmin: false });
+  });
+
+  // The picture is an https address wherever it comes from: the browser of everyone who sees the person fetches it
+  it("takes a picture that is an https address, and refuses any other over HTTP", async () => {
+    const person = await registerUser("picture@example.com");
+
+    expect((await http("POST", "/update-user", { body: { image: "https://cdn.example.com/me.png" }, cookie: person.cookie })).status).toBe(200);
+    for (const image of ["http://cdn.example.com/me.png", "javascript:alert(1)", "data:image/png;base64,AAAA", "https://user:pass@cdn.example.com/me.png"]) {
+      expect((await http("POST", "/update-user", { body: { image }, cookie: person.cookie })).status, image).toBe(400);
+    }
+    // Taking the picture away is not refused
+    expect((await http("POST", "/update-user", { body: { image: "" }, cookie: person.cookie })).status).toBe(200);
+  });
+
+  it("signs a person up without a picture that is not an https address, whatever the request says", async () => {
+    const person = await registerUser("sneaky-picture@example.com", { image: "javascript:alert(1)" });
+    const kept = await registerUser("good-picture@example.com", { image: "https://cdn.example.com/me.png" });
+
+    const [refused] = await testDb.select().from(user).where(eq(user.id, person.id));
+    const [accepted] = await testDb.select().from(user).where(eq(user.id, kept.id));
+    expect(refused?.image).toBeNull();
+    expect(accepted?.image).toBe("https://cdn.example.com/me.png");
   });
 
   it("keeps organization writes behind the server actions", async () => {

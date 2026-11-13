@@ -169,6 +169,8 @@ describe("the database of the app (DB.ts)", () => {
     vi.stubEnv("DATABASE_URL", "");
     vi.stubEnv("PGLITE_DATA_DIR", dataDir);
     vi.stubEnv("NODE_ENV", "production");
+    // A production server refuses the local database unless it is asked for by name (production-config.ts): the e2e server is one
+    vi.stubEnv("ALLOW_PGLITE_IN_PRODUCTION", "1");
 
     await query(await loadCopy());
     expect(made.pglites).toHaveLength(1);

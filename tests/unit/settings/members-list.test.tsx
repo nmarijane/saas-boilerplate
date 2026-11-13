@@ -1,6 +1,6 @@
 import type { ComponentProps } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { changeRole, leaveWorkspace, removeMember } from "@/features/auth/organization/actions";
+import { changeRole, leaveWorkspace, removeMember, transferOwnership } from "@/features/auth/organization/actions";
 import { MembersList, removeMemberInput } from "@/features/auth/organization/components/members-list";
 import { RoleBadge } from "@/features/auth/organization/components/role-badge";
 import { toast } from "@/shared/components/ui/sonner";
@@ -37,6 +37,7 @@ vi.mock("@/features/auth/organization/actions", () => ({
   changeRole: vi.fn(),
   leaveWorkspace: vi.fn(),
   removeMember: vi.fn(),
+  transferOwnership: vi.fn(),
 }));
 vi.mock("@/shared/components/ui/confirm-dialog", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/shared/components/ui/confirm-dialog")>()),
@@ -103,6 +104,7 @@ beforeEach(() => {
   vi.mocked(changeRole).mockResolvedValue({ success: true, data: undefined });
   vi.mocked(removeMember).mockResolvedValue({ success: true, data: undefined });
   vi.mocked(leaveWorkspace).mockResolvedValue({ success: true, data: undefined });
+  vi.mocked(transferOwnership).mockResolvedValue({ success: true, data: undefined });
 });
 
 afterEach(() => {
@@ -239,7 +241,14 @@ describe("the menu of a member", () => {
     // One menu for each of Adam, Mia and Ada, in the order of the list
     expect(groups.map(({ value }) => value)).toEqual(["admin", "member", "admin"]);
     expect(groups.map(({ items }) => items)).toEqual(Array.from({ length: 3 }, () => ["admin", "member"]));
-    expect(rows.map(({ label }) => label)).toEqual(Array.from({ length: 3 }, () => "Remove from workspace"));
+    // The owner may also hand the workspace over: that row comes before the one that removes
+    expect(rows.map(({ label }) => label)).toEqual(Array.from({ length: 3 }, () => ["Make owner", "Remove from workspace"]).flat());
+  });
+
+  it("offers no way to hand over to an admin, who is not the owner", () => {
+    render({ viewer: AS_ADMIN });
+
+    expect(rows.map(({ label }) => label)).not.toContain("Make owner");
   });
 
   it("changes the role by the id of the membership, then reads the page again", async () => {
@@ -377,6 +386,70 @@ describe("removing a member", () => {
       title: "Retirer Mia Martin ?",
       confirmLabel: "Retirer",
     });
+  });
+});
+
+describe("handing the workspace over", () => {
+  const handOverFor = (name: string) => {
+    const call = confirm.calls.find(({ title }) => typeof title === "string" && title.includes(name) && title.includes("owner"));
+    expect(call, `a hand-over confirmation about ${name}`).toBeDefined();
+
+    return call as { onConfirm: () => Promise<void>; [key: string]: unknown };
+  };
+
+  it("asks first, naming the person, and says what each of the two becomes", () => {
+    render({ viewer: AS_OWNER });
+
+    expect(handOverFor("Mia Martin")).toMatchObject({
+      title: "Make Mia Martin the owner?",
+      description: expect.stringContaining("you become an admin"),
+      confirmLabel: "Make owner",
+    });
+    // A hand-over is not undone by the person who made it, but it is not a deletion: no danger tone
+    expect(handOverFor("Mia Martin").tone).toBeUndefined();
+  });
+
+  it("asks once for each member the owner can hand over to, and for nobody else", () => {
+    render({ viewer: AS_OWNER });
+
+    expect(confirm.calls.map(({ title }) => String(title)).filter((title) => title.endsWith("the owner?"))).toEqual([
+      "Make Adam Dupont the owner?",
+      "Make Mia Martin the owner?",
+      "Make Ada Lopez the owner?",
+    ]);
+  });
+
+  it.each([["an admin", AS_ADMIN], ["a member", AS_MEMBER]])("asks nothing of %s", (_, viewer) => {
+    render({ viewer });
+
+    expect(confirm.calls.map(({ title }) => String(title)).filter((title) => title.endsWith("the owner?"))).toEqual([]);
+  });
+
+  it("hands over by the id of the membership, says who is the owner now and reads the page again", async () => {
+    render({ viewer: AS_OWNER });
+
+    await handOverFor("Mia Martin").onConfirm();
+
+    expect(transferOwnership).toHaveBeenCalledExactlyOnceWith({ orgId: ORG, memberId: "m3" });
+    expect(toast.success).toHaveBeenCalledExactlyOnceWith("Mia Martin is now the owner.");
+    expect(router.refresh).toHaveBeenCalledOnce();
+  });
+
+  it("rejects when the server refuses, so that the dialog stays open and nothing looks changed", async () => {
+    vi.mocked(transferOwnership).mockResolvedValue({ success: false, error: "Failed to hand the workspace over" });
+    render({ viewer: AS_OWNER });
+
+    await expect(handOverFor("Mia Martin").onConfirm()).rejects.toThrow("Failed to hand the workspace over");
+
+    expect(router.refresh).not.toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  it("asks in French", () => {
+    render({ viewer: AS_OWNER }, "fr");
+
+    expect(confirm.calls.map(({ title }) => title)).toContain("Nommer Mia Martin propriétaire ?");
+    expect(rows.map(({ label }) => label)).toContain("Nommer propriétaire");
   });
 });
 

@@ -44,7 +44,7 @@ function fieldsOf(html: string): string[] {
   return startTags(html, "input").filter((tag) => attribute(tag, "data-slot") === "input");
 }
 
-const SECRET_SIGNING = "whsec_Q9n3-EXAMPLE-0000-0000-0000";
+const SECRET_SIGNING = "sb_whsec_Q9n3-EXAMPLE-0000-0000-0000";
 
 describe("adding an endpoint, once the person has asked for it", () => {
   const create = vi.fn();
@@ -132,7 +132,6 @@ describe("the address of an endpoint", () => {
   it.each([
     "https://example.com",
     "https://example.com/hooks/billing?team=a#top",
-    "http://localhost:3000/hook",
     "HTTPS://EXAMPLE.COM/Hook",
   ])("is %s", (url) => {
     expect(isEndpointUrl(url)).toBe(true);
@@ -143,6 +142,9 @@ describe("the address of an endpoint", () => {
     "example.com",
     "//example.com",
     "ftp://example.com",
+    "http://example.com/hook",
+    "http://localhost:3000/hook",
+    "https://user:secret@example.com/hook",
     "javascript:alert(1)",
     "data:text/plain,hi",
     "mailto:mia@example.com",
@@ -242,7 +244,7 @@ describe("the dialog that adds an endpoint", () => {
     const [url = ""] = fieldsOf(html);
 
     expect(html.match(/role="alert"/g)).toHaveLength(1);
-    expect(textOf(html)).toContain("Enter a full address, such as https://example.com/webhooks.");
+    expect(textOf(html)).toContain("Enter a full https address, such as https://example.com/webhooks.");
     expect(attribute(url, "aria-invalid")).toBe("true");
     expect(attribute(url, "aria-describedby")).toBe(`${attribute(url, "id")}-error`);
     expect(attribute(url, "value")).toBe("example.com");
@@ -277,7 +279,7 @@ describe("the dialog that adds an endpoint", () => {
 
     expect(textOf(html)).toContain("Ajouter un endpoint");
     expect(textOf(html)).toContain("URL de l'endpoint");
-    expect(textOf(html)).toContain("Saisissez une adresse complète, comme https://example.com/webhooks.");
+    expect(textOf(html)).toContain("Saisissez une adresse https complète, comme https://example.com/webhooks.");
     expect(labels.slice(0, 3)).toEqual(["Membre invité", "Membre retiré", "Rôle d'un membre modifié"]);
     expect(labels.slice(-3)).toEqual(["Projet créé", "Projet modifié", "Projet supprimé"]);
   });

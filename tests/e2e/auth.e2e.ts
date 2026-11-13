@@ -184,39 +184,61 @@ test.describe("the page of a verification link", () => {
   });
 });
 
+const TOKEN = "a-token-that-is-nobodys";
+
+// The proxy takes the token out of the address before the page is drawn and keeps it in an HttpOnly cookie:
+// the page, its payload and the history of the router never hold it, and no script can read it. The form hands
+// the new password to a server action, which reads the cookie.
 test.describe("the page of a reset link", () => {
-  test("takes the token out of the address and keeps it for the form", async ({ page }) => {
-    await page.goto("/en/reset-password?token=a-token-that-is-nobodys");
+  test("takes the token out of the address, and keeps it where no script reads it", async ({ page, context }) => {
+    await page.goto(`/en/reset-password?token=${TOKEN}`);
     await page.waitForLoadState("networkidle");
 
     await expect(page).not.toHaveURL(/token=/);
     expect(page.url()).toMatch(/\/en\/reset-password$/);
+    // The page asks for a new password, and holds no token: not in its markup, not in what a script can read
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Reset Password");
+    expect(await page.content()).not.toContain(TOKEN);
+    expect(await page.evaluate(() => document.cookie)).not.toContain("reset_token");
+    const [cookie] = (await context.cookies()).filter(({ name }) => name === "reset_token");
+    // Only the reset page of the language gets it, and it is not Secure here: the server of these tests is served over http (BETTER_AUTH_URL)
+    expect(cookie).toMatchObject({ value: TOKEN, httpOnly: true, sameSite: "Lax", path: "/en/reset-password", secure: false });
+  });
 
-    // The token is still there to be sent: the server refuses it, and the page says so
+  test("sends the password, which the server holds against the token: it refuses one that is nobody's, and forgets it", async ({ page, context }) => {
+    await page.goto(`/en/reset-password?token=${TOKEN}`);
+    await page.waitForLoadState("networkidle");
+
     await page.getByLabel("New password", { exact: false }).first().fill(STRONG);
     await page.getByRole("button", { name: "Reset Password", exact: true }).click();
 
     await expect(pageAlert(page)).toContainText("This link has expired or was already used.");
+    expect((await context.cookies()).filter(({ name }) => name === "reset_token")).toEqual([]);
+    // Without a token waiting, the page says the link is dead
+    await page.reload();
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("This link no longer works");
   });
 });
 
-// The router of Next has to hear of the new address as well as the address bar. If it kept the old one,
-// its next change (a refresh, a server action, Fast Refresh) would ask for the page with the token and
-// write it back to the bar. Heard of it, the router asks for the page without it, and the page, which reads
-// the token on the server, tells the link no longer works: as a reload does. The token lives in the form alone.
+// The router of Next keeps the address of the page and the payload it was sent. Neither held the token, so a
+// refresh asks for the page as it is, and what comes back holds none either.
 test.describe("the page of a reset link, when the router refreshes it", () => {
-  test("asks for the page without the token and writes none back to the address", async ({ page }) => {
-    await page.goto("/en/reset-password?token=a-token-that-is-nobodys");
+  test("asks for the page without the token, and is sent none", async ({ page }) => {
+    await page.goto(`/en/reset-password?token=${TOKEN}`);
     await page.waitForLoadState("networkidle");
     await expect(page).not.toHaveURL(/token=/);
 
     const refreshed = page.waitForRequest((request) => request.url().includes("_rsc="));
     await page.evaluate(() => (window as unknown as { next: { router: { refresh: () => void } } }).next.router.refresh());
-
     expect((await refreshed).url()).not.toContain("token=");
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("This link no longer works");
+    // What the server sends the router for this page, asked for as the router asks (the body of the router's own
+    // request is not kept by the browser once it is read)
+    const payload = await page.evaluate(async () => (await fetch(location.href, { headers: { RSC: "1" } })).text());
+
+    expect(payload).toContain("Reset Password");
+    expect(payload).not.toContain(TOKEN);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Reset Password");
     await expect(page).not.toHaveURL(/token=/);
-    expect(page.url()).toMatch(/\/en\/reset-password$/);
   });
 });
 

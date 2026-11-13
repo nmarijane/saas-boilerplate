@@ -1,202 +1,107 @@
+import { NextRequest } from "next/server";
 import { describe, expect, it, vi } from "vitest";
-import { scheduleTokenRemoval } from "@/features/auth/reset-token";
+import { RESET_TOKEN_COOKIE, RESET_TOKEN_MAX_AGE_SECONDS, resetTokenCookieOptions } from "@/features/auth/reset-token";
+import { proxy } from "@/proxy";
 
 /**
- * The link of the reset e-mail carries the token in its address (`?token=`),
- * and an address is kept: it stays in the history and on the screen, is read by
- * extensions, and goes with the events of the browser's error reporter. The page
- * reads the token once, keeps it in memory, and replaces the address with one
- * that does not hold it (`history.replaceState`: no reload, no new entry).
- * Node has no window: a stand-in has what the function reads of one.
- *
- * Next's router has to hear of the new address, or it keeps the old one, token
- * and all, and writes it back to the address bar at its next change (a refresh,
- * a server action, Fast Refresh). It hears of it through its own
- * `history.replaceState`, which it installs in an effect of its own. That effect
- * runs after the effects of the page (a child's effect runs before its parent's),
- * so the address is replaced a tick later, and with no state of the history entry:
- * the router takes a call that carries its own `__NA` marker for its own.
+ * The token of the reset link does not stay in the address: the proxy takes it out before any page is
+ * drawn, keeps it in an HttpOnly cookie and redirects to the same address without it. The page and its
+ * payload never hold it (reset-password.test.tsx), and the server action reads the cookie
+ * (tests/integration/reset-password-action.test.ts).
  */
 
-interface Fake {
-  window: Parameters<typeof scheduleTokenRemoval>[0];
-  /** The query the router of Next holds: what `useSearchParams()` returns, and what it writes back to the address bar. */
-  router: { search: string };
-  /** The address bar, and the state of the entry. */
-  address: { href: string; state: unknown };
-  /** The effect of the router has run: `history.replaceState` is its own from now on. */
-  mountRouter: () => void;
-  /** The ticks go by: every timer that was set runs. */
-  tick: () => void;
-  replaceState: ReturnType<typeof vi.fn>;
-}
+vi.mock("next-intl/middleware", async () => {
+  const { NextResponse } = await import("next/server");
+  return { default: () => () => NextResponse.next() };
+});
+vi.mock("@/shared/lib/rate-limit", () => ({ getRateLimiter: vi.fn() }));
 
-/**
- * A window with the history of the browser and the router of Next on top of it.
- * Before `mountRouter()` `history.replaceState` is the browser's own: it sets the
- * address and the state it is given, and nobody else hears of it. After it, it is the one
- * Next installs (`next/dist/client/components/app-router.js`): a state that carries the
- * `__NA` marker is the router's own call and leaves the router alone; any other call
- * is an outside change of the address, which the router is told of, and its
- * bookkeeping is added to the entry.
- */
-function fakeWindow(href: string): Fake {
-  const router = { search: new URL(href).search };
-  // What the router's own effect on the history wrote at the first commit
-  const address = { href, state: { __NA: true, idx: 3 } as unknown };
-  let mounted = false;
-  const timers = new Map<number, () => void>();
-  let next = 1;
+const visit = (path: string, headers: HeadersInit = {}) => proxy(new NextRequest(`http://localhost${path}`, { headers }));
 
-  const replaceState = vi.fn((data: unknown, _unused: string, url: string) => {
-    if (mounted) {
-      const isTheRoutersOwn = typeof data === "object" && data !== null && "__NA" in data;
-      if (!isTheRoutersOwn) {
-        router.search = new URL(url, address.href).search;
-      }
-      address.state = { ...(typeof data === "object" ? data : {}), __NA: true, idx: 3 };
-    } else {
-      address.state = data;
+describe("following the link of a reset e-mail", () => {
+  it.each([
+    ["/en/reset-password?token=abc123", "/en/reset-password"],
+    ["/fr/reset-password?token=abc123", "/fr/reset-password"],
+    // No language in the address: the page, and the cookie that is for it, get the default one
+    ["/reset-password?token=abc123", "/en/reset-password"],
+  ])(
+    "keeps the token of %s in a cookie and redirects to the page without it",
+    async (path, bare) => {
+      const response = await visit(path);
+
+      expect(response.status).toBeGreaterThanOrEqual(300);
+      expect(response.status).toBeLessThan(400);
+      const location = new URL(response.headers.get("location") ?? "");
+      expect(location.pathname).toBe(bare);
+      expect(location.search).toBe("");
+      expect(response.cookies.get(RESET_TOKEN_COOKIE)?.value).toBe("abc123");
+    },
+  );
+
+  it("sets a cookie that no script reads, that is not sent across sites, and that does not last", async () => {
+    const response = await visit("/en/reset-password?token=abc123");
+    const set = response.headers.get("set-cookie") ?? "";
+
+    expect(set).toMatch(/HttpOnly/i);
+    expect(set).toMatch(/SameSite=lax/i);
+    // The page that reads it, not the whole site: it is not sent with every request for fifteen minutes
+    expect(set).toMatch(/Path=\/en\/reset-password(?:;|$)/i);
+    expect(set).not.toMatch(/Path=\/(?:;|$)/i);
+    expect(set).toContain(`Max-Age=${RESET_TOKEN_MAX_AGE_SECONDS}`);
+    expect(set).not.toMatch(/;\s*Secure/i);
+  });
+
+  // From the scheme of the app's own address (what Better Auth uses for its cookies), not from a header that a proxy
+  // may or may not send, and not from NODE_ENV: a Secure cookie is refused on plain http, and the page would say the link expired
+  it("makes the cookie Secure when the app is served over https, whatever the headers say", async () => {
+    vi.stubEnv("BETTER_AUTH_URL", "https://app.example.com");
+    const noHeader = await visit("/en/reset-password?token=abc123");
+    const claimsHttp = await visit("/en/reset-password?token=abc123", { "x-forwarded-proto": "http" });
+    vi.stubEnv("BETTER_AUTH_URL", "http://localhost:3088");
+    const plainHttp = await visit("/en/reset-password?token=abc123", { "x-forwarded-proto": "https" });
+    vi.stubEnv("NODE_ENV", "production");
+    const productionOverHttp = await visit("/en/reset-password?token=abc123");
+    vi.unstubAllEnvs();
+
+    expect(noHeader.headers.get("set-cookie") ?? "").toMatch(/;\s*Secure/i);
+    expect(claimsHttp.headers.get("set-cookie") ?? "").toMatch(/;\s*Secure/i);
+    expect(plainHttp.headers.get("set-cookie") ?? "").not.toMatch(/;\s*Secure/i);
+    expect(productionOverHttp.headers.get("set-cookie") ?? "").not.toMatch(/;\s*Secure/i);
+    expect(resetTokenCookieOptions("fr", true)).toMatchObject({ secure: true, path: "/fr/reset-password" });
+  });
+
+  it("reads the app's other address when BETTER_AUTH_URL is set to nothing", async () => {
+    vi.stubEnv("BETTER_AUTH_URL", "");
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://app.example.com");
+    const response = await visit("/en/reset-password?token=abc123");
+    vi.unstubAllEnvs();
+
+    expect(response.headers.get("set-cookie") ?? "").toMatch(/;\s*Secure/i);
+  });
+
+  it("keeps what else is in the address, and nothing of the token", async () => {
+    const response = await visit("/en/reset-password?token=abc123&utm=mail");
+    const location = new URL(response.headers.get("location") ?? "");
+
+    expect(location.search).toBe("?utm=mail");
+    expect(response.headers.get("location")).not.toContain("abc123");
+  });
+
+  it("leaves the page alone when the link brings an error, or no token", async () => {
+    for (const path of ["/en/reset-password?error=INVALID_TOKEN", "/en/reset-password"]) {
+      const response = await visit(path);
+
+      expect(response.headers.get("location"), path).toBeNull();
+      expect(response.cookies.get(RESET_TOKEN_COOKIE), path).toBeUndefined();
     }
-    address.href = new URL(url, address.href).href;
   });
 
-  return {
-    window: {
-      location: {
-        get href() {
-          return address.href;
-        },
-      },
-      history: { replaceState },
-      setTimeout: (handler) => {
-        const handle = next++;
-        timers.set(handle, handler);
+  // Another page that has a `token` in its address is none of this business
+  it("does not take the token of any other page", async () => {
+    for (const path of ["/en/verify-email?token=abc123", "/en/sign-in?token=abc123", "/en/blog?token=abc123"]) {
+      const response = await visit(path);
 
-        return handle;
-      },
-      clearTimeout: (handle) => {
-        timers.delete(handle);
-      },
-    },
-    router,
-    address,
-    mountRouter: () => {
-      mounted = true;
-    },
-    tick: () => {
-      for (const [handle, handler] of [...timers]) {
-        timers.delete(handle);
-        handler();
-      }
-    },
-    replaceState,
-  };
-}
-
-/** What the page does: schedules the removal in its effect, then the router mounts, then the ticks go by. */
-function pageOpens(href: string) {
-  const fake = fakeWindow(href);
-  const cancel = scheduleTokenRemoval(fake.window);
-  fake.mountRouter();
-  fake.tick();
-
-  return { ...fake, cancel };
-}
-
-describe("taking the token out of the address of the page", () => {
-  it("replaces the address with one that does not hold the token", () => {
-    const { address, replaceState } = pageOpens("https://app.example.com/en/reset-password?token=abc123");
-
-    expect(replaceState).toHaveBeenCalledExactlyOnceWith(null, "", "/en/reset-password");
-    expect(address.href).toBe("https://app.example.com/en/reset-password");
-  });
-
-  // The router's own effect runs after the page's: an address replaced at once is replaced by
-  // the browser alone, and the router never hears of it
-  it("waits for a tick, so that the router has installed its own history.replaceState", () => {
-    const fake = fakeWindow("https://app.example.com/en/reset-password?token=abc123");
-
-    scheduleTokenRemoval(fake.window);
-
-    expect(fake.replaceState).not.toHaveBeenCalled();
-    expect(fake.address.href).toContain("token=abc123");
-  });
-
-  // The address the router holds is what `useSearchParams()` returns, and what it writes back to the
-  // address bar at its next change (`router.refresh()`, a server action, Fast Refresh): with the token
-  // still in it, the token comes back. The stand-in holds that address and nothing more of the router:
-  // its entry state, which keeps the old query until that change, is not the stand-in's to check.
-  it("leaves the address the router holds with no token to write back to the address bar", () => {
-    const { router } = pageOpens("https://app.example.com/en/reset-password?token=abc123&lang=fr");
-
-    expect(router.search).toBe("?lang=fr");
-    expect(router.search).not.toContain("token");
-  });
-
-  // The state of the entry holds the bookkeeping of Next's router. Passed back, it makes the call the
-  // router's own, and the router never learns that the address has changed.
-  it("passes no state of the history entry back: Next's router keeps its own", () => {
-    const { replaceState } = pageOpens("https://app.example.com/en/reset-password?token=abc123");
-
-    expect(replaceState.mock.calls[0]?.[0]).toBeNull();
-  });
-
-  it("keeps the bookkeeping of the router in the entry: it can still be traversed", () => {
-    const { address } = pageOpens("https://app.example.com/en/reset-password?token=abc123");
-
-    expect(address.state).toMatchObject({ __NA: true });
-  });
-
-  it("keeps the rest of the address: the other parameters and the fragment", () => {
-    const { replaceState } = pageOpens("https://app.example.com/fr/reset-password?lang=fr&token=abc123&x=1#form");
-
-    expect(replaceState).toHaveBeenCalledExactlyOnceWith(null, "", "/fr/reset-password?lang=fr&x=1#form");
-  });
-
-  it("takes every token the address holds, not only the first", () => {
-    const { replaceState } = pageOpens("https://app.example.com/en/reset-password?token=a&token=b");
-
-    expect(replaceState).toHaveBeenCalledExactlyOnceWith(null, "", "/en/reset-password");
-  });
-
-  it("does nothing when the address holds no token: it can run twice", () => {
-    const first = pageOpens("https://app.example.com/en/reset-password");
-    const second = pageOpens("https://app.example.com/en/reset-password?error=INVALID_TOKEN");
-
-    expect(first.replaceState).not.toHaveBeenCalled();
-    expect(second.replaceState).not.toHaveBeenCalled();
-  });
-
-  it("does not touch a parameter that only has token in its name", () => {
-    const { replaceState } = pageOpens("https://app.example.com/en/reset-password?csrf_token=keep&token=drop");
-
-    expect(replaceState).toHaveBeenCalledExactlyOnceWith(null, "", "/en/reset-password?csrf_token=keep");
-  });
-
-  // React runs an effect, undoes it and runs it again in development: the first removal is cancelled, and
-  // the second one is the only one
-  it("can be cancelled: a page that is left before the tick takes nothing out", () => {
-    const fake = fakeWindow("https://app.example.com/en/reset-password?token=abc123");
-
-    const cancel = scheduleTokenRemoval(fake.window);
-    cancel();
-    fake.mountRouter();
-    fake.tick();
-
-    expect(fake.replaceState).not.toHaveBeenCalled();
-  });
-
-  it("is done once when the effect runs twice, as it does in development", () => {
-    const fake = fakeWindow("https://app.example.com/en/reset-password?token=abc123");
-
-    const cancelFirst = scheduleTokenRemoval(fake.window);
-    cancelFirst();
-    scheduleTokenRemoval(fake.window);
-    fake.mountRouter();
-    fake.tick();
-
-    expect(fake.replaceState).toHaveBeenCalledOnce();
-    expect(fake.router.search).toBe("");
+      expect(response.cookies.get(RESET_TOKEN_COOKIE), path).toBeUndefined();
+    }
   });
 });

@@ -87,11 +87,20 @@ function withoutSecrets(data: unknown): unknown {
       return form.toString();
     }
   }
-  if (data === null || typeof data !== "object" || Array.isArray(data)) {
+  // The body of a server action is the list of its arguments: `[{"newPassword":"…"}]`
+  if (Array.isArray(data)) {
+    return data.map(withoutSecrets);
+  }
+  if (data === null || typeof data !== "object") {
     return data;
   }
 
-  return Object.fromEntries(Object.entries(data).filter(([key]) => !SECRET_FIELDS.includes(key)));
+  // Objects inside it too (`[{"input":{"password":"…"}}]`); a string value is left as it is
+  return Object.fromEntries(
+    Object.entries(data)
+      .filter(([key]) => !SECRET_FIELDS.includes(key))
+      .map(([key, value]) => [key, typeof value === "object" && value !== null ? withoutSecrets(value) : value]),
+  );
 }
 
 /**
@@ -101,9 +110,20 @@ function withoutSecrets(data: unknown): unknown {
  * filtered out of every string. The data is an object or a JSON string.
  */
 export function scrubServerEvent<T>(event: T): T {
-  const request = (event as { request?: { data?: unknown } } | null)?.request;
-  if (request && typeof request === "object" && "data" in request) {
-    return scrubTokens({ ...event, request: { ...request, data: withoutSecrets(request.data) } });
+  const request = (event as { request?: Record<string, unknown> } | null)?.request;
+  if (request && typeof request === "object") {
+    // The cookies of the request are never sent: the session's, and the token of a reset link while it waits
+    // (the SDK attaches them to every event, whatever `sendDefaultPii` says)
+    const { cookies: _cookies, headers, ...rest } = request;
+    const kept: Record<string, unknown> = { ...rest };
+    if (headers && typeof headers === "object") {
+      kept.headers = Object.fromEntries(Object.entries(headers).filter(([name]) => name.toLowerCase() !== "cookie"));
+    }
+    if ("data" in kept) {
+      kept.data = withoutSecrets(kept.data);
+    }
+
+    return scrubTokens({ ...event, request: kept });
   }
 
   return scrubTokens(event);

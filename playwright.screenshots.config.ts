@@ -63,6 +63,9 @@ export default defineConfig({
       // are relative to it, and a database that stamps a row in another zone
       // would shift it by the offset.
       TZ: "UTC",
+      // One reverse proxy in front of the app, as in production: the address of the client is the one
+      // entry of X-Forwarded-For (Next fills it from the socket when a request has none)
+      TRUST_PROXY: "1",
       // A production server refuses the default secret of Better Auth: this one
       // is drawn for the run and lives as long as the server does.
       BETTER_AUTH_SECRET: randomBytes(32).toString("hex"),

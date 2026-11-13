@@ -8,6 +8,7 @@ import { ChangePasswordForm } from "@/features/settings/components/change-passwo
 import { ConnectedAccounts } from "@/features/settings/components/connected-accounts";
 import { DeleteAccountZone } from "@/features/settings/components/delete-account-zone";
 import { ProfileForm } from "@/features/settings/components/profile-form";
+import { hasPassword } from "@/features/settings/reauthentication";
 import { PageHeader } from "@/shared/components/data/page-header";
 import { SettingsNav } from "@/shared/components/shell/settings-nav";
 import {
@@ -44,6 +45,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function AccountSettingsPage({ params }: Props) {
   const { locale } = await params;
   const { user } = await requireWorkspace();
+  const needsPassword = await hasPassword(user.id);
   const [t, tSettings] = await Promise.all([
     getTranslations({ locale, namespace: "settings.account" }),
     getTranslations({ locale, namespace: "settings" }),
@@ -103,7 +105,7 @@ export default async function AccountSettingsPage({ params }: Props) {
           <ActiveSessions labelledBy={ACTIVE_SESSIONS_TITLE_ID} />
         </CardContent>
       </Card>
-      <DeleteAccountZone />
+      <DeleteAccountZone needsPassword={needsPassword} />
     </div>
   );
 }

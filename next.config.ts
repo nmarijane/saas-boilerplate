@@ -24,6 +24,11 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        // What the API answers is data, never a page: nothing it sends may be loaded, run or framed
+        source: "/api/:path*",
+        headers: [{ key: "Content-Security-Policy", value: "default-src 'none'; frame-ancestors 'none'" }],
+      },
+      {
         source: "/(.*)",
         headers: [
           { key: "X-Frame-Options", value: "DENY" },
@@ -38,23 +43,8 @@ const nextConfig: NextConfig = {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(), geolocation=()",
           },
-          {
-            // Start with Report-Only — switch to Content-Security-Policy
-            // after validation in staging
-            key: "Content-Security-Policy-Report-Only",
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com",
-              "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob: https:",
-              "font-src 'self'",
-              "connect-src 'self' https://api.stripe.com https://*.sentry.io",
-              "frame-src https://js.stripe.com",
-              "frame-ancestors 'none'",
-              "object-src 'none'",
-              "base-uri 'self'",
-            ].join("; "),
-          },
+          // The Content-Security-Policy is not here: it carries a nonce that is new at each request,
+          // so the proxy sets it (src/proxy.ts, src/shared/lib/csp.ts)
         ],
       },
     ];

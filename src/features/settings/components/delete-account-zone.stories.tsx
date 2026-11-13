@@ -37,6 +37,7 @@ type Story = StoryObj<typeof meta>;
 
 /** One sentence on the danger background, with a danger edge, and the one destructive button. */
 export const Default: Story = {
+  args: { needsPassword: true },
   play: async ({ canvasElement }) => {
     const button = within(canvasElement).getByRole("button", { name: "Delete account" });
 
@@ -51,6 +52,7 @@ export const Default: Story = {
  * written. Cancel closes it, and the focus goes back to the button of the zone.
  */
 export const AsksForTheWord: Story = {
+  args: { needsPassword: false },
   play: async ({ canvasElement }) => {
     const page = within(canvasElement.ownerDocument.body);
     const button = within(canvasElement).getByRole("button", { name: "Delete account" });
@@ -76,6 +78,7 @@ export const AsksForTheWord: Story = {
 
 /** Typing the word and confirming deletes the account (the stub answers that it is done), and the dialog closes. */
 export const Deletes: Story = {
+  args: { needsPassword: false },
   play: async ({ canvasElement }) => {
     const page = within(canvasElement.ownerDocument.body);
 
@@ -94,6 +97,7 @@ export const Deletes: Story = {
 
 /** The same zone in French: the word to type is still DELETE, and the dialog says so. */
 export const French: Story = {
+  args: { needsPassword: false },
   globals: { locale: "fr" },
   play: async ({ canvasElement }) => {
     const page = within(canvasElement.ownerDocument.body);
@@ -104,5 +108,26 @@ export const French: Story = {
     await waitFor(() => expect(dialog).toBeVisible());
     await expect(within(dialog).getByLabelText("Saisissez DELETE pour confirmer")).toBeVisible();
     await expect(within(dialog).getByRole("button", { name: "Annuler" })).toBeVisible();
+  },
+};
+
+/**
+ * An account with a password asks for it again before it can be deleted: the button that
+ * deletes waits for the word and for a password, which the server checks.
+ */
+export const AsksForThePassword: Story = {
+  args: { needsPassword: true },
+  play: async ({ canvasElement }) => {
+    const page = within(canvasElement.ownerDocument.body);
+
+    await userEvent.click(within(canvasElement).getByRole("button", { name: "Delete account" }));
+    const dialog = await page.findByRole("alertdialog", { name: "Delete your account?" });
+    await waitFor(() => expect(dialog).toBeVisible());
+    const confirm = within(dialog).getByRole("button", { name: "Delete account" });
+
+    await userEvent.type(within(dialog).getByLabelText("Type DELETE to confirm"), "DELETE");
+    await expect(confirm).toBeDisabled();
+    await userEvent.type(within(dialog).getByLabelText("Current password"), "a-password");
+    await expect(confirm).toBeEnabled();
   },
 };

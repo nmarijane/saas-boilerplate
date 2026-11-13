@@ -9,6 +9,10 @@ if (process.env.SENTRY_DSN) {
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
     tracesSampleRate: 0.1,
+    // No body of an incoming request is kept (the SDK keeps up to 10 kB of it by default, whatever
+    // `sendDefaultPii` says, and attaches it to events): what a form sent is not what explains an error.
+    // The scrub below is the second line. docs/SETUP.md, "Error tracking (Sentry)", says how to turn bodies back on.
+    integrations: [Sentry.httpIntegration({ disableIncomingRequestSpans: true, maxIncomingRequestBodySize: "none" })],
     beforeSend: (event) => scrubServerEvent(event),
     beforeSendTransaction: (event) => scrubServerEvent(event),
     beforeBreadcrumb: (breadcrumb) => scrubTokens(breadcrumb),

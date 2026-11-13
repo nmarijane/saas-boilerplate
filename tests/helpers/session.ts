@@ -26,7 +26,6 @@ export function fakeSession(
       updatedAt: now,
       isAdmin,
       onboardingCompleted: true,
-      twoFactorEnabled: false,
     },
     session: {
       id: `session-${userId}`,

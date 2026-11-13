@@ -83,7 +83,7 @@ export const RefusesABadLink: Story = {
     await userEvent.type(avatar, "example.com/me.png");
     await userEvent.click(canvas.getByRole("button", { name: "Save" }));
 
-    await expect(canvas.getByRole("alert")).toHaveTextContent("Enter a full link, such as https://example.com/me.png.");
+    await expect(canvas.getByRole("alert")).toHaveTextContent("Enter a full https link, such as https://example.com/me.png.");
     await expect(avatar).toHaveAttribute("aria-invalid", "true");
     await expect(canvas.queryByRole("status")).not.toBeInTheDocument();
 

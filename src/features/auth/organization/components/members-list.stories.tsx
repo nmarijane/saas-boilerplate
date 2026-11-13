@@ -278,6 +278,49 @@ export const RemovesAMember: Story = {
   },
 };
 
+/**
+ * Only the owner can hand the workspace over: the menu of a member has "Make owner", which asks first, naming the
+ * person and saying what each becomes (a dialog, not an alert: it is not a deletion). Cancel closes it and the
+ * focus goes back to the button of the menu; confirming says who is the owner now (the stub answers that it is
+ * done). An admin's menu has no such entry.
+ */
+export const MakesAnOwner: Story = {
+  play: async ({ canvasElement }) => {
+    const { page, button, menu } = await openMenu(canvasElement, "Actions for Mia Martin");
+
+    await userEvent.click(within(menu).getByRole("menuitem", { name: "Make owner" }));
+    const dialog = await page.findByRole("dialog", { name: "Make Mia Martin the owner?" });
+    await waitFor(() => expect(dialog).toBeVisible());
+    await expect(dialog).toHaveAccessibleDescription(/you become an admin/);
+    await waitFor(() => expect(dialog).toContainElement(dialog.ownerDocument.activeElement as HTMLElement));
+
+    await userEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(page.queryByRole("dialog")).not.toBeInTheDocument());
+    await waitFor(() => expect(button).toHaveFocus());
+
+    const second = await openMenu(canvasElement, "Actions for Mia Martin");
+    await userEvent.click(within(second.menu).getByRole("menuitem", { name: "Make owner" }));
+    const again = await page.findByRole("dialog", { name: "Make Mia Martin the owner?" });
+    await waitFor(() => expect(again).toBeVisible());
+    await userEvent.click(within(again).getByRole("button", { name: "Make owner" }));
+
+    await waitFor(() => expect(page.queryByRole("dialog")).not.toBeInTheDocument());
+    const toast = await page.findByText("Mia Martin is now the owner.");
+    await waitFor(() => expect(toast).toBeVisible());
+  },
+};
+
+/** An admin changes roles and removes members, but cannot hand the workspace over. */
+export const AdminCannotHandOver: Story = {
+  args: { viewer: { userId: "u2", role: "admin" } },
+  play: async ({ canvasElement }) => {
+    const { menu } = await openMenu(canvasElement, "Actions for Mia Martin");
+
+    await expect(within(menu).queryByRole("menuitem", { name: "Make owner" })).not.toBeInTheDocument();
+    await expect(within(menu).getByRole("menuitem", { name: "Remove from workspace" })).toBeVisible();
+  },
+};
+
 /** Names and emails that are not ours to choose wrap in their row, and push nothing out of the card. */
 export const LongNames: Story = {
   args: {

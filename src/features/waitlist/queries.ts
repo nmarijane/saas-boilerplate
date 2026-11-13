@@ -4,13 +4,9 @@ import { db } from "@/shared/lib/DB";
 import { calculatePosition } from "./lib/referral";
 import "server-only";
 
-export async function getWaitlistEntry(email: string) {
-  const entry = await db
-    .select()
-    .from(waitlistEntry)
-    .where(eq(waitlistEntry.email, email))
-    .limit(1)
-    .then((rows) => rows[0] ?? null);
+/** An entry with its position, by its referral code: the code is what the person is given, an address is nobody's to look up. */
+export async function getWaitlistEntryWithPosition(code: string) {
+  const entry = await getWaitlistEntryByCode(code);
 
   if (!entry) return null;
 

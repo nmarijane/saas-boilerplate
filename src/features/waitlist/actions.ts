@@ -18,12 +18,16 @@ const joinSchema = z.object({
 });
 
 // Public by design (anonymous visitors): validated input, rate-limited per IP.
+// It answers the same way whether the address is new or already on the list: the
+// answer is the referral link of the address (which is meant to be shared, as it
+// leads to the page that invites people), and nothing else, so that typing an
+// address does not tell whether somebody signed up with it.
 export async function joinWaitlist(input: { email: string; referralCode?: string }) {
   return safeAction(async () => {
     await enforceActionRateLimit(`waitlist:${await getClientIp()}`, 10, 60);
     const parsed = joinSchema.parse(input);
 
-    // Check if already registered
+    // Already on the list: the same answer as a new address gets
     const existing = await db
       .select()
       .from(waitlistEntry)
@@ -32,7 +36,7 @@ export async function joinWaitlist(input: { email: string; referralCode?: string
       .then((rows) => rows[0] ?? null);
 
     if (existing) {
-      return { id: existing.id, referralCode: existing.referralCode, alreadyExists: true };
+      return { referralCode: existing.referralCode };
     }
 
     // Find referrer if code provided
@@ -62,7 +66,7 @@ export async function joinWaitlist(input: { email: string; referralCode?: string
     });
 
     revalidatePath("/waitlist");
-    return { id, referralCode: code, alreadyExists: false };
+    return { referralCode: code };
   });
 }
 

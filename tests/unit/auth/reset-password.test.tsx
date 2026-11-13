@@ -18,11 +18,26 @@ import { renderWithIntl } from "../../helpers/intl";
 
 // The page the link of the reset email lands on. Better Auth checks the token
 // of the link and redirects here with `?token=` when it holds, and with
-// `?error=INVALID_TOKEN` when it does not (missing, unknown, expired). The page
-// takes the new password on a good link, and tells a dead one in a card that
-// leads to a new request. What it reaches for outside itself is replaced, as in
+// `?error=INVALID_TOKEN` when it does not (missing, unknown, expired). The proxy
+// keeps a token in an HttpOnly cookie and redirects to the page without it: the page
+// only learns that one is waiting. It takes the new password on a good link, and tells
+// a dead one in a card that leads to a new request. What it reaches for outside itself is replaced, as in
 // auth-card.test.tsx.
 vi.mock("@/features/auth/auth-client", () => ({ authClient: {} }));
+// The cookie of the token: the page asks whether it is there, and is never told what it holds
+const jar = vi.hoisted(() => ({ waiting: false, asked: [] as string[] }));
+vi.mock("next/headers", () => ({
+  cookies: async () => ({
+    has: (name: string) => {
+      jar.asked.push(name);
+      return name === "reset_token" && jar.waiting;
+    },
+    get: () => {
+      throw new Error("The page must not read the token itself");
+    },
+  }),
+  headers: async () => new Headers(),
+}));
 vi.mock("@/shared/lib/i18n-navigation", async () => {
   const { createElement } = await import("react");
 
@@ -58,15 +73,18 @@ type Query = Record<string, string | string[] | undefined>;
 
 const STRONG = "Secret-123!";
 
-function page(query: Query, locale: Locale = "en") {
+function page(query: Query, locale: Locale = "en", waiting = true) {
+  jar.waiting = waiting;
+  jar.asked = [];
+
   return ResetPasswordPage({
     params: Promise.resolve({ locale }),
     searchParams: Promise.resolve(query),
   });
 }
 
-async function drawPage(query: Query, locale: Locale = "en") {
-  return renderWithIntl(await page(query, locale), locale);
+async function drawPage(query: Query, locale: Locale = "en", waiting = true) {
+  return renderWithIntl(await page(query, locale, waiting), locale);
 }
 
 /** The first element of a type in a tree of elements that is not drawn yet, or undefined. */
@@ -89,18 +107,18 @@ function find(node: ReactNode, type: unknown): ReactElement<Record<string, unkno
   return undefined;
 }
 
-const DEAD_LINKS: [string, Query][] = [
-  ["no token at all", {}],
-  ["an empty token", { token: "" }],
-  ["the error Better Auth redirects with when the token is unknown or expired", { error: "INVALID_TOKEN" }],
-  ["any error", { error: "SOMETHING_ELSE" }],
-  ["a token and an error together", { token: "tok_123", error: "INVALID_TOKEN" }],
-  ["a token that is not a word but a list, with an error", { token: ["a", "b"], error: ["INVALID_TOKEN"] }],
+// [what it is, the address, whether a token is waiting in the cookie]
+const DEAD_LINKS: [string, Query, boolean][] = [
+  ["no token waiting: an address typed by hand, or a token that was used or expired", {}, false],
+  ["the error Better Auth redirects with when the token is unknown or expired", { error: "INVALID_TOKEN" }, false],
+  ["an error, whatever is waiting", { error: "INVALID_TOKEN" }, true],
+  ["any error", { error: "SOMETHING_ELSE" }, true],
+  ["a list of errors", { error: ["INVALID_TOKEN"] }, true],
 ];
 
 describe("the reset page, on a link that does not work", () => {
-  it.each(DEAD_LINKS)("tells a dead link, with no form, for %s", async (_, query) => {
-    const html = await drawPage(query);
+  it.each(DEAD_LINKS)("tells a dead link, with no form, for %s", async (_, query, waiting) => {
+    const html = await drawPage(query, "en", waiting);
 
     expect(startTags(html, "form")).toEqual([]);
     expect(startTags(html, "input")).toEqual([]);
@@ -108,8 +126,8 @@ describe("the reset page, on a link that does not work", () => {
     expect(textOf(html)).toContain("The link to reset your password has expired or was already used.");
   });
 
-  it.each(DEAD_LINKS)("leads to a new request, on a link that keeps the locale, for %s", async (_, query) => {
-    const html = await drawPage(query);
+  it.each(DEAD_LINKS)("leads to a new request, on a link that keeps the locale, for %s", async (_, query, waiting) => {
+    const html = await drawPage(query, "en", waiting);
     const ask = startTags(html, "a").find((tag) => attribute(tag, "href") === "/forgot-password") ?? "";
 
     expect(ask).toContain("data-locale-link");
@@ -119,25 +137,28 @@ describe("the reset page, on a link that does not work", () => {
   });
 
   it("says so in French", async () => {
-    const html = await drawPage({ error: "INVALID_TOKEN" }, "fr");
+    const html = await drawPage({ error: "INVALID_TOKEN" }, "fr", false);
 
     expect(textOf(elements(html, "h1")[0] ?? "")).toBe("Ce lien ne fonctionne plus");
     expect(textOf(html)).toContain("Demander un nouveau lien");
   });
 
   it("gives the card exactly one h1", async () => {
-    for (const [, query] of DEAD_LINKS) {
-      expect(elements(await drawPage(query), "h1")).toHaveLength(1);
+    for (const [, query, waiting] of DEAD_LINKS) {
+      expect(elements(await drawPage(query, "en", waiting), "h1")).toHaveLength(1);
     }
   });
 });
 
 describe("the reset page, on a good link", () => {
-  it("shows the form, and hands it the token of the link", async () => {
-    const element = await page({ token: "tok_123" });
+  // The token is not in what the server sends the browser: not as a prop of the form, which the payload of the page would carry
+  it("shows the form, and hands it no token: the page only knows that one is waiting", async () => {
+    const element = await page({});
     const form = find(element, ResetPasswordForm);
 
-    expect(form?.props.token).toBe("tok_123");
+    expect(form?.props).toEqual({});
+    expect(JSON.stringify(element)).not.toContain("tok_");
+    expect(jar.asked).toEqual(["reset_token"]);
 
     const html = renderWithIntl(element);
     expect(startTags(html, "form")).toHaveLength(1);
@@ -145,20 +166,14 @@ describe("the reset page, on a good link", () => {
   });
 
   it("leaves the card to the form, which is what follows its state: the page draws no card round it", async () => {
-    const element = await page({ token: "tok_123" });
+    const element = await page({});
 
     // The page hands over the form itself, not a card that holds it
     expect(isValidElement(element) && element.type).toBe(ResetPasswordForm);
   });
 
-  it("takes the first token when the address holds several", async () => {
-    const form = find(await page({ token: ["first", "second"] }), ResetPasswordForm);
-
-    expect(form?.props.token).toBe("first");
-  });
-
   it("keeps the form of a good link away from the card of a dead one", async () => {
-    const html = await drawPage({ token: "tok_123" });
+    const html = await drawPage({});
 
     expect(textOf(html)).not.toContain("This link no longer works");
   });
@@ -169,19 +184,19 @@ describe("the reset page, on a good link", () => {
 describe("the call the reset makes", () => {
   const fakeClient = () => ({ resetPassword: vi.fn().mockResolvedValue({ data: { status: true }, error: null }) });
 
-  it("asks for the new password with the token of the link, and for nothing else: the person is not signed in", async () => {
+  it("asks for the new password, and for nothing else (the server holds the token): the person is not signed in", async () => {
     const client = fakeClient();
 
-    await expect(resetPasswordFlow(client, { newPassword: STRONG, token: "tok_123" })).resolves.toEqual({ ok: true });
+    await expect(resetPasswordFlow(client, { newPassword: STRONG })).resolves.toEqual({ ok: true });
 
-    expect(client.resetPassword).toHaveBeenCalledExactlyOnceWith({ newPassword: STRONG, token: "tok_123" });
+    expect(client.resetPassword).toHaveBeenCalledExactlyOnceWith({ newPassword: STRONG });
   });
 
   it("does not ask while a rule of the strength meter fails", async () => {
     const client = fakeClient();
 
     for (const newPassword of ["", "abc", "Abcdefg1"]) {
-      await expect(resetPasswordFlow(client, { newPassword, token: "tok_123" })).resolves.toEqual({
+      await expect(resetPasswordFlow(client, { newPassword })).resolves.toEqual({
         ok: false,
         messageKey: "auth.passwordTooWeak",
       });

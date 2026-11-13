@@ -1,6 +1,7 @@
 import { and, count, desc, eq } from "drizzle-orm";
 import { notification } from "@/models/notification";
 import { db } from "@/shared/lib/DB";
+import { listWindowOf } from "./list-window";
 import "server-only";
 
 interface GetNotificationsOptions {
@@ -12,7 +13,8 @@ export async function getNotifications(
   userId: string,
   options: GetNotificationsOptions = {},
 ) {
-  const { limit = 20, offset = 0 } = options;
+  // Whoever calls, the window is one that can be served (list-window.ts)
+  const { limit, offset } = listWindowOf(options.limit, options.offset);
 
   return db
     .select()
