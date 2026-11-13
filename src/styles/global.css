@@ -38,6 +38,7 @@
   --color-sidebar-primary-foreground: var(--brand-on);
   --color-sidebar-accent: var(--side-active-bg);
   --color-sidebar-accent-foreground: var(--ink);
+  --color-sidebar-hover: var(--side-hover-bg);
   --color-sidebar-border: var(--hairline);
   --color-sidebar-ring: var(--focus-ring);
 
@@ -63,6 +64,7 @@
   --color-warning-bar: var(--warning-bar);
   --color-danger: var(--danger);
   --color-danger-text: var(--danger-text);
+  --color-danger-bg: var(--danger-bg);
   --color-danger-on: var(--danger-on);
 
   --color-track: var(--track);
@@ -104,6 +106,9 @@
   --text-section--font-weight: 600;
   --text-panel: 1.25rem;
   --text-panel--line-height: 1.75rem;
+  --text-entity: 1.5rem;
+  --text-entity--line-height: 2rem;
+  --text-entity--font-weight: 700;
   --text-page: 1.75rem;
   --text-page--line-height: 2.125rem;
   --text-key: 2.5rem;
@@ -111,6 +116,47 @@
 
   --container-content: 70rem;
   --ease-expo: cubic-bezier(0.2, 0, 0, 1);
+
+  /* 480 px: below it the shell navigates by a tab bar at the bottom; from it, by the Menu button of the header. */
+  --breakpoint-xs: 30rem;
+}
+
+/*
+ * The names that the sidebar of shadcn (`npx shadcn add sidebar`) reads through
+ * `var()`: its outline variant draws its edge with `--sidebar-border` and
+ * `--sidebar-accent`. They are aliases of the tokens of theme.css, so the theme
+ * reaches them in light and in dark. They sit here, in the file that
+ * components.json points at: the CLI finds them, and writes its own `hsl()`
+ * colors for none. An alias is computed where it is declared, so `.dark`
+ * computes them again for a dark wrapper that is not <html>, and a
+ * [data-brand-scope] computes the three that follow the brand.
+ */
+:root {
+  --sidebar: var(--side-bg);
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: var(--brand-on);
+  --sidebar-accent: var(--side-active-bg);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--hairline);
+  --sidebar-ring: var(--focus-ring);
+}
+
+.dark {
+  --sidebar: var(--side-bg);
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: var(--brand-on);
+  --sidebar-accent: var(--side-active-bg);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--hairline);
+  --sidebar-ring: var(--focus-ring);
+}
+
+[data-brand-scope] {
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: var(--brand-on);
+  --sidebar-ring: var(--focus-ring);
 }
 
 /* Decorative: a bar, an edge, an illustration. Never the background of text: the tests hold its ends to 3:1 as a graphic, not to 4.5:1 under text. */
@@ -138,6 +184,343 @@
     width: max(100%, 44px);
     height: max(100%, 44px);
     transform: translate(-50%, -50%);
+  }
+}
+
+/*
+ * The markdown of a text that the app does not write (the answers of the
+ * assistant, the posts of the blog): paragraphs, headings, lists, quotes, code, tables and rules, from
+ * the tokens of the theme, in light and in dark. Tailwind's base resets all of
+ * them (a list has no marker, a heading is as big as a paragraph) and no
+ * typography plugin is installed, so the block draws them itself. It spaces what
+ * it holds, from its first child to its last, and breaks a word longer than itself.
+ * A block that scrolls (code, a table) is a tab stop: a keyboard reads it.
+ */
+@utility markdown {
+  overflow-wrap: anywhere;
+
+  & > * + * {
+    margin-top: 0.75rem;
+  }
+
+  & > :first-child {
+    margin-top: 0;
+  }
+
+  /* Headings, on the scale of the app: a heading of an answer is never larger than a panel title. */
+  & :is(h1, h2, h3, h4, h5, h6) {
+    font-weight: 600;
+    text-wrap: balance;
+  }
+
+  & h1 {
+    @apply text-panel;
+  }
+
+  & h2 {
+    @apply text-section;
+  }
+
+  & :is(h3, h4, h5, h6) {
+    @apply text-body;
+  }
+
+  /* The room before a heading is a variable, which a long text (an article) widens. */
+  & > :is(h1, h2, h3, h4, h5, h6):not(:first-child) {
+    margin-top: var(--markdown-heading-gap, 1.25rem);
+  }
+
+  /* Lists: the base gives them no marker and no indent. */
+  & ul {
+    list-style-type: disc;
+    padding-inline-start: 1.5rem;
+  }
+
+  & ol {
+    list-style-type: decimal;
+    padding-inline-start: 1.5rem;
+  }
+
+  & ul ul {
+    list-style-type: circle;
+  }
+
+  & li::marker {
+    color: var(--ink-muted);
+  }
+
+  & li + li {
+    margin-top: 0.25rem;
+  }
+
+  & li > * + * {
+    margin-top: 0.25rem;
+  }
+
+  & ul.contains-task-list {
+    list-style-type: none;
+    padding-inline-start: 0;
+  }
+
+  & .task-list-item input {
+    margin-inline-end: 0.5rem;
+  }
+
+  & a {
+    @apply text-primary underline underline-offset-4;
+  }
+
+  & blockquote {
+    border-inline-start: 3px solid var(--control-border);
+    padding-inline-start: 1rem;
+    color: var(--ink-soft);
+  }
+
+  & hr {
+    border-top: 1px solid var(--control-border);
+  }
+
+  /* The answers of the assistant draw no image (chat-message.tsx): this is for a text that does. */
+  & img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--corner-sm);
+  }
+
+  /* Code: a chip inside a line, and a block that scrolls its own long lines. */
+  & code {
+    @apply font-mono;
+    font-size: 0.9em;
+  }
+
+  & :not(pre) > code {
+    padding: 0.125rem 0.375rem;
+    border: 1px solid var(--hairline);
+    border-radius: var(--corner-xs);
+    background-color: var(--surface);
+  }
+
+  & pre {
+    overflow-x: auto;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--hairline);
+    border-radius: var(--corner-sm);
+    background-color: var(--surface);
+    line-height: 1.5;
+  }
+
+  & pre code {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background-color: transparent;
+  }
+
+  /* A table wider than the text scrolls in a box of its own, which the component puts around it (`scrollableBlocks`). */
+  & table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  /* The cells keep their words whole: `anywhere`, above, would make a column as narrow as a letter. The box round the table scrolls when the columns do not fit. */
+  & :is(th, td) {
+    padding: 0.375rem 0.75rem;
+    border: 1px solid var(--hairline);
+    text-align: start;
+    vertical-align: top;
+    overflow-wrap: normal;
+  }
+
+  & th {
+    background-color: var(--surface);
+    font-weight: 600;
+  }
+}
+
+/*
+ * Motion. A layer that opens and closes animates itself: the entrance plays on
+ * `data-state` open and the exit on closed, which is where Radix puts the state
+ * (it keeps the element mounted until the exit has ended). An entrance takes
+ * 200 ms and an exit 150 ms, a drawer 280 ms and 200 ms, on --ease-expo. Under
+ * reduced motion nothing plays, and Radix unmounts a closing layer at once.
+ */
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    scale: 0.95;
+  }
+}
+
+@keyframes pop-out {
+  to {
+    opacity: 0;
+    scale: 0.95;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes sheet-in-left {
+  from {
+    translate: -100% 0;
+  }
+}
+
+@keyframes sheet-out-left {
+  to {
+    translate: -100% 0;
+  }
+}
+
+@keyframes sheet-in-right {
+  from {
+    translate: 100% 0;
+  }
+}
+
+@keyframes sheet-out-right {
+  to {
+    translate: 100% 0;
+  }
+}
+
+@keyframes sheet-in-top {
+  from {
+    translate: 0 -100%;
+  }
+}
+
+@keyframes sheet-out-top {
+  to {
+    translate: 0 -100%;
+  }
+}
+
+@keyframes sheet-in-bottom {
+  from {
+    translate: 0 100%;
+  }
+}
+
+@keyframes sheet-out-bottom {
+  to {
+    translate: 0 100%;
+  }
+}
+
+/*
+ * A menu, a popover, a tooltip, a list of choices, the content of a dialog: it
+ * grows from the transform origin its component takes from Radix. A tooltip
+ * opens as `delayed-open` or `instant-open`, never as `open`. The reduced-motion
+ * rule is as specific as the two before it, and comes after them.
+ */
+@utility animate-pop {
+  &[data-state="open"],
+  &[data-state="delayed-open"],
+  &[data-state="instant-open"] {
+    animation: pop-in 200ms var(--ease-expo);
+  }
+
+  &[data-state="closed"] {
+    animation: pop-out 150ms var(--ease-expo);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &[data-state] {
+      animation: none;
+    }
+  }
+}
+
+/* The scrim behind a dialog or a drawer. */
+@utility animate-fade {
+  &[data-state="open"] {
+    animation: fade-in 200ms var(--ease-expo);
+  }
+
+  &[data-state="closed"] {
+    animation: fade-out 150ms var(--ease-expo);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &[data-state] {
+      animation: none;
+    }
+  }
+}
+
+/* A drawer, which slides from the edge it is fixed to. */
+@utility animate-sheet-left {
+  &[data-state="open"] {
+    animation: sheet-in-left 280ms var(--ease-expo);
+  }
+
+  &[data-state="closed"] {
+    animation: sheet-out-left 200ms var(--ease-expo);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &[data-state] {
+      animation: none;
+    }
+  }
+}
+
+@utility animate-sheet-right {
+  &[data-state="open"] {
+    animation: sheet-in-right 280ms var(--ease-expo);
+  }
+
+  &[data-state="closed"] {
+    animation: sheet-out-right 200ms var(--ease-expo);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &[data-state] {
+      animation: none;
+    }
+  }
+}
+
+@utility animate-sheet-top {
+  &[data-state="open"] {
+    animation: sheet-in-top 280ms var(--ease-expo);
+  }
+
+  &[data-state="closed"] {
+    animation: sheet-out-top 200ms var(--ease-expo);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &[data-state] {
+      animation: none;
+    }
+  }
+}
+
+@utility animate-sheet-bottom {
+  &[data-state="open"] {
+    animation: sheet-in-bottom 280ms var(--ease-expo);
+  }
+
+  &[data-state="closed"] {
+    animation: sheet-out-bottom 200ms var(--ease-expo);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &[data-state] {
+      animation: none;
+    }
   }
 }
 
@@ -171,6 +554,56 @@
       transition-delay: 0s !important;
       scroll-behavior: auto !important;
     }
+  }
+}
+
+/*
+ * The shell (src/shared/components/shell) keeps two bars stuck over the page: a
+ * header of 56 px up to 1024 px, and under 480 px a tab bar (61 px, counted as
+ * 64 px) and the safe area. The height of the tab bar is written once, as
+ * `--tab-bar-height`, on the page (`html`, which is where the toaster, outside
+ * the shell, can read it) and is 0 from 480 px, where there is no bar: the scroll
+ * padding, the room the bars take of the screen and the offset of the toasts
+ * (components/ui/sonner.tsx) all read it. `--shell-chrome` is what the bars take
+ * of the screen, and `--shell-gutter-y` the margin of the page above and below its
+ * content (`py-6`, `py-8`, `py-10`, twice): a page that fills the screen, the
+ * assistant, is `100dvh` less both. `--shell-chrome` reads the token with a
+ * fallback of 0: a browser without `:has()` never sets it, and the height of that
+ * page must hold without it. The scroll padding keeps what the page
+ * scrolls to (a field in focus, an anchor) clear of the bars, which WCAG 2.4.11
+ * asks. Outside any layer, like the rule of sonner below: these are not utilities.
+ */
+html:has([data-shell]) {
+  --tab-bar-height: calc(4rem + env(safe-area-inset-bottom));
+  scroll-padding-top: 3.5rem;
+  scroll-padding-bottom: var(--tab-bar-height);
+}
+
+[data-shell] {
+  --shell-chrome: calc(3.5rem + var(--tab-bar-height, 0px));
+  --shell-gutter-y: 3rem;
+}
+
+@media (min-width: 30rem) {
+  html:has([data-shell]) {
+    --tab-bar-height: 0px;
+    scroll-padding-top: 3.5rem;
+  }
+
+  [data-shell] {
+    --shell-gutter-y: 4rem;
+  }
+}
+
+@media (min-width: 64rem) {
+  [data-shell] {
+    --shell-chrome: 0px;
+    --shell-gutter-y: 5rem;
+  }
+
+  html:has([data-shell]) {
+    scroll-padding-top: 0;
+    scroll-padding-bottom: 0;
   }
 }
 

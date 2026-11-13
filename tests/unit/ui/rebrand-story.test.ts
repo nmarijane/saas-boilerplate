@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { OTHER_BRAND } from "@/shared/components/foundations/other-brand";
 import { contrastRatio, parseThemeBlocks } from "../../helpers/color";
 
 /**
@@ -16,27 +17,52 @@ const story = readFileSync(
 const { light, dark: darkOverrides } = parseThemeBlocks(
   readFileSync(resolve(srcDir, "styles/theme.css"), "utf-8"),
 );
+const readme = readFileSync(resolve(srcDir, "../README.md"), "utf-8");
 
-/** The tokens the story sets inline: `"--brand": "#E5484D"`. */
-const inline = Object.fromEntries(
-  [...story.matchAll(/"(--[\w-]+)":\s*"([^"]+)"/g)].map(([, name, value]) => [
-    name,
-    value,
-  ]),
-);
+/** The tokens of the other brand: `"--brand": "#E5484D"`. */
+const inline = OTHER_BRAND;
 
 describe("the Other brand story", () => {
   it("is titled Foundations/Other brand", () => {
     expect(story).toContain('title: "Foundations/Other brand"');
   });
 
-  it("sets the other brand inline: its colors, its card corner and its display typeface", () => {
+  it("sets the other brand: its colors, its card corner and its display typeface", () => {
     expect(inline).toMatchObject({
       "--brand": "#E5484D",
       "--brand-2": "#F76B15",
       "--corner-card": "4px",
       "--typeface-display": "Georgia, serif",
     });
+  });
+
+  // The README's screenshot sets the same tokens on <html>: one list, so that
+  // the story and the picture show the same brand.
+  it("takes those tokens from OTHER_BRAND and keeps no copy of its own", () => {
+    expect(story).toContain('import { OTHER_BRAND } from "./other-brand";');
+    expect(story).not.toMatch(/"--[\w-]+":/);
+  });
+
+  // The README shows four of the tokens as CSS, written by hand: it is read
+  // here, so that the picture and the excerpt beside it keep saying the same.
+  it("is the brand that the CSS excerpt of the README shows", () => {
+    const excerpt = /```css\n([\s\S]*?)```/.exec(readme)?.[1] ?? "";
+    const shown = Object.fromEntries(
+      [...excerpt.matchAll(/^(--[\w-]+): (.+);$/gm)].map(([, name, value]) => [
+        name,
+        value,
+      ]),
+    );
+
+    expect(Object.keys(shown)).toEqual(
+      expect.arrayContaining([
+        "--brand",
+        "--brand-2",
+        "--corner-card",
+        "--typeface-display",
+      ]),
+    );
+    expect(OTHER_BRAND).toMatchObject(shown);
   });
 
   it("puts data-brand-scope on the container that holds that style, or the derived tokens would not recompute", () => {

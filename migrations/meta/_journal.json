@@ -43,6 +43,20 @@
       "when": 1793739118326,
       "tag": "0005_abnormal_rhodey",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793757004009,
+      "tag": "0006_peaceful_callisto",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793894605555,
+      "tag": "0007_cooing_abomination",
+      "breakpoints": true
     }
   ]
 }

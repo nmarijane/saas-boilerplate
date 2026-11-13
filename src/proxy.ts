@@ -2,8 +2,10 @@ import type { NextRequest } from "next/server";
 import { getSessionCookie } from "better-auth/cookies";
 import createMiddleware from "next-intl/middleware";
 import { NextResponse } from "next/server";
+import { APP_PATH_PREFIXES } from "@/shared/config/app";
 import { routing } from "@/shared/lib/i18n-routing";
 import { getRateLimiter } from "@/shared/lib/rate-limit";
+import { isActivePath } from "@/shared/utils/paths";
 
 const intlMiddleware = createMiddleware(routing);
 const LOCALE_PREFIX_RE = /^\/(en|fr)/;
@@ -37,21 +39,21 @@ export async function proxy(request: NextRequest) {
   // 2. i18n (handles locale detection and redirection)
   const response = intlMiddleware(request);
 
-  // 3. Auth guards — protect (app) and (admin) routes. On https, Better Auth
-  // names its cookie `__Secure-better-auth.session_token`; its helper reads
-  // that name and the plain one.
+  // 3. Auth guard — the pages of the connected space need a session: a page is
+  // one of APP_PATH_PREFIXES, or under one (whole segments, as everywhere in the app).
+  // On https, Better Auth names its cookie `__Secure-better-auth.session_token`;
+  // its helper reads that name and the plain one.
   const sessionToken = getSessionCookie(request);
   const localeMatch = pathname.match(LOCALE_PREFIX_RE);
   const pathWithoutLocale = localeMatch
     ? pathname.slice(localeMatch[0].length)
     : pathname;
 
-  const isAppRoute = pathWithoutLocale.startsWith("/dashboard") ||
-    pathWithoutLocale.startsWith("/settings") ||
-    pathWithoutLocale.startsWith("/onboarding");
-  const isAdminRoute = pathWithoutLocale.startsWith("/admin");
+  const needsSession = APP_PATH_PREFIXES.some((prefix) =>
+    isActivePath(pathWithoutLocale, prefix),
+  );
 
-  if ((isAppRoute || isAdminRoute) && !sessionToken) {
+  if (needsSession && !sessionToken) {
     const locale = localeMatch?.[1] ?? routing.defaultLocale;
     const signInUrl = new URL(`/${locale}/sign-in`, request.url);
     signInUrl.searchParams.set("callbackUrl", pathname);

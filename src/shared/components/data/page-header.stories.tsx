@@ -33,7 +33,6 @@ const meta = {
     moreActions: { control: false },
     alert: { control: false },
     tabs: { control: false },
-    actions: { control: false },
   },
   args: {
     icon: HouseIcon,
@@ -108,17 +107,6 @@ export const WithTabs: Story = {
         <p className="text-ink-soft">The plan, the invoices and the card.</p>
       </TabsContent>
     </Tabs>
-  ),
-};
-
-/** The pages written before the rebuild pass `description` and `actions`: they read as the context and the primary action, with no tile, and need no change. New pages use `context` and `primaryAction`. */
-export const Legacy: Story = {
-  render: () => (
-    <PageHeader
-      title="Settings"
-      description="Manage your account and your preferences."
-      actions={<Button variant="outline">Export</Button>}
-    />
   ),
 };
 

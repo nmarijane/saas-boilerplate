@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useRef } from "react";
 import { Button } from "@/shared/components/ui/button";
 
@@ -14,8 +15,9 @@ export function UploadButton({
   onFileSelect,
   accept,
   disabled = false,
-  children = "Upload File",
+  children,
 }: UploadButtonProps) {
+  const t = useTranslations("upload");
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -25,7 +27,7 @@ export function UploadButton({
         disabled={disabled}
         onClick={() => inputRef.current?.click()}
       >
-        {children}
+        {children ?? t("button")}
       </Button>
       <input
         ref={inputRef}

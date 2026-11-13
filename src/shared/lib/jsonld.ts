@@ -1,4 +1,6 @@
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+import { DEV_APP_URL } from "@/shared/config/app";
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? DEV_APP_URL;
 
 export function organizationJsonLd(name: string, url: string = APP_URL) {
   return {

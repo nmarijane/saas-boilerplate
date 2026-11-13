@@ -1,25 +1,23 @@
 import { useTranslations } from "next-intl";
+import { AuthCard } from "@/features/auth/components/auth-card";
 import { ForgotPasswordForm } from "@/features/auth/components/forgot-password-form";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/shared/components/ui/card";
+import { TextLink } from "@/shared/components/ui/text-link";
+import { Link } from "@/shared/lib/i18n-navigation";
 
 export default function ForgotPasswordPage() {
   const t = useTranslations("auth");
 
   return (
-    <Card>
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl">{t("resetPassword")}</CardTitle>
-        <CardDescription>{t("forgotPassword")}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ForgotPasswordForm />
-      </CardContent>
-    </Card>
+    <AuthCard
+      title={t("resetPassword")}
+      description={t("forgotPasswordDescription")}
+      footer={
+        <TextLink asChild className="tap-target">
+          <Link href="/sign-in">{t("backToSignIn")}</Link>
+        </TextLink>
+      }
+    >
+      <ForgotPasswordForm />
+    </AuthCard>
   );
 }

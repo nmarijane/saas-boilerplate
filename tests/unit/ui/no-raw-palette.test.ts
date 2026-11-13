@@ -3,25 +3,28 @@ import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 /**
- * A component takes its colors from the theme (`bg-surface`, `text-ink-muted`,
- * `bg-success-bg`...), never from a step of the Tailwind palette, `white` or
- * `black`: a rebrand and the dark theme cannot reach those. A hex color and a
- * typeface are the same kind of mistake: their values live in the theme files
- * (`src/styles/theme.css`, `src/styles/fonts.ts`), and a component only names
- * a token.
+ * A component, a page or a layout takes its colors from the theme (`bg-surface`,
+ * `text-ink-muted`, `bg-success-bg`...), never from a step of the Tailwind
+ * palette, `white` or `black`: a rebrand and the dark theme cannot reach those.
+ * A hex color and a typeface are the same kind of mistake: their values live in
+ * the theme files (`src/styles/theme.css`, `src/styles/fonts.ts`), and the code
+ * only names a token. The palette and hex guards read the folders of SCANNED
+ * and the typeface guard all of `src`; the five exceptions below say what each
+ * of them leaves out.
  */
 
 const ROOT = resolve(import.meta.dirname, "../../..");
 
 /**
- * The folders the palette guard covers. Each project adds its own components
- * here. A folder that a removed feature took with it is skipped, so that
- * removing a feature (docs/SETUP.md, Phase 3) never breaks this file.
+ * The folders the guards cover: the shared layer, the features and the routes,
+ * which is all the code of the app that draws. A folder that a project adds
+ * there is covered with no edit here, and a folder that a removed feature took
+ * with it is skipped, so that removing a feature (docs/SETUP.md, Phase 3) never
+ * breaks this file.
  */
-const SCANNED = [
-  "src/shared/components",
-  "src/features/billing/components",
-].filter((directory) => existsSync(join(ROOT, directory)));
+const SCANNED = ["src/shared", "src/features", "src/app"].filter((directory) =>
+  existsSync(join(ROOT, directory)),
+);
 
 const RAW_PALETTE =
   /\b(?:bg|text|border|ring|fill|stroke|from|to)-(?:white|black|(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d{2,3})\b/;
@@ -32,17 +35,29 @@ const HEX_COLOR = /(?<![&\w])#(?:[\da-f]{8}|[\da-f]{6}|[\da-f]{3,4})\b/i;
 /** A font family declared in CSS, in a style object, or as a Tailwind arbitrary value. */
 const FONT_FAMILY = /\bfont-?family\s*:|\bfont-\[family-name:/i;
 
-/** Files that keep their hex colors: the logo of a third-party service is drawn in its own colors, whatever the brand. */
+/**
+ * Left out of the hex guard only: the logo of a third-party service is drawn in
+ * its own colors, whatever the brand. These files are read for the palette like
+ * the rest.
+ */
 const THIRD_PARTY_MARKS = [
   "src/features/auth/components/social-buttons.tsx",
   "src/features/settings/components/connected-accounts.tsx",
 ];
 
 /**
- * Pages and emails that are drawn without the stylesheet of the app, so they
- * name a system font themselves: the error page that replaces the root layout,
- * the not-found page that has no layout above it, and the emails, whose
- * clients read inline styles only.
+ * Left out of the hex guard only: the other brand of the "Other brand" story,
+ * which the README's screenshot sets on <html> as well, is a second brand's
+ * colors written out on purpose.
+ */
+const DEMO_BRANDS = ["src/shared/components/foundations/other-brand.ts"];
+
+/**
+ * Left out of the three guards (palette, hex color and typeface): pages that are
+ * drawn without the stylesheet of the app, so they write their colors and their
+ * system font out as inline styles. They are the error page that replaces the
+ * root layout, the not-found page that has no layout above it, and the base
+ * layout of the emails.
  */
 const STANDALONE_SURFACES = [
   "src/app/global-error.tsx",
@@ -50,7 +65,14 @@ const STANDALONE_SURFACES = [
   "src/features/email/templates/base-layout.tsx",
 ];
 
-/** The only files that name a typeface. */
+/**
+ * Left out of the three guards as well: the folders drawn the same way. The
+ * templates of the emails write their colors and their fonts out, as mail
+ * clients read inline styles only.
+ */
+const STANDALONE_FOLDERS = ["src/features/email/templates"];
+
+/** The only files that name a typeface: the typeface guard reads every other source of src. */
 const TYPEFACE_FILES = ["src/styles/theme.css", "src/styles/fonts.ts"];
 
 /** The sources of a folder, as paths from the root of the project. */
@@ -68,32 +90,59 @@ function sources(directory: string, extension = /\.tsx?$/): string[] {
     .sort();
 }
 
-/** A source inside a `components` folder of a feature, at any depth. */
-function isFeatureComponent(file: string): boolean {
-  return /^src\/features\/(?:[^/]+\/)+components\/.+\.tsx?$/.test(file);
+/** A source that is drawn outside the theme: a standalone page, or a file of a standalone folder. */
+function isStandalone(file: string): boolean {
+  return (
+    STANDALONE_SURFACES.includes(file) ||
+    STANDALONE_FOLDERS.some((folder) => file.startsWith(`${folder}/`))
+  );
 }
 
 function isStory(file: string): boolean {
   return /\.stories\.tsx?$/.test(file);
 }
 
-/** `file:line: text` for each line of a source that matches the pattern. */
-function offences(file: string, pattern: RegExp): string[] {
-  return readFileSync(join(ROOT, file), "utf-8")
+/**
+ * A source with its comments blanked out, line for line: a reference such as
+ * `// see #106` is not a color. A comment opens at the start of a line, after a
+ * space or after a `{` (as a JSX comment does), so the slash and the star of
+ * `accept="image/*"` open none.
+ */
+function withoutComments(source: string): string {
+  return source
+    .replace(
+      /(^|[\s{])(\/\*[\s\S]*?\*\/)/g,
+      (_, lead: string, block: string) =>
+        lead + block.replace(/[^\n]/g, " "),
+    )
+    .replace(/(^|\s)\/\/.*$/gm, "$1");
+}
+
+/** `file:line: text` for each line of a source that matches the pattern, once `read` has had its say on the source. */
+function offences(
+  file: string,
+  pattern: RegExp,
+  read = (source: string) => source,
+): string[] {
+  const source = readFileSync(join(ROOT, file), "utf-8");
+  const lines = source.split("\n");
+
+  return read(source)
     .split("\n")
     .flatMap((line, index) =>
-      pattern.test(line) ? [`${file}:${index + 1}: ${line.trim()}`] : [],
+      pattern.test(line)
+        ? [`${file}:${index + 1}: ${lines[index]?.trim()}`]
+        : [],
     );
 }
 
-const files = SCANNED.flatMap((directory) => sources(directory));
+const files = SCANNED.flatMap((directory) => sources(directory)).filter(
+  (file) => !isStandalone(file),
+);
 
-// The stories are left out of the hex guard: the "Other brand" story sets a
-// demo brand inline, on purpose.
-const componentFiles = [
-  ...sources("src/shared/components"),
-  ...sources("src/features").filter(isFeatureComponent),
-].filter((file) => !isStory(file));
+// The stories are left out of the hex guard, and the demo brand they share is
+// exempt (DEMO_BRANDS): the "Other brand" story sets a second brand, on purpose.
+const hexFiles = files.filter((file) => !isStory(file));
 
 const typefaceFiles = sources("src", /\.(?:tsx?|css)$/).filter(
   (file) => !TYPEFACE_FILES.includes(file),
@@ -139,7 +188,58 @@ describe("raw palette guard", () => {
     );
   });
 
-  it("finds no raw palette color in the shared and billing components", () => {
+  // The guards read every source of the shared layer, of the features and of the
+  // routes, not only the folders named components: a page, a layout or a helper
+  // that draws is held to the theme as well.
+  it("covers the routes and the code of the features that is not a component", () => {
+    expect(files).toEqual(
+      expect.arrayContaining([
+        "src/app/[locale]/layout.tsx",
+        "src/features/app-shell.ts",
+      ]),
+    );
+  });
+
+  it("leaves out the surfaces that are drawn outside the theme", () => {
+    for (const file of STANDALONE_SURFACES.filter((one) =>
+      existsSync(join(ROOT, one)),
+    )) {
+      expect(files, file).not.toContain(file);
+    }
+  });
+
+  // A feature that is removed takes its folder with it, and its files are no
+  // longer asked for: removing a feature never breaks this file.
+  it("covers the components of the API keys and of the webhooks", () => {
+    const expected = [
+      "src/features/api-keys/components/api-key-list.tsx",
+      "src/features/api-keys/components/create-key-modal.tsx",
+      "src/features/webhooks/components/webhook-list.tsx",
+      "src/features/webhooks/components/create-webhook-modal.tsx",
+    ].filter((file) => existsSync(join(ROOT, file)));
+
+    expect(files).toEqual(expect.arrayContaining(expected));
+  });
+
+  // The sign-in pages and the account menu share this folder. The logos of
+  // Google and GitHub keep their own colors (THIRD_PARTY_MARKS, below) but are
+  // read for the palette like the rest.
+  it("covers the components of the sign-in pages and the account menu", () => {
+    expect(files).toEqual(
+      expect.arrayContaining([
+        "src/features/auth/components/auth-card.tsx",
+        "src/features/auth/components/sign-in-form.tsx",
+        "src/features/auth/components/sign-up-form.tsx",
+        "src/features/auth/components/forgot-password-form.tsx",
+        "src/features/auth/components/reset-password-form.tsx",
+        "src/features/auth/components/password-strength.tsx",
+        "src/features/auth/components/social-buttons.tsx",
+        "src/features/auth/components/account-menu.tsx",
+      ]),
+    );
+  });
+
+  it("finds no raw palette color in the scanned sources", () => {
     const found = files.flatMap((file) => offences(file, RAW_PALETTE));
 
     expect(
@@ -180,32 +280,56 @@ describe("hex color guard", () => {
   });
 
   it.each([
-    ["src/features/auth/components/login-form.tsx", true],
-    ["src/features/auth/organization/components/org-switcher.tsx", true],
-    ["src/features/billing/components/plan-badge.tsx", true],
-    ["src/features/email/templates/base-layout.tsx", false],
-    ["src/features/billing/actions.ts", false],
-    ["src/features/ui-components/helpers.ts", false],
+    ["src/app/global-error.tsx", true],
+    ["src/features/email/templates/base-layout.tsx", true],
+    ["src/features/email/templates/welcome.tsx", true],
+    ["src/features/email/templates/parts/footer.tsx", true],
+    ["src/features/email/send.ts", false],
+    ["src/features/email/templates-draft/welcome.tsx", false],
+    ["src/app/[locale]/layout.tsx", false],
     ["src/shared/components/ui/button.tsx", false],
-  ])("tells whether %s is a component of a feature: %s", (file, expected) => {
-    expect(isFeatureComponent(file)).toBe(expected);
+  ])("tells whether %s is drawn outside the theme: %s", (file, expected) => {
+    expect(isStandalone(file)).toBe(expected);
   });
 
-  it("covers the shared components and leaves the stories out", () => {
-    expect(componentFiles).toEqual(
+  it.each([
+    ["// see #106", false],
+    ["const size = 1; // #fff", false],
+    ["/* #fff */", false],
+    ["{/* the #E5484D of the other brand */}", false],
+    ["/*\n * #123456\n */", false],
+    ['fill="#fff" // white', true],
+    ['<input accept="image/*" style={{ color: "#E5484D" }} />\n{/* the end */}', true],
+    ['const link = "https://example.com"; const color = "#fff";', true],
+  ])("reads the colors of the code and not those of a comment: %j", (text, flagged) => {
+    expect(HEX_COLOR.test(withoutComments(text))).toBe(flagged);
+  });
+
+  it("keeps the lines of a source when it blanks the comments, so that an offence is reported at its line", () => {
+    const source = "a\n/* b\n c */\nd // e\nf";
+
+    expect(withoutComments(source).split("\n")).toHaveLength(
+      source.split("\n").length,
+    );
+  });
+
+  it("covers the shared components and the routes, and leaves the stories out", () => {
+    expect(hexFiles).toEqual(
       expect.arrayContaining([
         "src/shared/components/ui/button.tsx",
         "src/shared/components/ui/popover-styles.ts",
         "src/shared/components/data/page-header.tsx",
+        "src/app/[locale]/layout.tsx",
       ]),
     );
-    expect(componentFiles.filter(isStory)).toEqual([]);
+    expect(hexFiles.filter(isStory)).toEqual([]);
   });
 
   it("finds no hex color in them: token values live in theme.css", () => {
-    const found = componentFiles
+    const found = hexFiles
       .filter((file) => !THIRD_PARTY_MARKS.includes(file))
-      .flatMap((file) => offences(file, HEX_COLOR));
+      .filter((file) => !DEMO_BRANDS.includes(file))
+      .flatMap((file) => offences(file, HEX_COLOR, withoutComments));
 
     expect(
       found,
@@ -252,7 +376,7 @@ describe("typeface guard", () => {
 
   it("finds no font family outside theme.css and fonts.ts", () => {
     const found = typefaceFiles
-      .filter((file) => !STANDALONE_SURFACES.includes(file))
+      .filter((file) => !isStandalone(file))
       .flatMap((file) => offences(file, FONT_FAMILY));
 
     expect(

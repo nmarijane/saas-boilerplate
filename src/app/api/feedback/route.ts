@@ -20,6 +20,18 @@ export async function POST(request: Request) {
       );
     }
 
+    // The workspace asked for is one of the person's, as for the GET below: the guard of `submitFeedback` redirects
+    // for any other, which a client of this route cannot follow, and the route would answer a 500 for it
+    if (typeof orgId === "string" && orgId !== "") {
+      const userOrgs = await getUserOrganizations(auth.session.user.id);
+      if (!userOrgs.some((o) => o.id === orgId)) {
+        return NextResponse.json(
+          { error: "Forbidden", code: "FORBIDDEN", status: 403 },
+          { status: 403 },
+        );
+      }
+    }
+
     const result = await submitFeedback({
       orgId,
       type,

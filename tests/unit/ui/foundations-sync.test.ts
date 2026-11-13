@@ -77,6 +77,21 @@ describe("foundations stories and theme.css", () => {
     expect(story).toMatch(/className=\{`[^`]*\bborder\b[^`]*\$\{utility\}`\}/);
   });
 
+  it("shows the danger background and the hover and press colors of the destructive button", () => {
+    expect(shown).toEqual(
+      expect.arrayContaining([
+        "--danger-bg",
+        "--btn-danger-hover",
+        "--btn-danger-active",
+      ]),
+    );
+  });
+
+  it("shows the entity title step", () => {
+    expect(structural["--text-entity"]).toBeDefined();
+    expect(list("typeScale")).toContain('"text-entity"');
+  });
+
   it("shows the steps of the type scale that global.css declares", () => {
     const steps = [...list("typeScale").matchAll(/"(text-[\w-]+)"/g)].map(
       ([, step]) => step,

@@ -1,4 +1,5 @@
 import { useTranslations } from "next-intl";
+import { APP_NAME } from "@/shared/config/app";
 import { Link } from "@/shared/lib/i18n-navigation";
 
 export function Footer() {
@@ -47,7 +48,7 @@ export function Footer() {
           </Link>
         </div>
         <p className="text-sm text-muted-foreground">
-          &copy; {new Date().getFullYear()} SaaS Boilerplate
+          &copy; {new Date().getFullYear()} {APP_NAME}
         </p>
       </div>
     </footer>

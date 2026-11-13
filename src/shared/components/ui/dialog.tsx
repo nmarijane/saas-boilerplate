@@ -18,8 +18,7 @@ const dialogContentVariants = cva(
   [
     "fixed top-1/2 left-1/2 z-50 -translate-x-1/2 -translate-y-1/2",
     "flex max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] flex-col gap-5 overflow-y-auto",
-    "rounded-xl border bg-popover p-6 text-popover-foreground shadow-pop duration-200",
-    "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+    "rounded-xl border bg-popover p-6 text-popover-foreground shadow-pop animate-pop",
   ],
   {
     variants: {
@@ -65,7 +64,7 @@ function DialogOverlay({
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-scrim",
+        "animate-fade fixed inset-0 z-50 bg-scrim",
         className
       )}
       {...props}

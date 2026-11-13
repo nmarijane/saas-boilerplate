@@ -137,3 +137,33 @@ export const LongLabels: Story = {
     cancelLabel: "Garder le projet",
   },
 };
+
+/**
+ * The user types the text before they can confirm: the button stays disabled
+ * until the field holds exactly `DELETE`, case and spaces included. Keep it for
+ * what cannot be undone. Close the dialog and open it again: the field starts
+ * empty.
+ */
+export const RequireText: Story = {
+  args: {
+    tone: "danger",
+    title: "Delete your account?",
+    description:
+      "Your projects, your files and your invitations are deleted for good.",
+    confirmLabel: "Delete account",
+    requireText: "DELETE",
+  },
+};
+
+/** The text can be a name: ask for the name of what is deleted, as it is written. The field names it in its label, and the French label runs longer. */
+export const RequireName: Story = {
+  args: {
+    tone: "danger",
+    title: "Supprimer l'espace de travail ?",
+    description:
+      "Tous les projets et tous les membres de l'espace sont supprimés. Cette action est irréversible.",
+    confirmLabel: "Supprimer l'espace",
+    cancelLabel: "Garder l'espace",
+    requireText: "Studio Nord Architecture",
+  },
+};

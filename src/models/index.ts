@@ -6,6 +6,7 @@ export * from "./feature-flag";
 export * from "./feedback";
 export * from "./notification";
 export * from "./organization";
+export * from "./project";
 export * from "./subscription";
 export * from "./two-factor";
 export * from "./upload";

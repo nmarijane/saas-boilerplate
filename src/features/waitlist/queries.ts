@@ -76,7 +76,10 @@ export async function getTopReferrers(limit = 10) {
     .limit(limit);
 }
 
-export async function getAllWaitlistEntries(page = 1, pageSize = 20) {
+/** How many entries a page of the admin list holds. */
+export const WAITLIST_PAGE_SIZE = 20;
+
+export async function getAllWaitlistEntries(page = 1, pageSize = WAITLIST_PAGE_SIZE) {
   const offset = (page - 1) * pageSize;
   const [countRow] = await db.select({ total: count() }).from(waitlistEntry);
 

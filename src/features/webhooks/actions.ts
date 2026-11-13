@@ -9,10 +9,11 @@ import { emitEvent } from "@/features/events/emitter";
 import { webhookEndpoint } from "@/models/webhook";
 import { db } from "@/shared/lib/DB";
 import { generateId } from "@/shared/utils/helpers";
+import { eventsSchema } from "./events-schema";
 
 const createWebhookSchema = z.object({
   url: z.string().url(),
-  events: z.array(z.string()).min(1),
+  events: eventsSchema,
 });
 
 const endpointIdSchema = z.string().min(1).max(100);
@@ -41,7 +42,7 @@ export async function createWebhookEndpointAction(
     resourceId: id,
   });
 
-  revalidatePath("/settings/api");
+  revalidatePath("/settings/developers");
   return { id, secret };
 }
 
@@ -69,7 +70,7 @@ export async function deleteWebhookEndpointAction(
     resourceId: id,
   });
 
-  revalidatePath("/settings/api");
+  revalidatePath("/settings/developers");
 }
 
 export async function toggleWebhookEndpointAction(
@@ -86,5 +87,5 @@ export async function toggleWebhookEndpointAction(
     .set({ active: isActive })
     .where(and(eq(webhookEndpoint.id, id), eq(webhookEndpoint.orgId, orgId)));
 
-  revalidatePath("/settings/api");
+  revalidatePath("/settings/developers");
 }

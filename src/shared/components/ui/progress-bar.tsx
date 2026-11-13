@@ -51,6 +51,11 @@ interface ProgressBarProps {
   max: number;
   /** What the bar counts ("AI credits this month"): its accessible name, and where its unit is named. */
   label: string;
+  /**
+   * The value as a sentence ("12 of 50 used"), which assistive technology reads
+   * in place of the figure: a bare 24 says nothing about what it is out of.
+   */
+  valueText?: string;
   /** `quota` (the default) turns warning, then danger, as it fills; `signature` stays on the brand gradient. */
   tone?: "signature" | "quota";
   className?: string;
@@ -60,6 +65,7 @@ function ProgressBar({
   value,
   max,
   label,
+  valueText,
   tone = "quota",
   className,
 }: ProgressBarProps) {
@@ -82,6 +88,7 @@ function ProgressBar({
       aria-valuemin={0}
       aria-valuemax={max}
       aria-valuenow={used}
+      aria-valuetext={valueText}
       className={cn(
         "h-2 w-full overflow-hidden rounded-full bg-track forced-colors:border",
         className,

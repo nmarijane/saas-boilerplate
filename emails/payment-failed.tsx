@@ -5,7 +5,7 @@ export default function PaymentFailedPreview() {
     <PaymentFailedEmail
       name="John Doe"
       planName="Pro"
-      billingUrl="http://localhost:3000/en/settings/billing"
+      billingUrl="http://localhost:3088/en/settings/billing"
     />
   );
 }

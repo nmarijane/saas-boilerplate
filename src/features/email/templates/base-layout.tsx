@@ -10,6 +10,7 @@ import {
   Section,
   Text,
 } from "@react-email/components";
+import { DEV_APP_URL } from "@/shared/config/app";
 
 interface BaseLayoutProps {
   preview: string;
@@ -17,7 +18,7 @@ interface BaseLayoutProps {
   footerText?: string;
 }
 
-const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? DEV_APP_URL;
 
 const body = {
   backgroundColor: "#f6f9fc",

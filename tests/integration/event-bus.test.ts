@@ -1,9 +1,11 @@
 import type { AppEvent } from "@/features/events/types";
+import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { handleAuditLog } from "@/features/events/handlers/audit-log";
 import { handleNotification } from "@/features/events/handlers/notification";
 import { auditLog } from "@/models/audit-log";
 import { notification } from "@/models/notification";
+import { organization } from "@/models/organization";
 import { seedOrg, seedOrgMember, seedUser } from "../helpers/seed";
 import { testDb } from "../setup";
 
@@ -71,6 +73,30 @@ describe("handleAuditLog", () => {
     expect(logs).toHaveLength(1);
     expect(logs[0].actorId).toBeNull();
   });
+
+  // The log of a workspace goes with it, as the deletion promises: the entry that
+  // says it was deleted, and by whom, is the platform's, and outlives the cascade
+  it("writes the deletion of a workspace as an entry of the platform, which outlives the workspace", async () => {
+    await handleAuditLog(makeEvent("api_key.created"));
+    await handleAuditLog(makeEvent("organization.deleted", {
+      resourceType: "organization",
+      resourceId: ORG_ID,
+      metadata: { name: "Northwind" },
+    }));
+
+    await testDb.delete(organization).where(eq(organization.id, ORG_ID));
+
+    expect(await testDb.select().from(auditLog)).toEqual([
+      expect.objectContaining({
+        orgId: null,
+        action: "organization.deleted",
+        actorId: USER_ID,
+        resourceType: "organization",
+        resourceId: ORG_ID,
+        metadata: { name: "Northwind" },
+      }),
+    ]);
+  });
 });
 
 describe("handleNotification", () => {
@@ -84,25 +110,47 @@ describe("handleNotification", () => {
     await seedOrgMember(OWNER_ID, ORG_ID, "owner");
   });
 
-  it("creates a notification for org owner when event is in NOTIFICATION_MAP", async () => {
-    const event = makeEvent("payment.failed");
-    await handleNotification(event);
+  // The words are drawn when the notification is read, in the reader's language,
+  // from its type: what is stored is the event, its workspace and the values its
+  // messages name, never English sentences.
+  it("creates a notification for the owner of the workspace, as the event and the values its messages name", async () => {
+    await handleNotification(makeEvent("payment.failed", { metadata: { planId: "pro", amount: 2900 } }));
 
     const notifications = await testDb.select().from(notification);
     expect(notifications).toHaveLength(1);
-    expect(notifications[0].userId).toBe(OWNER_ID);
-    expect(notifications[0].title).toBe("Payment failed");
-    expect(notifications[0].type).toBe("billing");
+    expect(notifications[0]).toMatchObject({
+      userId: OWNER_ID,
+      organizationId: ORG_ID,
+      type: "payment.failed",
+      title: null,
+      body: null,
+      values: { workspace: "Test Org", planId: "pro" },
+    });
   });
 
   it("creates notification for member.invited event", async () => {
-    const event = makeEvent("member.invited");
-    await handleNotification(event);
+    await handleNotification(makeEvent("member.invited"));
 
     const notifications = await testDb.select().from(notification);
     expect(notifications).toHaveLength(1);
-    expect(notifications[0].title).toBe("New member invited");
-    expect(notifications[0].type).toBe("info");
+    expect(notifications[0]).toMatchObject({ type: "member.invited", organizationId: ORG_ID, title: null, body: null });
+  });
+
+  it("gives every event it notifies a message in both languages", async () => {
+    const { NOTIFIED_EVENTS } = await import("@/features/events/handlers/notification");
+    const { default: en } = await import("@/locales/en.json");
+    const { default: fr } = await import("@/locales/fr.json");
+    const messageOf = (messages: unknown, name: string) =>
+      [...name.split("."), "title"].reduce<unknown>(
+        (node, key) => (node as Record<string, unknown> | undefined)?.[key],
+        (messages as { notifications: { events: unknown } }).notifications.events,
+      );
+
+    expect(NOTIFIED_EVENTS.length).toBeGreaterThan(0);
+    for (const name of NOTIFIED_EVENTS) {
+      expect(typeof messageOf(en, name), `${name} in English`).toBe("string");
+      expect(typeof messageOf(fr, name), `${name} in French`).toBe("string");
+    }
   });
 
   it("does NOT create a notification for unmapped events", async () => {

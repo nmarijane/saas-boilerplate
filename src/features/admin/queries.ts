@@ -1,4 +1,4 @@
-import { count, sql } from "drizzle-orm";
+import { count, desc, sql } from "drizzle-orm";
 
 import { organization } from "@/models/organization";
 import { plan, subscription  } from "@/models/subscription";
@@ -8,6 +8,11 @@ import "server-only";
 
 // Admin reads: each admin page calls requireAdmin() before using them.
 // Columns are listed explicitly, so a sensitive column added to a table later is never exposed.
+
+// The two lists stop at `limit`, so what they leave out must be the oldest rows, in
+// an order that holds between two reads: newest first, then by id. Rows inserted in
+// one statement share their `createdAt`, and without the id two pages of `offset` could
+// repeat a row or skip one.
 
 export async function getAdminUsers(limit = 100, offset = 0) {
   return db
@@ -20,6 +25,7 @@ export async function getAdminUsers(limit = 100, offset = 0) {
       createdAt: user.createdAt,
     })
     .from(user)
+    .orderBy(desc(user.createdAt), desc(user.id))
     .limit(limit)
     .offset(offset);
 }
@@ -33,14 +39,29 @@ export async function getAdminOrganizations(limit = 100, offset = 0) {
       createdAt: organization.createdAt,
     })
     .from(organization)
+    .orderBy(desc(organization.createdAt), desc(organization.id))
     .limit(limit)
     .offset(offset);
 }
 
+// The totals the headers of the admin pages give. The lists above stop at 100,
+// so a header never counts the rows its table was handed: it asks for the total.
+export async function countUsers() {
+  const [row] = await db.select({ count: count() }).from(user);
+
+  return row?.count ?? 0;
+}
+
+export async function countOrganizations() {
+  const [row] = await db.select({ count: count() }).from(organization);
+
+  return row?.count ?? 0;
+}
+
 export async function getAdminMetrics() {
-  const [usersCount, orgsCount, mrrResult] = await Promise.all([
-    db.select({ count: count() }).from(user),
-    db.select({ count: count() }).from(organization),
+  const [totalUsers, totalOrganizations, mrrResult] = await Promise.all([
+    countUsers(),
+    countOrganizations(),
     db
       .select({
         mrr: sql<number>`COALESCE(SUM(${plan.price}), 0)`,
@@ -51,8 +72,8 @@ export async function getAdminMetrics() {
   ]);
 
   return {
-    totalUsers: usersCount[0]?.count ?? 0,
-    totalOrganizations: orgsCount[0]?.count ?? 0,
+    totalUsers,
+    totalOrganizations,
     mrr: mrrResult[0]?.mrr ?? 0,
   };
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
 import { cn } from "@/shared/utils/cn";
 
@@ -16,6 +17,7 @@ export function FileDropzone({
   disabled = false,
   className,
 }: FileDropzoneProps) {
+  const t = useTranslations("upload");
   const [dragOver, setDragOver] = useState(false);
 
   const handleDragOver = useCallback(
@@ -66,7 +68,7 @@ export function FileDropzone({
       )}
     >
       <p className="text-sm text-muted-foreground">
-        Drag & drop a file here, or click to browse
+        {t("dropzone")}
       </p>
       <input
         type="file"

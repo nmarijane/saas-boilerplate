@@ -1,0 +1,16 @@
+import type { OrgRole } from "@/shared/types";
+import { ROLE_HIERARCHY } from "@/shared/types";
+
+// Who may change the plan of a workspace and open its billing portal, written
+// once. The actions ask this role of `requireRole`, the shell offers the
+// upgrade from it up, and the billing page draws its buttons for it alone, by
+// the comparison `requireRole` makes itself. This module is plain, so that a
+// Server Component and a client component both read it.
+
+/** The lowest role that may change the plan and manage the billing. */
+export const BILLING_MIN_ROLE: OrgRole = "admin";
+
+/** Whether a role is offered the buttons of the billing page. */
+export function canManageBilling(role: OrgRole): boolean {
+  return (ROLE_HIERARCHY[role] ?? 0) >= ROLE_HIERARCHY[BILLING_MIN_ROLE];
+}

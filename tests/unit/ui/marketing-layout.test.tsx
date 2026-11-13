@@ -6,8 +6,7 @@ import MarketingLayout from "@/app/[locale]/(marketing)/layout";
 import { classesOf, startTags } from "../../helpers/html";
 import { renderWithIntl } from "../../helpers/intl";
 
-// The locale-aware Link of next-intl cannot be imported in Node: its ESM build
-// resolves `next/navigation` without an extension. A plain anchor stands in.
+// The locale-aware Link of next-intl is replaced: no Next router runs in a test. A plain anchor stands in.
 vi.mock("@/shared/lib/i18n-navigation", async () => {
   const { createElement } = await import("react");
   return {

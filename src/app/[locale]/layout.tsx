@@ -3,6 +3,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/shared/components/ui/sonner";
+import { APP_NAME } from "@/shared/config/app";
 import { routing } from "@/shared/lib/i18n-routing";
 import { cn } from "@/shared/utils/cn";
 import { fontMono, fontSans } from "@/styles/fonts";
@@ -10,8 +11,8 @@ import "@/styles/global.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "SaaS Boilerplate",
-    template: "%s | SaaS Boilerplate",
+    default: APP_NAME,
+    template: `%s | ${APP_NAME}`,
   },
   description: "Production-ready SaaS boilerplate built with Next.js",
 };

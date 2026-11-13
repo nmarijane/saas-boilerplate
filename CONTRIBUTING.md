@@ -19,14 +19,23 @@ Thanks for your interest in contributing! This guide covers everything you need 
 git clone https://github.com/<your-username>/saas-boilerplate.git
 cd saas-boilerplate
 
-# 2. Install dependencies
+# 2. Install dependencies (Node 22.13 or later: `nvm use` reads `.nvmrc`)
 npm install
 
-# 3. Start dev server (no env vars needed — uses PGlite in-memory DB)
+# 3. Create the local database (PGlite, kept in ./local.db) with the dev accounts and a demo workspace
+npm run db:seed
+
+# 4. Start the dev server (no env vars needed)
 npm run dev
 ```
 
-That's it. The app runs at [http://localhost:3000](http://localhost:3000) with no external services required.
+That's it. The app runs at [http://localhost:3088](http://localhost:3088) with no external services required. `PGLITE_DATA_DIR` keeps the local database somewhere else.
+
+### The local database
+
+One process at a time opens `./local.db`: two at once break it. `npm run dev` holds it while it runs, so stop it before `npm run db:seed`. The seed refuses a directory that another process holds, and its message names that process (`pid 12345 (npm run dev)`) and says what to do: stop `npm run dev`, then run the seed again, or give the second process a directory of its own (`PGLITE_DATA_DIR=.scratch/db npm run db:seed`; git ignores `.scratch/`). When the holder is a command that ends by itself, the seed, say, it says to wait for its end, or to stop it. The lock is a file in the directory, `process-<pid>.lock`; it goes when its process exits, and a process that was killed leaves one that the next process takes over. Loading the app's code opens nothing (the workers of `next dev` and `next build` never open the directory): only a query does.
+
+If every page answers 500 and the log says that `./local.db` cannot be opened, the directory is broken. Stop `npm run dev`, delete it (`rm -rf local.db`) and run `npm run db:seed`: the demo data comes back, what you added does not. `docs/SETUP.md` (Phase 5) has the details.
 
 ### Optional: Run with PostgreSQL
 
@@ -36,7 +45,7 @@ cp .env.example .env.local
 
 # Set DATABASE_URL to your PostgreSQL connection string, then:
 npm run db:migrate
-npm run db:seed   # Creates plans, admin user, and a dev user
+npm run db:seed   # Creates the plans and, outside production and on a local database only (SEED_DEMO=1 for any other), the admin and dev users and a demo workspace
 npm run dev
 ```
 
@@ -44,9 +53,11 @@ npm run dev
 
 ```bash
 npm run test          # Unit + integration tests (Vitest)
-npm run test:e2e      # End-to-end tests (Playwright)
+npm run test:e2e      # End-to-end tests (Playwright): builds the app, serves it on port 3090 over a throwaway seeded database
 npm run test:watch    # Watch mode
 ```
+
+The end-to-end tests need a browser, installed once with `npx playwright install chromium`. They build the app and serve it on port 3090 over a database of their own (`.e2e/`, deleted before each run), so they never touch `npm run dev` or `./local.db`: it can stay running. They sign in as the people of the seed (`tests/e2e/support.ts`).
 
 ### Storybook
 
@@ -69,7 +80,7 @@ src/
   locales/              # Translation files (en.json, fr.json)
 ```
 
-Each feature module in `src/features/` owns its own components, server actions, hooks, and tests. When adding a feature, keep everything inside its folder and minimize cross-feature dependencies.
+Each feature module in `src/features/` owns its own components, server actions, hooks, and tests. When adding a feature, keep everything inside its folder and minimize cross-feature dependencies. A feature that appears in the app shell gives what it adds (a link, a quota, a first step of the home) in its `shell.ts`, and is listed in `src/features/registry.ts` (`docs/SETUP.md`, "App shell").
 
 ---
 
@@ -117,7 +128,7 @@ npm run check:deps    # Unused dependencies (Knip)
 
 The look is a set of tokens in `src/styles/theme.css` and the components in `src/shared/components/`, which you can browse in Storybook. `docs/SETUP.md` ("Rebrand in one file") tells how a project changes the brand.
 
-- **Use the primitives** of `src/shared/components/ui` (`Button`, `Badge`, `Card`, `Field`, `ProgressBar`...) and the token utilities (`bg-surface`, `text-ink-muted`, `bg-success-bg`, `text-danger-text`). Never a raw Tailwind palette color (`bg-gray-100`, `text-white`): `tests/unit/ui/no-raw-palette.test.ts` fails on it, in `src/shared/components` and `src/features/billing/components`. Add the folders of your own components to that test.
+- **Use the primitives** of `src/shared/components/ui` (`Button`, `Badge`, `Card`, `Field`, `ProgressBar`...) and the token utilities (`bg-surface`, `text-ink-muted`, `bg-success-bg`, `text-danger-text`). Never a raw Tailwind palette color (`bg-gray-100`, `text-white`): `tests/unit/ui/no-raw-palette.test.ts` fails on it, as it does on a hex color (in all of `src/shared`, `src/features` and `src/app`) and on a font family (anywhere in `src`). A folder you add under those three is covered with no edit. The exceptions are listed in the test, each with its reason: the logos of third-party services (`social-buttons.tsx`, `connected-accounts.tsx`), the second brand of the "Other brand" story (`other-brand.ts`), the pages drawn outside the theme (`global-error.tsx`, `not-found.tsx`), the e-mail templates (`src/features/email/templates`), and the two files that name the typefaces (`theme.css`, `fonts.ts`).
 - **One primary button per zone.** The other actions are `outline` or `ghost` buttons, or go in the « ⋯ » menu of `PageHeader` (`moreActions`).
 - **Empty, error and loading states** come from `src/shared/components/data` (`EmptyState`, `ErrorState`, the skeletons), not from markup of your own.
 - **Strings** go in both `src/locales/en.json` and `src/locales/fr.json` (see Internationalization below).
@@ -142,7 +153,7 @@ All user-facing strings must be added to both `src/locales/en.json` and `src/loc
 
 2. **Keep PRs small and focused** — one logical change per PR. Large PRs are slow to review and more likely to conflict.
 
-3. **Write or update tests** for any changed behavior. The CI will check coverage.
+3. **Write or update tests** for any changed behavior. The CI runs the tests with coverage and publishes the coverage badge on `main`; it enforces no threshold, so a change that lowers coverage is stopped by review, not by a check.
 
 4. **Update documentation** if you're changing behavior, adding features, or modifying env vars.
 

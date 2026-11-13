@@ -33,7 +33,7 @@ export const aiCreditLedger = pgTable("ai_credit_ledger", {
   organizationId: text("organization_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
   amount: integer("amount").notNull(), // positive = add, negative = consume
   reason: text("reason").notNull(), // "plan_allocation", "usage", "admin_adjustment"
-  referenceId: text("reference_id"), // message id, subscription id, etc.
+  referenceId: text("reference_id"), // message id (conversation id for an answer with no text), subscription id, etc.
   createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (t) => [
   index("ai_credit_ledger_org_idx").on(t.organizationId),

@@ -2,6 +2,7 @@
 
 import { and, eq, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { unstable_rethrow } from "next/navigation";
 import { z } from "zod";
 
 import { requireAuth } from "@/features/auth/guards";
@@ -32,7 +33,7 @@ export async function updateProfile(
       })
       .where(eq(user.id, session.user.id));
 
-    revalidatePath("/settings/profile");
+    revalidatePath("/settings/account");
   }, "Failed to update profile");
 }
 
@@ -76,7 +77,8 @@ export async function deleteAccount() {
           try {
             const { getStripe } = await import("@/features/billing/stripe");
             await getStripe().subscriptions.cancel(sub.stripeSubscriptionId);
-          } catch {
+          } catch (error) {
+            unstable_rethrow(error);
             // Stripe cancellation is best-effort
           }
         }

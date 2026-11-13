@@ -83,7 +83,7 @@ const API_SCHEMA = {
       body_shape: {
         type: '"bug" | "feature" | "general"',
         message: "string (required)",
-        orgId: "string (optional)",
+        orgId: "string (optional, one of the workspaces of the person: 403 otherwise)",
         screenshotId: "string (optional)",
       },
       response_shape: { id: "string", createdAt: "ISO 8601" },
@@ -94,7 +94,16 @@ const API_SCHEMA = {
       auth_required: true,
       description: "Upload a file. Returns the uploaded file metadata.",
       body_shape: "multipart/form-data — field: file",
-      response_shape: { id: "string", url: "string", name: "string", size: "number" },
+      response_shape: { id: "string", filename: "string" },
+      errors: {
+        "400": {
+          error: "string — an English sentence",
+          code: '"FILE_TOO_LARGE" | "FILE_TYPE_NOT_ALLOWED" | "MISSING_FIELDS" | "NO_ORG"',
+          status: "400",
+          values: "object (a refused file only) — what the message needs: { max: megabytes } for FILE_TOO_LARGE, { type: string } for FILE_TYPE_NOT_ALLOWED",
+        },
+        "500": { error: "string", code: '"UPLOAD_ERROR"', status: "500" },
+      },
     },
     {
       method: "GET",
@@ -107,12 +116,13 @@ const API_SCHEMA = {
       method: "POST",
       path: "/api/ai/chat",
       auth_required: true,
-      description: "Streaming AI chat endpoint (Server-Sent Events).",
+      description: "Streaming AI chat endpoint, in the active workspace of the session: it reads and debits that workspace's credits.",
       body_shape: {
-        messages: "{ role: 'user' | 'assistant', content: string }[]",
-        orgId: "string (optional)",
+        messages: "{ role: string, content: string }[] — only the last 'user' message is read; the model gets the history the server holds",
+        conversationId: "string (optional) — a conversation of the active workspace; without it, the message starts one",
+        model: "string (optional, default 'gpt-4o-mini')",
       },
-      response_shape: "text/event-stream — streamed tokens",
+      response_shape: "text/plain — streamed tokens; the X-Conversation-Id header names the conversation",
     },
     {
       method: "POST",

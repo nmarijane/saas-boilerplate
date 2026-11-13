@@ -1,159 +1,177 @@
 "use client";
 
+import type { SignUpClient, SocialProvider } from "../auth-flows";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { useId, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { authClient } from "@/features/auth/auth-client";
 import { Button } from "@/shared/components/ui/button";
+import { Field } from "@/shared/components/ui/field";
 import { Input } from "@/shared/components/ui/input";
-import { Label } from "@/shared/components/ui/label";
+import { PageAlert } from "@/shared/components/ui/page-alert";
 import { PasswordInput } from "@/shared/components/ui/password-input";
-import { toast } from "@/shared/components/ui/sonner";
-import { isPasswordStrong, PasswordStrength } from "./password-strength";
+import { signUpFlow } from "../auth-flows";
+import { useAuthSubmit } from "../hooks/use-auth-submit";
+import { isPasswordStrong } from "../password-rules";
+import { AuthConfirmation } from "./auth-confirmation";
+import { PasswordStrength } from "./password-strength";
 import { SocialButtons } from "./social-buttons";
 
-const signUpSchema = z
-  .object({
-    name: z.string().min(1),
-    email: z.string().email(),
-    password: z.string().min(8).refine(isPasswordStrong),
-    confirmPassword: z.string().min(8),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    path: ["confirmPassword"],
-  });
+interface SignUpFormProps {
+  /** The auth client: the page gives none (it is the app's own), and a story gives one that answers what it is told to. */
+  client?: SignUpClient;
+  /** The providers the server says are on: a button for each under the form, and none when there are none. */
+  socialProviders?: readonly SocialProvider[];
+  /** The page that sent the person to sign up (an invitation): signing in leads back to it. */
+  callbackUrl?: string;
+}
 
-type SignUpValues = z.infer<typeof signUpSchema>;
-
-export function SignUpForm() {
+// The form of the sign-up page, built as the sign-in form is (see there): it
+// checks the fields itself, tells a refusal of the server in the words of the
+// locale, works by loading and sends once at a time. The strength of the
+// password is told as it is typed (its rules describe the field), and what is
+// wrong with it only when the form is sent. Once the account exists the form
+// gives way to a confirmation: the server has sent the email that verifies the
+// address.
+export function SignUpForm({ client = authClient, socialProviders = [], callbackUrl }: SignUpFormProps) {
   const t = useTranslations("auth");
   const tCommon = useTranslations("common");
   const tSettings = useTranslations("settings");
-  const [isLoading, setIsLoading] = useState(false);
+  // The message of a refusal is a key from the root of the message files
+  const tMessage = useTranslations();
+  const locale = useLocale();
+  const nameId = useId();
+  const emailId = useId();
+  const passwordId = useId();
+  const rulesId = useId();
+  const confirmId = useId();
+  const { pending, failure, run, clearFailure } = useAuthSubmit();
   const [emailSent, setEmailSent] = useState(false);
+
+  const schema = useMemo(
+    () =>
+      z
+        .object({
+          name: z.string().trim().min(1, t("errors.nameRequired")),
+          email: z.email(t("errors.invalidEmail")),
+          password: z.string().refine(isPasswordStrong, t("passwordTooWeak")),
+          confirmPassword: z.string(),
+        })
+        .refine((data) => data.password === data.confirmPassword, {
+          path: ["confirmPassword"],
+          message: t("passwordMismatch"),
+        }),
+    [t],
+  );
 
   const {
     register,
     handleSubmit,
     watch,
     formState: { errors },
-  } = useForm<SignUpValues>({
-    resolver: zodResolver(signUpSchema),
-  });
+  } = useForm<z.infer<typeof schema>>({ resolver: zodResolver(schema) });
 
   const passwordValue = watch("password", "");
 
-  const onSubmit = async (data: SignUpValues) => {
-    setIsLoading(true);
-    const result = await authClient.signUp.email({
-      name: data.name,
-      email: data.email,
-      password: data.password,
-    });
-
-    if (result.error) {
-      toast.error(result.error.message ?? tCommon("error"));
-      setIsLoading(false);
-      return;
-    }
-
-    setEmailSent(true);
-    setIsLoading(false);
-  };
+  const onSubmit = (values: z.infer<typeof schema>) =>
+    run(
+      () =>
+        signUpFlow(client, {
+          name: values.name,
+          email: values.email,
+          password: values.password,
+          locale,
+          callbackUrl,
+        }),
+      () => setEmailSent(true),
+    );
 
   if (emailSent) {
-    return (
-      <div className="text-center space-y-4">
-        <p className="text-muted-foreground">{t("emailSent")}</p>
-      </div>
-    );
+    return <AuthConfirmation message={t("emailSent")} />;
   }
 
   return (
-    <div className="space-y-6">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">{tSettings("name")}</Label>
+    <div className="grid gap-6">
+      <form
+        method="post"
+        onSubmit={handleSubmit(onSubmit)}
+        noValidate
+        className="grid gap-5"
+      >
+        <Field
+          label={tSettings("name")}
+          htmlFor={nameId}
+          error={errors.name?.message}
+        >
           <Input
-            id="name"
             type="text"
             autoComplete="name"
-            {...register("name")}
+            required
+            readOnly={pending}
+            className="min-h-11"
+            {...register("name", { onChange: clearFailure })}
           />
-          {errors.name && (
-            <p className="text-sm text-destructive">{errors.name.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="email">{t("email")}</Label>
+        </Field>
+        <Field
+          label={t("email")}
+          htmlFor={emailId}
+          error={errors.email?.message}
+        >
           <Input
-            id="email"
             type="email"
             placeholder="name@example.com"
             autoComplete="email"
-            {...register("email")}
+            required
+            readOnly={pending}
+            className="min-h-11"
+            {...register("email", { onChange: clearFailure })}
           />
-          {errors.email && (
-            <p className="text-sm text-destructive">{errors.email.message}</p>
-          )}
+        </Field>
+        <div className="grid gap-3">
+          <Field
+            label={t("password")}
+            htmlFor={passwordId}
+            error={errors.password?.message}
+          >
+            <PasswordInput
+              autoComplete="new-password"
+              aria-describedby={passwordValue ? rulesId : undefined}
+              required
+              readOnly={pending}
+              className="min-h-11"
+              {...register("password", { onChange: clearFailure })}
+            />
+          </Field>
+          <PasswordStrength password={passwordValue} id={rulesId} />
         </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="password">{t("password")}</Label>
+        <Field
+          label={t("confirmPassword")}
+          htmlFor={confirmId}
+          error={errors.confirmPassword?.message}
+        >
           <PasswordInput
-            id="password"
             autoComplete="new-password"
-            {...register("password")}
+            required
+            readOnly={pending}
+            className="min-h-11"
+            {...register("confirmPassword", { onChange: clearFailure })}
           />
-          <PasswordStrength password={passwordValue} />
-          {errors.password && (
-            <p className="text-sm text-destructive">
-              {t("passwordTooWeak")}
-            </p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="confirmPassword">{t("confirmPassword")}</Label>
-          <PasswordInput
-            id="confirmPassword"
-            autoComplete="new-password"
-            {...register("confirmPassword")}
-          />
-          {errors.confirmPassword && (
-            <p className="text-sm text-destructive">
-              {t("passwordMismatch")}
-            </p>
-          )}
-        </div>
-
-        <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? tCommon("loading") : t("signUp")}
+        </Field>
+        {failure ? (
+          <PageAlert tone="danger">{tMessage(failure)}</PageAlert>
+        ) : null}
+        <Button
+          type="submit"
+          className="w-full"
+          loading={pending}
+          loadingText={tCommon("loading")}
+        >
+          {t("signUp")}
         </Button>
       </form>
-
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-2 text-muted-foreground">
-            {t("orContinueWith")}
-          </span>
-        </div>
-      </div>
-
-      <SocialButtons />
-
-      <p className="text-center text-sm text-muted-foreground">
-        {t("hasAccount")}{" "}
-        <a href="/sign-in" className="text-primary hover:underline">
-          {t("signIn")}
-        </a>
-      </p>
+      <SocialButtons providers={socialProviders} callbackUrl={callbackUrl} />
     </div>
   );
 }

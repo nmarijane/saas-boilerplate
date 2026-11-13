@@ -1,47 +1,36 @@
 "use client";
 
+import type { RuleKey } from "../password-rules";
+import { CheckIcon, XIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { cn } from "@/shared/utils/cn";
+import { getPasswordStrength, PASSWORD_RULES } from "../password-rules";
 
-const RE_UPPERCASE = /[A-Z]/;
-const RE_LOWERCASE = /[a-z]/;
-const RE_NUMBER = /\d/;
-const RE_SPECIAL = /[^a-z0-9]/i;
-
-const PASSWORD_RULES = [
-  { key: "minLength", test: (p: string) => p.length >= 8 },
-  { key: "uppercase", test: (p: string) => RE_UPPERCASE.test(p) },
-  { key: "lowercase", test: (p: string) => RE_LOWERCASE.test(p) },
-  { key: "number", test: (p: string) => RE_NUMBER.test(p) },
-  { key: "special", test: (p: string) => RE_SPECIAL.test(p) },
-] as const;
-
-type RuleKey = (typeof PASSWORD_RULES)[number]["key"];
-
-export function getPasswordStrength(password: string): number {
-  if (!password) return 0;
-  return PASSWORD_RULES.filter((rule) => rule.test(password)).length;
-}
-
-export function isPasswordStrong(password: string): boolean {
-  return PASSWORD_RULES.every((rule) => rule.test(password));
-}
-
+// The bar takes the graphic tones of the theme (3:1 against the card, in light and
+// in dark), on the track the progress bars use, and the rules that pass the text
+// tone of success (4.5:1): a step of the palette is neither, and the dark theme
+// cannot reach it.
 const STRENGTH_COLORS: Record<number, string> = {
-  0: "bg-muted",
+  0: "bg-track",
   1: "bg-destructive",
   2: "bg-destructive",
-  3: "bg-orange-500",
-  4: "bg-yellow-500",
-  5: "bg-emerald-500",
+  3: "bg-warning-bar",
+  4: "bg-warning-bar",
+  5: "bg-success",
 };
 
 interface PasswordStrengthProps {
   password: string;
+  /** The id of the list of rules: the field they are about names it in `aria-describedby`, so that the rules are read with it. */
+  id?: string;
 }
 
-export function PasswordStrength({ password }: PasswordStrengthProps) {
+// One bar for each rule that passes, and the five rules under them. A rule is
+// told by an icon (a check, or a cross) and by words that only assistive
+// technology hears ("met", "not met"), never by its color alone: the color only
+// echoes them. The bars say what the list says, so they are left to the eye.
+export function PasswordStrength({ password, id }: PasswordStrengthProps) {
   const t = useTranslations("auth.passwordStrength");
   const strength = useMemo(() => getPasswordStrength(password), [password]);
   const ruleResults = useMemo(
@@ -57,29 +46,35 @@ export function PasswordStrength({ password }: PasswordStrengthProps) {
 
   return (
     <div className="space-y-3">
-      <div className="flex gap-1">
-        {Array.from({ length: 5 }, (_, i) => (
+      <div aria-hidden="true" className="flex gap-1">
+        {PASSWORD_RULES.map((rule, i) => (
           <div
-            key={i}
+            key={rule.key}
             className={cn(
               "h-1 flex-1 rounded-full transition-colors",
-              i < strength ? STRENGTH_COLORS[strength] : "bg-muted"
+              i < strength ? STRENGTH_COLORS[strength] : "bg-track"
             )}
           />
         ))}
       </div>
-      <ul className="space-y-1">
-        {ruleResults.map(({ key, passed }) => (
-          <li
-            key={key}
-            className={cn(
-              "text-xs transition-colors",
-              passed ? "text-emerald-500" : "text-muted-foreground"
-            )}
-          >
-            {passed ? "\u2713" : "\u2022"} {t(key as RuleKey)}
-          </li>
-        ))}
+      <ul id={id} className="space-y-1">
+        {ruleResults.map(({ key, passed }) => {
+          const Icon = passed ? CheckIcon : XIcon;
+
+          return (
+            <li
+              key={key}
+              className={cn(
+                "flex items-center gap-2 text-meta transition-colors",
+                passed ? "text-success-text" : "text-ink-muted"
+              )}
+            >
+              <Icon aria-hidden="true" className="size-4 shrink-0" />
+              <span>{t(key as RuleKey)}</span>
+              <span className="sr-only">{passed ? t("met") : t("notMet")}</span>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

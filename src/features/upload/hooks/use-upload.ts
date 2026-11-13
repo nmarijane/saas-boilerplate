@@ -1,6 +1,8 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
+import { failureMessage, UploadFailed } from "../upload-failure";
 
 interface UseUploadOptions {
   userId: string;
@@ -15,7 +17,17 @@ interface UploadState {
   error: string | null;
 }
 
+/** The body of an answer as JSON, or null when it is none: the answer of a server that is down is a page. */
+function bodyOf(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
 export function useUpload({ userId, orgId, onSuccess, onError }: UseUploadOptions) {
+  const t = useTranslations();
   const [state, setState] = useState<UploadState>({
     uploading: false,
     progress: 0,
@@ -44,19 +56,19 @@ export function useUpload({ userId, orgId, onSuccess, onError }: UseUploadOption
 
           xhr.addEventListener("load", () => {
             if (xhr.status >= 200 && xhr.status < 300) {
-              const data = JSON.parse(xhr.responseText);
-              if (data.error) {
-                reject(new Error(data.error));
-              } else {
-                resolve(data);
+              try {
+                resolve(JSON.parse(xhr.responseText));
+              } catch {
+                reject(new UploadFailed(xhr.status, null));
               }
             } else {
-              reject(new Error(`Upload failed with status ${xhr.status}`));
+              // A file the server refuses comes as a 400 that says why: the page tells it in its language (failureMessage)
+              reject(new UploadFailed(xhr.status, bodyOf(xhr.responseText)));
             }
           });
 
           xhr.addEventListener("error", () => {
-            reject(new Error("Upload failed"));
+            reject(new UploadFailed(0, null));
           });
 
           xhr.open("POST", "/api/upload");
@@ -67,14 +79,19 @@ export function useUpload({ userId, orgId, onSuccess, onError }: UseUploadOption
         onSuccess?.(result);
         return result;
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Upload failed";
+        const message = failureMessage(err, (key, values) => t(key, values));
         setState({ uploading: false, progress: 0, error: message });
         onError?.(message);
         return null;
       }
     },
-    [userId, orgId, onSuccess, onError],
+    [userId, orgId, onSuccess, onError, t],
   );
 
-  return { ...state, upload };
+  /** Forgets an upload that is over: its error, its progress, its state. */
+  const reset = useCallback(() => {
+    setState({ uploading: false, progress: 0, error: null });
+  }, []);
+
+  return { ...state, upload, reset };
 }

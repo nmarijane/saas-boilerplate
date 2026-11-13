@@ -1,10 +1,29 @@
 import { getLogger } from "@logtape/logtape";
-import { isRedirectError } from "next/dist/client/components/redirect-error";
+import { notFound, unstable_rethrow } from "next/navigation";
 import { ZodError } from "zod";
 
 const logger = getLogger(["safe-action"]);
 
-type ActionResult<T> =
+/** What `notFound()` throws: Next's own sample of it, so that its format is not written down here. */
+const NOT_FOUND_DIGEST = (() => {
+  try {
+    notFound();
+  } catch (error) {
+    const { digest } = error as { digest?: unknown };
+    return typeof digest === "string" ? digest : undefined;
+  }
+})();
+
+/** Whether an error is the one `notFound()` throws, or wraps it: `unstable_rethrow` looks through `cause` as well. */
+function isNotFound(error: unknown, depth = 0): boolean {
+  if (NOT_FOUND_DIGEST === undefined || typeof error !== "object" || error === null || depth > 8) {
+    return false;
+  }
+
+  return ("digest" in error && error.digest === NOT_FOUND_DIGEST) || ("cause" in error && isNotFound(error.cause, depth + 1));
+}
+
+export type ActionResult<T> =
   | { success: true; data: T }
   | { success: false; error: string; validationErrors?: Record<string, string[]> };
 
@@ -16,9 +35,15 @@ export async function safeAction<T>(
     const data = await fn();
     return { success: true, data };
   } catch (error) {
-    // Next.js redirect() throws a special error that must be re-thrown
-    if (isRedirectError(error)) {
-      throw error;
+    // `redirect()` throws an error that Next itself catches, higher up, to send
+    // the person elsewhere (as do the errors of dynamic rendering): it is not a
+    // failure of the action, and is handed on. `notFound()` is not: an action is
+    // called from a click, and Next gives its rejection to the caller, which no
+    // boundary reads (the page of a not found is drawn only for a rejection that
+    // a render throws, a form or a transition, and a click that hands it on shows
+    // nothing at all), so it is a refusal, like any other.
+    if (!isNotFound(error)) {
+      unstable_rethrow(error);
     }
 
     if (error instanceof ZodError) {

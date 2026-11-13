@@ -5,6 +5,19 @@ import { createOpenAI } from "@ai-sdk/openai";
 
 export type AIProviderName = "openai" | "anthropic" | "google" | "groq" | "ollama";
 
+/**
+ * The variables that switch a provider on, one each, and the page of the
+ * assistant names them when none is set. `getAvailableProviders` reads them
+ * (tests/unit/ai/providers.test.ts keeps the two together). `OLLAMA_BASE_URL` is
+ * left out: no model of the list runs on it.
+ */
+export const PROVIDER_ENV_KEYS = [
+  "OPENAI_API_KEY",
+  "ANTHROPIC_API_KEY",
+  "GOOGLE_GENERATIVE_AI_API_KEY",
+  "GROQ_API_KEY",
+] as const;
+
 export function getProvider(providerName: AIProviderName) {
   switch (providerName) {
     case "openai":

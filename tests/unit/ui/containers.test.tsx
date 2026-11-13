@@ -1,12 +1,14 @@
 import type { ComponentProps, ReactNode } from "react";
+import type { Accepts } from "../../helpers/types";
 import type { Column } from "@/shared/components/data/data-table";
+import type { IconTileProps } from "@/shared/components/ui/icon-tile";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { UsersIcon } from "lucide-react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, expectTypeOf, it, vi } from "vitest";
 import en from "@/locales/en.json";
 import fr from "@/locales/fr.json";
-import { ariaSort, DataTable } from "@/shared/components/data/data-table";
+import { ariaSort, DataTable, sortRows } from "@/shared/components/data/data-table";
 import { StatCard } from "@/shared/components/data/stat-card";
 import * as cardModule from "@/shared/components/ui/card";
 import {
@@ -14,19 +16,29 @@ import {
   CardContent,
   CardFooter,
   CardHeader,
+  CardTitle,
 } from "@/shared/components/ui/card";
 import { IconTile } from "@/shared/components/ui/icon-tile";
 import { List, ListRow } from "@/shared/components/ui/list";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/shared/components/ui/table";
 import {
   contrastRatio,
   parseBlock,
   parseThemeBlocks,
 } from "../../helpers/color";
-import { attribute, classesOf, startTags } from "../../helpers/html";
+import { attribute, classesOf, decodedClassesOf, startTags, textOf } from "../../helpers/html";
 import { renderWithIntl } from "../../helpers/intl";
 
-// The locale-aware Link of next-intl cannot be imported in Node: its ESM build
-// resolves `next/navigation` without an extension. A plain anchor stands in.
+// The locale-aware Link of next-intl is replaced: no Next router runs in a test. A plain anchor stands in.
 vi.mock("@/shared/lib/i18n-navigation", async () => {
   const { createElement } = await import("react");
   return {
@@ -147,32 +159,103 @@ describe("card", () => {
     expect(classesOf(header)).toContain("[.border-b]:pb-4");
     expect(classesOf(footer)).toContain("[.border-t]:pt-4");
   });
+
+  describe("its title", () => {
+    it("is a div unless it is told otherwise", () => {
+      const html = renderWithIntl(<CardTitle>Profile</CardTitle>);
+
+      expect(html).toContain('<div data-slot="card-title"');
+      expect(html).toContain(">Profile</div>");
+    });
+
+    it("renders a heading when asked", () => {
+      const html = renderWithIntl(<CardTitle as="h2">Profile</CardTitle>);
+
+      expect(html).toContain('<h2 data-slot="card-title"');
+      expect(html).toContain(">Profile</h2>");
+    });
+
+    it.each(["h2", "h3"] as const)(
+      "looks the same as a %s as it does as a div: the tag says the structure, never the size",
+      (tag) => {
+        const classesFor = (as: "div" | "h2" | "h3") =>
+          classesOf(
+            slotTag(
+              renderWithIntl(<CardTitle as={as}>Profile</CardTitle>),
+              "card-title",
+            ),
+          );
+
+        expect(classesFor(tag)).toEqual(classesFor("div"));
+        expect(classesFor(tag)).toEqual(
+          expect.arrayContaining(["leading-none", "font-semibold"]),
+        );
+      },
+    );
+
+    it("keeps the attributes and the class of the caller, whatever the tag", () => {
+      const tag = slotTag(
+        renderWithIntl(
+          <CardTitle as="h3" id="plan-title" className="text-section">
+            Plan
+          </CardTitle>,
+        ),
+        "card-title",
+      );
+
+      expect(attribute(tag, "id")).toBe("plan-title");
+      expect(classesOf(tag)).toContain("text-section");
+    });
+
+    it("takes a heading of level 2 or 3 only: the one h1 of a page is the header's", () => {
+      type Title = ComponentProps<typeof CardTitle>;
+
+      expectTypeOf<Accepts<Title, { as: "h2" }>>().toEqualTypeOf<true>();
+      expectTypeOf<Accepts<Title, { as: "h3" }>>().toEqualTypeOf<true>();
+      expectTypeOf<Accepts<Title, { as: "h1" }>>().toEqualTypeOf<false>();
+    });
+  });
 });
 
 describe("icon tile", () => {
-  function tile(props: Partial<ComponentProps<typeof IconTile>> = {}) {
+  // What a test of a tile changes: its tone, its size and its class.
+  function tile(props: Pick<IconTileProps, "tone" | "size" | "className"> = {}) {
     return slotTag(
       renderWithIntl(<IconTile icon={UsersIcon} {...props} />),
       "icon-tile",
     );
   }
 
-  it("tints a numbered tone with its own background and ink", () => {
-    const classes = classesOf(tile({ tone: 2 }));
+  it("draws the tone tiles", () => {
+    const classes = classesOf(tile({ tone: "t3" }));
 
-    expect(classes).toContain("bg-tone-2");
-    expect(classes).toContain("text-tone-2-ink");
+    expect(classes).toContain("bg-tone-3");
+    expect(classes).toContain("text-tone-3-ink");
   });
 
-  it.each([1, 2, 3, 4] as const)(
-    "reads tone %s on the tokens of that number",
-    (n) => {
-      const classes = classesOf(tile({ tone: n }));
+  it.each([
+    ["t1", 1],
+    ["t2", 2],
+    ["t3", 3],
+    ["t4", 4],
+  ] as const)(
+    "reads tone %s on the tokens of the number %s",
+    (tone, n) => {
+      const classes = classesOf(tile({ tone }));
 
       expect(classes).toContain(`bg-tone-${n}`);
       expect(classes).toContain(`text-tone-${n}-ink`);
     },
   );
+
+  it("names the numbered tones t1 to t4, so that a tone of the shell, written t then its number, is one of them", () => {
+    const fromNumber = (n: 1 | 2 | 3 | 4) => tile({ tone: `t${n}` });
+
+    expect(classesOf(fromNumber(4))).toContain("bg-tone-4");
+    // A bare number is no tone any more: it reads `t3`
+    expectTypeOf<Accepts<IconTileProps, { icon: typeof UsersIcon; tone: "t3" }>>().toEqualTypeOf<true>();
+    expectTypeOf<Accepts<IconTileProps, { icon: typeof UsersIcon; tone: 3 }>>().toEqualTypeOf<false>();
+  });
 
   it.each([
     ["brand", ["bg-brand-tint", "text-brand-tint-ink"]],
@@ -195,10 +278,10 @@ describe("icon tile", () => {
   });
 
   it.each([
-    1,
-    2,
-    3,
-    4,
+    "t1",
+    "t2",
+    "t3",
+    "t4",
     "brand",
     "neutral",
     "success",
@@ -268,6 +351,55 @@ describe("icon tile", () => {
     expect(classes).toContain("size-12");
     expect(classes).not.toContain("size-10");
   });
+
+  // The shell hands its icons over already drawn (a quota's, a first step's):
+  // a component cannot cross from the server to the client, and a drawn icon can.
+  describe("with an icon that is already drawn", () => {
+    const drawn = <svg data-icon="folder" aria-hidden="true" />;
+
+    it("draws it in the tile, in the tone it is given, and draws no other icon", () => {
+      const html = renderWithIntl(<IconTile tone="t2">{drawn}</IconTile>);
+      const classes = classesOf(slotTag(html, "icon-tile"));
+
+      expect(classes).toEqual(expect.arrayContaining(["bg-tone-2", "text-tone-2-ink", "size-10", "rounded-md"]));
+      expect(startTags(html, "svg")).toHaveLength(1);
+      expect(html).toMatch(/data-slot="icon-tile"[^>]*><svg data-icon="folder" aria-hidden="true"/);
+    });
+
+    it.each([
+      ["sm", "[&>svg]:size-4.5"],
+      ["md", "[&>svg]:size-5"],
+      ["lg", "[&>svg]:size-6.5"],
+    ] as const)("sizes the icon of the %s tile from the tile, as it sizes one it draws itself", (size, rule) => {
+      const classes = decodedClassesOf(slotTag(renderWithIntl(<IconTile size={size}>{drawn}</IconTile>), "icon-tile"));
+
+      expect(classes).toContain(rule);
+    });
+
+    it("leaves a tile that draws its own icon without that rule", () => {
+      expect(decodedClassesOf(tile())).not.toContain("[&>svg]:size-5");
+    });
+
+    it("hides the whole tile from assistive technology: it is decoration, and the shell's icon is the caller's", () => {
+      const html = renderWithIntl(<IconTile>{<svg data-icon="folder" />}</IconTile>);
+
+      // Even an icon that did not hide itself
+      expect(attribute(slotTag(html, "icon-tile"), "aria-hidden")).toBe("true");
+    });
+
+    it("leaves the tile of an icon it draws itself to hide the icon alone, as before", () => {
+      expect(attribute(tile(), "aria-hidden")).toBeUndefined();
+    });
+
+    it("takes an icon or a drawn one: both, or neither, is refused by the type", () => {
+      expectTypeOf<Accepts<IconTileProps, { icon: typeof UsersIcon }>>().toEqualTypeOf<true>();
+      expectTypeOf<Accepts<IconTileProps, { children: ReactNode }>>().toEqualTypeOf<true>();
+      // Both: one of the two would be dropped without a word
+      expectTypeOf<Accepts<IconTileProps, { icon: typeof UsersIcon; children: ReactNode }>>().toEqualTypeOf<false>();
+      // Neither: an empty tile
+      expectTypeOf<Accepts<IconTileProps, object>>().toEqualTypeOf<false>();
+    });
+  });
 });
 
 describe("list", () => {
@@ -303,6 +435,44 @@ describe("list", () => {
 
     expect(classes).toContain("divide-ink-muted");
     expect(classes).not.toContain("divide-hairline");
+  });
+
+  describe("when the order of the rows matters (as=\"ol\")", () => {
+    const ordered = (props: { className?: string } = {}) =>
+      renderWithIntl(
+        <List as="ol" {...props}>
+          <ListRow title="First" />
+          <ListRow title="Second" />
+        </List>,
+      );
+
+    it("is an ordered list of the same rows, and no unordered one", () => {
+      const html = ordered();
+
+      expect(startTags(html, "ol")).toHaveLength(1);
+      expect(startTags(html, "ul")).toHaveLength(0);
+      expect(startTags(html, "li")).toHaveLength(2);
+      expect(html).toContain('data-slot="list"');
+    });
+
+    it("keeps the role and the hairlines of the list, so that the two cannot drift apart", () => {
+      const [list = ""] = startTags(ordered(), "ol");
+
+      expect(attribute(list, "role")).toBe("list");
+      expect(classesOf(list)).toEqual(expect.arrayContaining(["divide-y", "divide-hairline"]));
+    });
+
+    it("lets a caller's class win, as the unordered one does", () => {
+      const [list = ""] = startTags(ordered({ className: "divide-ink-muted" }), "ol");
+
+      expect(classesOf(list)).toContain("divide-ink-muted");
+      expect(classesOf(list)).not.toContain("divide-hairline");
+    });
+
+    it("stays a ul when it is not told otherwise, or told so", () => {
+      expect(startTags(renderWithIntl(<List as="ul" />), "ul")).toHaveLength(1);
+      expect(startTags(render(), "ol")).toHaveLength(0);
+    });
   });
 });
 
@@ -543,6 +713,159 @@ describe("stat card", () => {
   });
 });
 
+// The primitive the data table is built on, and the one the admin tables that
+// do not need a search or pages use directly (the waitlist). Everything below is
+// a class: a static render cannot measure a row, so the 48 px is the class that
+// sets it, and tests/unit/admin/ reads the pages for the rest.
+describe("table", () => {
+  const render = () =>
+    renderWithIntl(
+      <Table>
+        <TableCaption>Two people</TableCaption>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Projects</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow>
+            <TableCell>Alice Martin</TableCell>
+            <TableCell>12</TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell>Bob Johnson</TableCell>
+            <TableCell>3</TableCell>
+          </TableRow>
+        </TableBody>
+        <TableFooter>
+          <TableRow>
+            <TableCell>Total</TableCell>
+            <TableCell>15</TableCell>
+          </TableRow>
+        </TableFooter>
+      </Table>,
+    );
+
+  it("draws table headers in the meta style: 13 px, muted ink, medium weight", () => {
+    const heads = startTags(render(), "th");
+
+    expect(heads).toHaveLength(2);
+    for (const head of heads) {
+      expect(classesOf(head)).toEqual(
+        expect.arrayContaining(["text-meta", "text-ink-muted", "font-medium"]),
+      );
+      expect(classesOf(head)).not.toContain("text-muted-foreground");
+    }
+  });
+
+  it("sets every row 48 px high at least, divided from the next by a hairline", () => {
+    const rows = startTags(render(), "tr");
+
+    // The header row, two rows of data and the footer's
+    expect(rows).toHaveLength(4);
+    for (const row of rows) {
+      expect(classesOf(row)).toEqual(
+        expect.arrayContaining(["h-12", "border-b", "border-hairline"]),
+      );
+    }
+  });
+
+  it("draws no stripes: no row, and no cell, has a background of its own to alternate", () => {
+    const html = render();
+
+    for (const tag of [
+      ...startTags(html, "tr"),
+      ...startTags(html, "td"),
+      ...startTags(html, "tbody"),
+    ]) {
+      expect(decodedClassesOf(tag).filter((name) => /^(?:even|odd|nth-)/.test(name))).toEqual([]);
+    }
+  });
+
+  it("lights a row on hover with the accent, and leaves the rows of the header alone", () => {
+    const html = render();
+
+    for (const row of startTags(html, "tr")) {
+      expect(classesOf(row)).toContain("hover:bg-accent");
+      expect(classesOf(row)).not.toContain("hover:bg-muted/50");
+    }
+    // A header is not something to point at: its rows take no highlight
+    expect(decodedClassesOf(slotTag(html, "table-header"))).toContain(
+      "[&_tr]:hover:bg-transparent",
+    );
+  });
+
+  it("sets figures in tabular numbers, so that a column of them lines up", () => {
+    expect(classesOf(slotTag(render(), "table"))).toContain("tabular-nums");
+  });
+
+  it("sets the text at 14 px, with room round it, and keeps a cell on one line", () => {
+    const html = render();
+
+    expect(classesOf(slotTag(html, "table"))).toContain("text-body");
+    for (const cell of startTags(html, "td")) {
+      expect(classesOf(cell)).toEqual(
+        expect.arrayContaining(["px-4", "py-3", "align-middle", "whitespace-nowrap"]),
+      );
+    }
+    for (const head of startTags(html, "th")) {
+      expect(classesOf(head)).toEqual(
+        expect.arrayContaining(["px-4", "whitespace-nowrap"]),
+      );
+    }
+  });
+
+  it("scrolls sideways inside its own box: a wide table never widens the page", () => {
+    const html = render();
+
+    expect(classesOf(slotTag(html, "table-container"))).toEqual(
+      expect.arrayContaining(["w-full", "max-w-full", "overflow-x-auto"]),
+    );
+    // The table keeps the width of its columns: the box is what scrolls
+    expect(classesOf(slotTag(html, "table"))).toContain("w-full");
+  });
+
+  it("writes the caption in muted 13 px text", () => {
+    expect(classesOfText(render(), "Two people")).toEqual(
+      expect.arrayContaining(["text-meta", "text-ink-muted"]),
+    );
+  });
+
+  // A table that holds a control (a sort button, an action in a row) lets the
+  // keyboard scroll the box: the control takes the focus, and the box moves to
+  // it. One that can hold none has nothing to focus, and the box that scrolls
+  // is unreachable (axe: scrollable-region-focusable), so it is named, and it
+  // becomes a region a tab reaches.
+  it("leaves its box a plain div while it is not named, so that a table of controls takes no extra stop", () => {
+    const box = slotTag(render(), "table-container");
+
+    expect(attribute(box, "role")).toBeUndefined();
+    expect(attribute(box, "tabindex")).toBeUndefined();
+    expect(attribute(box, "aria-labelledby")).toBeUndefined();
+  });
+
+  it("makes its box a region the keyboard reaches, named by the title of the table, once it is given that title", () => {
+    const html = renderWithIntl(
+      <Table scrollLabelledBy="people-title">
+        <TableBody>
+          <TableRow>
+            <TableCell>Alice Martin</TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>,
+    );
+    const box = slotTag(html, "table-container");
+
+    expect(attribute(box, "role")).toBe("region");
+    expect(attribute(box, "aria-labelledby")).toBe("people-title");
+    expect(attribute(box, "tabindex")).toBe("0");
+    // The table itself is not renamed by it, and takes no stop of its own
+    expect(attribute(slotTag(html, "table"), "aria-labelledby")).toBeUndefined();
+    expect(attribute(slotTag(html, "table"), "tabindex")).toBeUndefined();
+  });
+});
+
 interface Person {
   name: string;
   projects: number;
@@ -594,15 +917,23 @@ describe("data table", () => {
     expect(startTags(html, "tr")).toHaveLength(1 + 2);
   });
 
-  it("writes the column headers in muted 13 px text", () => {
-    const heads = startTags(render(), "th");
+  // The look of a table (the text, the headers, the rows, their rules and their
+  // highlight) is the primitive's, pinned once by the table block above: this
+  // table is made of the primitive and adds only what is its own.
+  it("is built on the table primitive, so that the look of a table has one source", () => {
+    const html = render();
 
-    expect(heads).toHaveLength(columns.length);
-    for (const head of heads) {
-      expect(classesOf(head)).toEqual(
-        expect.arrayContaining(["text-meta", "text-ink-muted"]),
-      );
-      expect(classesOf(head)).not.toContain("text-muted-foreground");
+    expect(startTags(html, "th")).toHaveLength(columns.length);
+    expect(html).toContain('data-slot="table-container"');
+    for (const [tag, slot] of [
+      ["table", "table"],
+      ["th", "table-head"],
+      ["tr", "table-row"],
+      ["td", "table-cell"],
+    ] as const) {
+      for (const start of startTags(html, tag)) {
+        expect(attribute(start, "data-slot"), tag).toBe(slot);
+      }
     }
   });
 
@@ -623,18 +954,6 @@ describe("data table", () => {
     expect(ariaSort(direction)).toBe(expected);
   });
 
-  it("lights a row on hover with the accent, and leaves the header row alone", () => {
-    const [head, ...body] = startTags(render(), "tr");
-
-    expect(body).toHaveLength(people.length);
-    for (const row of body) {
-      expect(classesOf(row)).toContain("hover:bg-accent");
-      expect(classesOf(row)).not.toContain("hover:bg-muted/50");
-    }
-    expect(classesOf(head)).not.toContain("hover:bg-accent");
-    expect(classesOf(head)).toContain("hover:bg-transparent");
-  });
-
   it("sits in a card-radius surface with a hairline border", () => {
     expect(classesOf(slotTag(render(), "data-table-surface"))).toEqual(
       expect.arrayContaining([
@@ -647,23 +966,16 @@ describe("data table", () => {
     );
   });
 
-  it("sets the cells in 14 px text with room around it", () => {
+  // The figures are tabular because the table is (pinned in the block of the
+  // primitive): what is the data table's own is the monospace face of a number.
+  it("writes a number in a monospace face, and a word in the text face", () => {
     const html = render();
+    const [name, projects, status] = startTags(html, "td");
 
-    expect(classesOf(slotTag(html, "table"))).toContain("text-body");
-    for (const cell of startTags(html, "td")) {
-      expect(classesOf(cell)).toEqual(expect.arrayContaining(["px-4", "py-3"]));
-    }
-  });
-
-  it("writes a number in a monospace face with tabular figures, and a word in the text face", () => {
-    const [name, projects, status] = startTags(render(), "td");
-
-    expect(classesOf(projects)).toEqual(
-      expect.arrayContaining(["font-mono", "tabular-nums"]),
-    );
+    expect(classesOf(projects)).toContain("font-mono");
     expect(classesOf(name)).not.toContain("font-mono");
     expect(classesOf(status)).not.toContain("font-mono");
+    expect(classesOf(slotTag(html, "table"))).toContain("tabular-nums");
   });
 
   it("makes a sort button a 44 px target with the focus ring, and hides its arrow", () => {
@@ -760,6 +1072,32 @@ describe("data table", () => {
     expect(render({ data: [] }, "fr")).toContain(">Aucun résultat trouvé<");
   });
 
+  // A line the caller writes, in the card, above the table: what the rows are
+  // not (the newest 100 of more, the latest 50 of a log with no end), so that a
+  // search that finds nothing is not taken for a list with nothing in it.
+  it("holds a note in its card, above the table, and describes the table by it", () => {
+    const html = render({ note: "This list shows the 3 newest people out of 12." });
+    const note = slotTag(html, "data-table-note");
+
+    expect(note).toContain("<p");
+    expect(classesOf(note)).toEqual(
+      expect.arrayContaining(["border-b", "border-hairline", "px-4", "text-meta", "text-ink-muted"]),
+    );
+    expect(textOf(html)).toContain("This list shows the 3 newest people out of 12.");
+    // In the surface, before the table that it speaks of
+    expect(html.indexOf('data-slot="data-table-surface"')).toBeLessThan(html.indexOf('data-slot="data-table-note"'));
+    expect(html.indexOf('data-slot="data-table-note"')).toBeLessThan(html.indexOf("<table"));
+    expect(attribute(note, "id")).toBeTruthy();
+    expect(attribute(slotTag(html, "table"), "aria-describedby")).toBe(attribute(note, "id"));
+  });
+
+  it("holds no note, and describes its table by nothing, unless it is given one", () => {
+    const html = render();
+
+    expect(html).not.toContain('data-slot="data-table-note"');
+    expect(attribute(slotTag(html, "table"), "aria-describedby")).toBeUndefined();
+  });
+
   it("asks for a search in the language of the page, unless the caller words it", () => {
     // With the real ellipsis (U+2026), not three full stops.
     expect(render({ searchKey: "name" })).toContain('placeholder="Search\u2026"');
@@ -836,6 +1174,75 @@ describe("data table", () => {
   });
 });
 
+describe("data table sort", () => {
+  interface Row {
+    id: string;
+    value: unknown;
+    [key: string]: unknown;
+  }
+  const row = (id: string, value: unknown): Row => ({ id, value });
+  const ids = (rows: Row[]) => rows.map((entry) => entry.id);
+
+  // The weekday of these dates runs against their order: Wednesday the 4th,
+  // Thursday the 5th and Friday the 6th of November read Fri, Thu, Wed as text.
+  it("sorts a column of dates by the time, both ways, and not by the text of the date", () => {
+    const rows = [
+      row("thu", new Date("2026-11-05T09:00:00Z")),
+      row("wed", new Date("2026-11-04T09:00:00Z")),
+      row("fri", new Date("2026-11-06T09:00:00Z")),
+      row("jan", new Date("2026-01-23T09:00:00Z")),
+    ];
+
+    expect(ids(sortRows(rows, "value", "asc"))).toEqual(["jan", "wed", "thu", "fri"]);
+    expect(ids(sortRows(rows, "value", "desc"))).toEqual(["fri", "thu", "wed", "jan"]);
+  });
+
+  // As text, -10 would come after -5 and 2.25 after 2.5
+  it("sorts a column of numbers by value, negatives and decimals included", () => {
+    const rows = [row("a", 2.5), row("b", -10), row("c", 2.25), row("d", -5), row("e", 0)];
+
+    expect(ids(sortRows(rows, "value", "asc"))).toEqual(["b", "d", "e", "c", "a"]);
+    expect(ids(sortRows(rows, "value", "desc"))).toEqual(["a", "c", "e", "d", "b"]);
+  });
+
+  it("sorts text with its numbers read as numbers: item 2 comes before item 10", () => {
+    const rows = [row("ten", "item 10"), row("two", "item 2"), row("one", "item 1")];
+
+    expect(ids(sortRows(rows, "value", "asc"))).toEqual(["one", "two", "ten"]);
+    expect(ids(sortRows(rows, "value", "desc"))).toEqual(["ten", "two", "one"]);
+  });
+
+  it("puts a row with no value last, whichever way the column is sorted", () => {
+    const rows = [
+      row("none", null),
+      row("b", "banana"),
+      row("blank", ""),
+      row("a", "apple"),
+      row("missing", undefined),
+      row("bad", new Date("not a date")),
+    ];
+
+    expect(ids(sortRows(rows, "value", "asc"))).toEqual(["a", "b", "none", "blank", "missing", "bad"]);
+    expect(ids(sortRows(rows, "value", "desc"))).toEqual(["b", "a", "none", "blank", "missing", "bad"]);
+  });
+
+  it("puts a row with no date last among dates, and a row with no number last among numbers", () => {
+    const dates = [row("none", null), row("late", new Date("2026-11-04")), row("early", new Date("2026-01-01"))];
+    const numbers = [row("none", undefined), row("big", 9), row("small", 1)];
+
+    expect(ids(sortRows(dates, "value", "desc"))).toEqual(["late", "early", "none"]);
+    expect(ids(sortRows(numbers, "value", "asc"))).toEqual(["small", "big", "none"]);
+  });
+
+  it("keeps equal rows in the order they came in, whichever way the column is sorted, and leaves its input alone", () => {
+    const rows = [row("x1", 1), row("x2", 1), row("x3", 1)];
+
+    expect(ids(sortRows(rows, "value", "asc"))).toEqual(["x1", "x2", "x3"]);
+    expect(ids(sortRows(rows, "value", "desc"))).toEqual(["x1", "x2", "x3"]);
+    expect(ids(rows)).toEqual(["x1", "x2", "x3"]);
+  });
+});
+
 describe("container strings", () => {
   const KEYS = [
     "searchPlaceholder",
@@ -862,6 +1269,7 @@ describe("container sources", () => {
     "ui/card.tsx",
     "ui/icon-tile.tsx",
     "ui/list.tsx",
+    "ui/table.tsx",
     "data/stat-card.tsx",
     "data/data-table.tsx",
   ].map((file) => `shared/components/${file}`);
@@ -890,6 +1298,20 @@ describe("container sources", () => {
 
   it.each(FILES)("%s never uses the destructive text color", (file) => {
     expect(read(file)).not.toMatch(/\btext-destructive\b/);
+  });
+
+  // The look of a table is the primitive's alone: a copy of its classes in the
+  // data table would be a second source, which drifts.
+  it("leaves the look of a table to the primitive: the data table repeats none of its classes", () => {
+    const source = read("shared/components/data/data-table.tsx");
+    const table = /<Table\b[\s\S]*<\/Table>/.exec(source)?.[0] ?? "";
+
+    expect(table).not.toBe("");
+    for (const copied of ["text-body", "text-meta", "h-11", "px-4", "py-3", "hover:bg-accent"]) {
+      expect(table, copied).not.toContain(copied);
+    }
+    // The one highlight it takes off is its own: the row that says there is nothing to show
+    expect(table.match(/hover:bg-transparent/g)).toHaveLength(1);
   });
 
   it("keeps a linked row on the locale-aware Link, so that the language of the page is kept", () => {

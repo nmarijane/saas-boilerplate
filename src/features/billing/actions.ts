@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { requireRole } from "@/features/auth/guards";
 import { createCheckoutSession, createPortalSession, getSubscriptionForOrg } from "./helpers";
+import { BILLING_MIN_ROLE } from "./permissions";
 import { PLANS } from "./plans";
 
 // Client-callable wrappers of ./helpers. They check the role first and only
@@ -16,7 +17,7 @@ const priceIdSchema = z
   );
 
 export async function createCheckoutSessionAction(orgId: string, priceId: string) {
-  await requireRole(orgId, "admin");
+  await requireRole(orgId, BILLING_MIN_ROLE);
   const price = priceIdSchema.parse(priceId);
 
   const session = await createCheckoutSession(orgId, price);
@@ -24,7 +25,7 @@ export async function createCheckoutSessionAction(orgId: string, priceId: string
 }
 
 export async function createPortalSessionAction(orgId: string) {
-  await requireRole(orgId, "admin");
+  await requireRole(orgId, BILLING_MIN_ROLE);
 
   const session = await createPortalSession(orgId);
   return { url: session.url };

@@ -6,7 +6,7 @@
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/next",
-      "args": ["dev"],
+      "args": ["dev", "--port", "3088"],
       "env": {
         "NODE_OPTIONS": "--inspect"
       },
@@ -21,7 +21,7 @@
       "name": "Next.js: debug client-side",
       "type": "chrome",
       "request": "launch",
-      "url": "http://localhost:3000"
+      "url": "http://localhost:3088"
     },
     {
       "name": "Vitest: debug current file",

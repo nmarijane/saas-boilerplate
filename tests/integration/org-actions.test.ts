@@ -1,5 +1,9 @@
 import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  DELETE_WORKSPACE_MIN_ROLE,
+  MANAGE_MEMBERS_MIN_ROLE,
+} from "@/features/auth/organization/permissions";
 import { organizationMember, organization as organizationTable } from "@/models/organization";
 import { seedOrg, seedOrgMember, seedUser } from "../helpers/seed";
 import { testDb } from "../setup";
@@ -19,6 +23,16 @@ vi.mock("@/features/email/send", () => ({
 
 vi.mock("@/features/email/templates/invitation", () => ({
   InvitationEmail: vi.fn().mockReturnValue("mock-template"),
+}));
+
+// Deleting a workspace reads the registry, which reaches the client components of
+// the features: the navigation of next-intl they import is replaced (no Next router runs in a test)
+vi.mock("@/shared/lib/i18n-navigation", () => ({
+  Link: () => null,
+  getPathname: () => "",
+  redirect: () => undefined,
+  usePathname: () => "",
+  useRouter: () => ({}),
 }));
 
 // Override the guards mock from setup.ts to add requireRole
@@ -148,6 +162,11 @@ describe("organization actions", () => {
   });
 
   describe("inviteMember", () => {
+    // The invitation is made for a workspace that exists, and says its name
+    beforeEach(async () => {
+      await seedOrg(ORG_ID, { name: "Acme Inc" });
+    });
+
     it("invites a member and sends email", async () => {
       const { inviteMember } = await import(
         "@/features/auth/organization/actions"
@@ -173,8 +192,45 @@ describe("organization actions", () => {
       expect(sendEmail).toHaveBeenCalledOnce();
       expect(vi.mocked(sendEmail).mock.calls[0][0]).toMatchObject({
         to: "new@test.com",
-        subject: "You've been invited to join an organization",
+        subject: "Test User invited you to join Acme Inc",
       });
+    });
+
+    // The link opens the page of the invitation, in the language of the page it was sent from
+    it("names the workspace in the email by its name, not by its id, and links to the invitation in the language of the sender", async () => {
+      const { inviteMember } = await import(
+        "@/features/auth/organization/actions"
+      );
+      const { InvitationEmail } = await import("@/features/email/templates/invitation");
+
+      await inviteMember({ orgId: ORG_ID, email: "new@test.com", role: "member", locale: "fr" });
+
+      expect(InvitationEmail).toHaveBeenCalledExactlyOnceWith({
+        inviterName: "Test User",
+        organizationName: "Acme Inc",
+        inviteUrl: expect.stringMatching(/^https?:\/\/[^/]+\/fr\/accept-invitation\/invite-1$/),
+      });
+
+      vi.mocked(InvitationEmail).mockClear();
+      await inviteMember({ orgId: ORG_ID, email: "new@test.com", role: "member" });
+      expect(vi.mocked(InvitationEmail).mock.calls[0]?.[0].inviteUrl).toMatch(/\/en\/accept-invitation\/invite-1$/);
+    });
+
+    // `requireRole` has proved that the person belongs to the workspace, so one that is not found
+    // is a failure of the action, not an empty name: no invitation is made, and none is mailed.
+    it("fails, and makes and mails no invitation, when the workspace cannot be found", async () => {
+      const { inviteMember } = await import(
+        "@/features/auth/organization/actions"
+      );
+      const { sendEmail } = await import("@/features/email/send");
+      const { auth } = await import("@/features/auth/auth");
+      await testDb.delete(organizationTable);
+
+      const result = await inviteMember({ orgId: ORG_ID, email: "new@test.com", role: "member" });
+
+      expect(result).toEqual({ success: false, error: "Failed to invite member" });
+      expect(auth.api.createInvitation).not.toHaveBeenCalled();
+      expect(sendEmail).not.toHaveBeenCalled();
     });
 
     it("returns validation error for invalid email", async () => {
@@ -393,6 +449,42 @@ describe("organization actions", () => {
       if (!result.success) {
         expect(result.error).toBe("Failed to delete organization");
       }
+    });
+  });
+
+  // The Team page shows an action to the roles at least as high as the ones
+  // below, and the server asks the guard for the same ones: if either side moves
+  // alone, a button is offered that the server refuses, or hidden that it allows.
+  describe("the roles the actions ask of the guard", () => {
+    it("asks an admin to invite, to change a role and to remove a member, as the Team page offers them", async () => {
+      const { requireRole } = await import("@/features/auth/guards");
+      const { changeRole, inviteMember, removeMember } = await import(
+        "@/features/auth/organization/actions"
+      );
+      await seedOrg(ORG_ID);
+
+      await inviteMember({ orgId: ORG_ID, email: "who@test.com", role: "member" });
+      await changeRole({ orgId: ORG_ID, memberId: "m1", newRole: "admin" });
+      await removeMember({ orgId: ORG_ID, memberIdToRemove: "m1" });
+
+      expect(MANAGE_MEMBERS_MIN_ROLE).toBe("admin");
+      expect(vi.mocked(requireRole).mock.calls).toEqual([
+        [ORG_ID, MANAGE_MEMBERS_MIN_ROLE],
+        [ORG_ID, MANAGE_MEMBERS_MIN_ROLE],
+        [ORG_ID, MANAGE_MEMBERS_MIN_ROLE],
+      ]);
+    });
+
+    it("asks the owner to delete the workspace, as the Team page offers it", async () => {
+      const { requireRole } = await import("@/features/auth/guards");
+      const { deleteOrganization } = await import(
+        "@/features/auth/organization/actions"
+      );
+
+      await deleteOrganization({ orgId: ORG_ID });
+
+      expect(DELETE_WORKSPACE_MIN_ROLE).toBe("owner");
+      expect(requireRole).toHaveBeenCalledExactlyOnceWith(ORG_ID, DELETE_WORKSPACE_MIN_ROLE);
     });
   });
 });

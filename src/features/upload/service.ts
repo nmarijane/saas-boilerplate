@@ -1,4 +1,5 @@
 import { Buffer } from "node:buffer";
+import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getUserOrganizations } from "@/features/auth/organization/queries";
 import { upload } from "@/models/upload";
@@ -59,4 +60,28 @@ export async function canAccessUpload(
   }
 
   return false;
+}
+
+/**
+ * Deletes the files of a workspace that is being deleted: each object from the
+ * storage, then its row. The rows would outlive the workspace otherwise (they
+ * lose their workspace, not their uploader), and the objects with them. One at
+ * a time, so that a storage that fails halfway leaves the rows of the files it
+ * still holds, for the next try. It throws when the storage refuses: the
+ * workspace is kept.
+ */
+export async function deleteWorkspaceFiles(orgId: string): Promise<void> {
+  const files = await db
+    .select({ id: upload.id, storageKey: upload.storageKey })
+    .from(upload)
+    .where(eq(upload.organizationId, orgId));
+  if (files.length === 0) {
+    return;
+  }
+
+  const storage = await getStorageAdapter();
+  for (const file of files) {
+    await storage.delete(file.storageKey);
+    await db.delete(upload).where(eq(upload.id, file.id));
+  }
 }

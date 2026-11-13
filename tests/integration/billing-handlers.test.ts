@@ -317,6 +317,31 @@ describe("billing webhook handlers", () => {
     });
   });
 
+  // A workspace that was deleted has no row left: its updates tell nothing (the
+  // audit log points at its workspace, and the route would answer an error)
+  describe("a workspace that is gone", () => {
+    it("is not updated, nor told about, when its subscription changes", async () => {
+      const { handleSubscriptionUpdated } = await import("@/features/billing/webhook-handlers");
+
+      await handleSubscriptionUpdated(makeStripeSubscription({ metadata: { orgId: "deleted-workspace" } }));
+
+      expect(emitEvent).not.toHaveBeenCalled();
+    });
+
+    it("gets no subscription, nor an event, from a checkout that completes after it went", async () => {
+      const { handleCheckoutCompleted } = await import("@/features/billing/webhook-handlers");
+
+      await handleCheckoutCompleted({
+        metadata: { orgId: "deleted-workspace" },
+        subscription: STRIPE_SUB_ID,
+        customer: STRIPE_CUSTOMER_ID,
+      } as unknown as Stripe.Checkout.Session);
+
+      expect(await testDb.select().from(subscription)).toEqual([]);
+      expect(emitEvent).not.toHaveBeenCalled();
+    });
+  });
+
   describe("handleSubscriptionDeleted", () => {
     it("sets status to canceled and planId to free", async () => {
       await seedSubscription(BILL_ORG, {
@@ -352,6 +377,21 @@ describe("billing webhook handlers", () => {
 
       await handleSubscriptionDeleted(
         makeStripeSubscription({ metadata: {} }),
+      );
+
+      expect(emitEvent).not.toHaveBeenCalled();
+    });
+
+    // Deleting a workspace cancels its subscription, and the provider then says so:
+    // the workspace is gone, and an event about it would fail (the audit log points
+    // at its workspace), so the provider would be answered an error, and retry for days
+    it("does nothing, and tells nothing, for a workspace that is gone", async () => {
+      const { handleSubscriptionDeleted } = await import(
+        "@/features/billing/webhook-handlers"
+      );
+
+      await handleSubscriptionDeleted(
+        makeStripeSubscription({ metadata: { orgId: "deleted-workspace" } }),
       );
 
       expect(emitEvent).not.toHaveBeenCalled();

@@ -170,7 +170,7 @@ api_key (
 )
 ```
 
-Le key complet (`sk_live_xxxxxxxxxxxxxxxxxxxx`) n'est affiché qu'une seule fois à la création. Seul le hash est stocké.
+Le key complet (`sk_live_xxxx…`) n'est affiché qu'une seule fois à la création. Seul le hash est stocké.
 
 **Sécurité du hash :** SHA-256 est un choix délibéré : les API keys sont générées avec 32 bytes aléatoires (crypto.randomBytes), ce qui donne 256 bits d'entropie — rendant le brute-force infaisable même avec SHA-256. Contrairement aux mots de passe (faible entropie, dictionnaire), les API keys n'ont pas besoin de bcrypt/argon2. SHA-256 permet un lookup O(1) sans coût CPU significatif.
 

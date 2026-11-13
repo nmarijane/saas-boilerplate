@@ -285,22 +285,6 @@ describe("page header", () => {
     it("draws no context line without a context", () => {
       expect(render()).not.toContain('data-slot="page-header-context"');
     });
-
-    it("renders the legacy description as the context", () => {
-      const html = render({ description: "Legacy" });
-
-      expect(html).toContain(">Legacy<");
-      expect(classesOf(slotTag(html, "page-header-context"))).toContain(
-        "text-ink-muted",
-      );
-    });
-
-    it("prefers the context to the legacy description", () => {
-      const html = render({ context: "Context", description: "Legacy" });
-
-      expect(html).toContain(">Context<");
-      expect(html).not.toContain("Legacy");
-    });
   });
 
   describe("its tile", () => {
@@ -353,28 +337,6 @@ describe("page header", () => {
 
       expect(html.indexOf("</h1>")).toBeLessThan(primary);
       expect(primary).toBeLessThan(more);
-    });
-
-    it("draws the legacy actions where the primary action goes, when there is none", () => {
-      const html = render({
-        actions: <button type="button">Export</button>,
-        moreActions: [{ label: "Rename", onSelect: vi.fn() }],
-      });
-
-      expect(html).toContain(">Export</button>");
-      expect(html.indexOf(">Export</button>")).toBeLessThan(
-        html.indexOf(moreButton(html)),
-      );
-    });
-
-    it("prefers the primary action to the legacy actions", () => {
-      const html = render({
-        primaryAction: <button type="button">New project</button>,
-        actions: <button type="button">Export</button>,
-      });
-
-      expect(html).toContain(">New project</button>");
-      expect(html).not.toContain("Export");
     });
 
     it("draws no area for the actions when there are none", () => {
@@ -586,10 +548,14 @@ describe("page header", () => {
       expect(7 * 0.25).toBe(panel);
     });
 
-    it("adds no breakpoint to the theme: 30rem is written where it is used", () => {
+    // The shell needs a name for 480 px (`xs:`, which draws its header and its
+    // tab bar). It is the one breakpoint of the theme, and it is this width: the
+    // header still writes `max-[30rem]:` where it uses it.
+    it("adds one breakpoint to the theme, xs, and it is the 30rem this header steps down at", () => {
       const css = readFileSync(resolve(srcDir, "styles/global.css"), "utf-8");
 
-      expect(css).not.toMatch(/--breakpoint-/);
+      expect(css.match(/--breakpoint-[\w-]+/g)).toEqual(["--breakpoint-xs"]);
+      expect(css).toMatch(/--breakpoint-xs:\s*30rem;/);
     });
   });
 });

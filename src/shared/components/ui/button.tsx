@@ -3,6 +3,7 @@ import { Slot } from "@radix-ui/react-slot";
 import { cva } from "class-variance-authority";
 import * as React from "react";
 
+import { LoadingButton } from "@/shared/components/ui/loading-button";
 import { Spinner } from "@/shared/components/ui/spinner";
 import {
   Tooltip,
@@ -18,10 +19,11 @@ const buttonVariants = cva(
     "tap-target inline-flex shrink-0 items-center justify-center rounded-md font-semibold whitespace-nowrap",
     "transition-[background-color,color,border-color,box-shadow,opacity,translate] duration-150 ease-expo",
     "focus-visible:focus-ring",
-    "disabled:pointer-events-none disabled:opacity-50 aria-busy:opacity-100",
-    // An icon component draws its svg as a direct child: while busy, the
-    // spinner takes its place.
-    "aria-busy:[&>svg]:hidden",
+    "disabled:pointer-events-none disabled:opacity-50",
+    // A loading button is not disabled: it keeps its focus and its look. An
+    // icon component draws its svg as a direct child, and while the button
+    // loads the spinner takes its place.
+    "data-loading:[&>svg]:hidden",
     "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   ],
   {
@@ -29,10 +31,10 @@ const buttonVariants = cva(
       variant: {
         default:
           "bg-primary text-primary-foreground shadow-[inset_0_-2px_0_var(--btn-primary-edge)] hover:bg-(--btn-primary-hover) active:bg-(--btn-primary-active) motion-safe:active:translate-y-(--btn-press)",
-        // Hover and press mix in --ink, which is dark in light mode and light
-        // in dark mode: the label keeps its contrast on the on-danger color.
+        // Hover and press come from the --btn-danger-* tokens of theme.css,
+        // which mix in --ink: the label keeps its contrast on the on-danger color.
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-[color-mix(in_oklab,var(--danger)_90%,var(--ink))] active:bg-[color-mix(in_oklab,var(--danger)_82%,var(--ink))]",
+          "bg-destructive text-destructive-foreground hover:bg-(--btn-danger-hover) active:bg-(--btn-danger-active)",
         outline:
           "border border-input bg-surface text-foreground hover:bg-accent hover:text-accent-foreground",
         secondary:
@@ -55,19 +57,12 @@ const buttonVariants = cva(
   },
 );
 
-/** The children without a leading svg element, which the spinner replaces. */
-function withoutLeadingIcon(children: React.ReactNode) {
-  const [first, ...rest] = React.Children.toArray(children);
-
-  return React.isValidElement(first) && first.type === "svg" ? rest : children;
-}
-
 function Button({
   className,
   variant,
   size,
   asChild = false,
-  loading = false,
+  loading,
   loadingText,
   disabledReason,
   children,
@@ -75,7 +70,23 @@ function Button({
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean;
-    /** Shows a spinner, sets `aria-busy` and disables the button. */
+    /**
+     * Shows a spinner and holds the clicks. The button stays where it is and
+     * keeps its focus: it says `aria-disabled`, and carries `data-loading`
+     * (`disabled` would take the focus from the one who just pressed it). Its
+     * click, and the submit of its form, do nothing until it stops loading.
+     *
+     * Drop `disabled` when you pass `loading`: a button that is both is dimmed
+     * and takes no focus, which is what `loading` is there to avoid.
+     *
+     * Pass a boolean every time (`loading={pending}`), and not `undefined`
+     * while it is idle. A button that is given `loading`, true or false, is
+     * drawn by the one client component that holds the click
+     * (loading-button.tsx), so that it keeps its node, and the focus on it, as
+     * it starts and stops loading; a button that is not given it stays a plain
+     * `<button>`. It works in a Server Component: the function that holds the
+     * click is made on the client, and Button hands that component data only.
+     */
     loading?: boolean;
     /** Replaces the label while `loading`; an icon button only speaks it. */
     loadingText?: string;
@@ -101,8 +112,9 @@ function Button({
       .filter(Boolean)
       .join(" ") || undefined;
 
-  // An icon-only button has room for the spinner alone; a text button swaps
-  // its leading icon for it.
+  // An icon-only button has room for the spinner alone; a text button puts it
+  // before its label, where the icon of the label was: `data-loading` hides
+  // that icon, which stays in the markup.
   const iconOnly = size === "icon" || size === "icon-sm";
   let content: React.ReactNode = children;
   if (loading) {
@@ -112,23 +124,39 @@ function Button({
       <>
         {/* The loading text already tells assistive technology what is going on. */}
         <Spinner label={loadingText ? "" : undefined} />
-        {loadingText ?? withoutLeadingIcon(children)}
+        {loadingText ?? children}
       </>
     );
   }
 
-  const button = (
-    <button
-      data-slot="button"
-      className={classes}
-      aria-busy={loading || undefined}
-      {...props}
-      disabled={props.disabled || loading}
-      aria-describedby={describedBy}
-    >
-      {content}
-    </button>
-  );
+  // Button is rendered from Server Components, where a function cannot cross to
+  // the page: it makes no handler. A button that is given `loading` is the
+  // client leaf, which makes the one that holds the click (see its file); any
+  // other is a plain `<button>`, as it was before `loading` existed. The leaf is
+  // used for `loading={false}` too, so that the node stays when loading starts.
+  // `aria-busy` is left out on purpose: a button has no busy state to announce,
+  // and the spinner is a status that says it.
+  const button =
+    loading === undefined ? (
+      <button
+        data-slot="button"
+        className={classes}
+        {...props}
+        aria-describedby={describedBy}
+      >
+        {content}
+      </button>
+    ) : (
+      <LoadingButton
+        data-slot="button"
+        className={classes}
+        {...props}
+        loading={loading}
+        aria-describedby={describedBy}
+      >
+        {content}
+      </LoadingButton>
+    );
 
   if (!showReason) {
     return button;

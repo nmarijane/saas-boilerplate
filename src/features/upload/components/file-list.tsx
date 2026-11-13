@@ -1,7 +1,9 @@
 "use client";
 
+import { useFormatter, useTranslations } from "next-intl";
 import { Button } from "@/shared/components/ui/button";
 import { deleteFile } from "../actions";
+import { fileSizeOf } from "../file-size";
 
 interface FileItem {
   id: string;
@@ -15,17 +17,25 @@ interface FileListProps {
   files: FileItem[];
 }
 
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1_048_576) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / 1_048_576).toFixed(1)} MB`;
-}
-
 export function FileList({ files }: FileListProps) {
+  const t = useTranslations("upload.list");
+  const format = useFormatter();
+  // The size is told in the unit of the storage quota (a megabyte is a million bytes), written as the page writes a figure and a unit.
+  // A byte is said in words ("512 bytes", « 512 octets »): its short form is "byte" in English, which reads wrong next to "2 kB".
+  const sizeOf = (bytes: number) => {
+    const { value, unit } = fileSizeOf(bytes);
+    return format.number(value, {
+      style: "unit",
+      unit,
+      unitDisplay: unit === "byte" ? "long" : "short",
+      maximumFractionDigits: 1,
+    });
+  };
+
   if (files.length === 0) {
     return (
       <p className="py-8 text-center text-sm text-muted-foreground">
-        No files uploaded yet.
+        {t("empty")}
       </p>
     );
   }
@@ -37,18 +47,23 @@ export function FileList({ files }: FileListProps) {
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium">{file.filename}</p>
             <p className="text-xs text-muted-foreground">
-              {formatFileSize(file.size)} &middot; {file.mimetype}
+              {sizeOf(file.size)} &middot; {file.mimetype}
             </p>
           </div>
           <div className="ml-4 flex gap-2">
             <Button variant="ghost" size="sm" asChild>
-              <a href={`/api/upload/${file.id}`} target="_blank" rel="noopener noreferrer">
-                View
+              <a
+                href={`/api/upload/${file.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={t("viewFile", { name: file.filename })}
+              >
+                {t("view")}
               </a>
             </Button>
             <form action={async () => { await deleteFile(file.id); }}>
-              <Button variant="ghost" size="sm" type="submit">
-                Delete
+              <Button variant="ghost" size="sm" type="submit" aria-label={t("deleteFile", { name: file.filename })}>
+                {t("delete")}
               </Button>
             </form>
           </div>

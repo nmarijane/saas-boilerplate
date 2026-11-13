@@ -1,6 +1,7 @@
 "use client";
 
 import type { AIModelConfig } from "@/features/ai/config/models";
+import { useTranslations } from "next-intl";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
 
 interface ModelSelectorProps {
@@ -10,10 +11,13 @@ interface ModelSelectorProps {
 }
 
 export function ModelSelector({ models, value, onValueChange }: ModelSelectorProps) {
+  const t = useTranslations("ai");
+
   return (
     <Select value={value} onValueChange={onValueChange}>
-      <SelectTrigger className="w-48">
-        <SelectValue placeholder="Select model" />
+      {/* The trigger says what it is for; the model that is picked is what it shows */}
+      <SelectTrigger className="w-48" aria-label={t("selectModel")}>
+        <SelectValue placeholder={t("selectModel")} />
       </SelectTrigger>
       <SelectContent>
         {models.map((model) => (

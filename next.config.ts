@@ -2,11 +2,25 @@ import type { NextConfig } from "next";
 
 import { withSentryConfig } from "@sentry/nextjs";
 import createNextIntlPlugin from "next-intl/plugin";
+// Relative, not `@/`: the config is loaded before the aliases of the app exist
+import { legacyRedirects } from "./src/shared/config/redirects";
+import { routing } from "./src/shared/lib/i18n-routing";
 
 const withNextIntl = createNextIntlPlugin("./src/shared/lib/i18n-request.ts");
 
 const nextConfig: NextConfig = {
   typedRoutes: true,
+  // The local database (PGlite, when there is no DATABASE_URL) loads its
+  // WebAssembly from `import.meta.url`. Bundled into the server, that URL is
+  // not one that Node's `fs` takes: the load fails, and since the client is
+  // shared by the whole server and a page that is drawn first creates it (the
+  // sign-in page, which asks `auth.ts` which providers are on), every query
+  // fails after it. Left out of the bundle, Node loads it itself.
+  serverExternalPackages: ["@electric-sql/pglite"],
+  // The old addresses of the settings pages (src/shared/config/redirects.ts)
+  async redirects() {
+    return legacyRedirects(routing.locales);
+  },
   async headers() {
     return [
       {

@@ -3,6 +3,9 @@
   "type": "module",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=22.13"
+  },
   "scripts": {
     "dev": "next dev --port 3088",
     "build": "next build",
@@ -14,6 +17,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "e2e:serve": "cross-env PGLITE_DATA_DIR=memory:// DATABASE_URL= next build && rimraf .e2e && cross-env PGLITE_DATA_DIR=.e2e/db DATABASE_URL= tsx scripts/seed.ts && cross-env PGLITE_DATA_DIR=.e2e/db DATABASE_URL= next start --port 3090",
+    "screenshots": "playwright test -c playwright.screenshots.config.ts",
+    "screenshots:serve": "cross-env PGLITE_DATA_DIR=memory:// DATABASE_URL= next build && rimraf .screenshots && cross-env PGLITE_DATA_DIR=.screenshots/db DATABASE_URL= tsx scripts/seed.ts && cross-env PGLITE_DATA_DIR=.screenshots/db DATABASE_URL= next start --port 3089",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
@@ -72,6 +78,7 @@
     "react-markdown": "^10.1.0",
     "reading-time": "^1.5.0",
     "remark-gfm": "^4.0.1",
+    "sharp": "0.35.5",
     "sonner": "^2.0.7",
     "stripe": "^22.0.0",
     "tailwind-merge": "^3.5.0",
@@ -86,6 +93,7 @@
     "@commitlint/cli": "^20.5.0",
     "@commitlint/config-conventional": "^20.5.0",
     "@eslint-react/eslint-plugin": "^5.8.10",
+    "@next/env": "16.4.3",
     "@playwright/test": "^1.59.1",
     "@storybook/addon-a11y": "^10.6.3",
     "@storybook/nextjs-vite": "^10.4.1",
@@ -114,6 +122,7 @@
     "tailwindcss": "^4.2.2",
     "tsx": "^4.22.3",
     "typescript": "^6.0.2",
+    "vite": "^8.3.5",
     "vitest": "^4.1.8"
   },
   "overrides": {

@@ -1,89 +1,89 @@
 "use client";
 
+import type { PasswordResetClient } from "../auth-flows";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { useId, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { requestPasswordReset } from "@/features/auth/auth-client";
+import { authClient } from "@/features/auth/auth-client";
 import { Button } from "@/shared/components/ui/button";
+import { Field } from "@/shared/components/ui/field";
 import { Input } from "@/shared/components/ui/input";
-import { Label } from "@/shared/components/ui/label";
-import { toast } from "@/shared/components/ui/sonner";
+import { PageAlert } from "@/shared/components/ui/page-alert";
+import { requestPasswordResetFlow } from "../auth-flows";
+import { useAuthSubmit } from "../hooks/use-auth-submit";
+import { AuthConfirmation } from "./auth-confirmation";
 
-const forgotPasswordSchema = z.object({
-  email: z.string().email(),
-});
+interface ForgotPasswordFormProps {
+  /** The auth client: the page gives none (it is the app's own), and a story gives one that answers what it is told to. */
+  client?: Pick<PasswordResetClient, "requestPasswordReset">;
+}
 
-type ForgotPasswordValues = z.infer<typeof forgotPasswordSchema>;
-
-export function ForgotPasswordForm() {
+// The form that asks for the link to a new password, built as the sign-in form
+// is (see there). The link leads back to the reset page in the language of this
+// one. It has no link of its own: the way back to the sign-in page is the
+// footer of the card the page draws, which is the same before and after the
+// email has been sent.
+export function ForgotPasswordForm({ client = authClient }: ForgotPasswordFormProps) {
   const t = useTranslations("auth");
   const tCommon = useTranslations("common");
-  const [isLoading, setIsLoading] = useState(false);
+  // The message of a refusal is a key from the root of the message files
+  const tMessage = useTranslations();
+  const locale = useLocale();
+  const emailId = useId();
+  const { pending, failure, run, clearFailure } = useAuthSubmit();
   const [emailSent, setEmailSent] = useState(false);
+
+  const schema = useMemo(
+    () => z.object({ email: z.email(t("errors.invalidEmail")) }),
+    [t],
+  );
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<ForgotPasswordValues>({
-    resolver: zodResolver(forgotPasswordSchema),
-  });
+  } = useForm<z.infer<typeof schema>>({ resolver: zodResolver(schema) });
 
-  const onSubmit = async (data: ForgotPasswordValues) => {
-    setIsLoading(true);
-    const result = await requestPasswordReset({
-      email: data.email,
-      redirectTo: "/sign-in",
-    });
-
-    if (result.error) {
-      toast.error(result.error.message ?? tCommon("error"));
-      setIsLoading(false);
-      return;
-    }
-
-    setEmailSent(true);
-    setIsLoading(false);
-  };
+  const onSubmit = (values: z.infer<typeof schema>) =>
+    run(
+      () => requestPasswordResetFlow(client, { email: values.email, locale }),
+      () => setEmailSent(true),
+    );
 
   if (emailSent) {
-    return (
-      <div className="text-center space-y-4">
-        <p className="text-muted-foreground">{t("emailSent")}</p>
-        <a href="/sign-in" className="text-sm text-primary hover:underline">
-          {t("signIn")}
-        </a>
-      </div>
-    );
+    return <AuthConfirmation message={t("emailSent")} />;
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="email">{t("email")}</Label>
+    <form method="post" onSubmit={handleSubmit(onSubmit)} noValidate className="grid gap-5">
+      <Field
+        label={t("email")}
+        htmlFor={emailId}
+        error={errors.email?.message}
+      >
         <Input
-          id="email"
           type="email"
           placeholder="name@example.com"
           autoComplete="email"
-          {...register("email")}
+          required
+          readOnly={pending}
+          className="min-h-11"
+          {...register("email", { onChange: clearFailure })}
         />
-        {errors.email && (
-          <p className="text-sm text-destructive">{errors.email.message}</p>
-        )}
-      </div>
-
-      <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? tCommon("loading") : t("resetPassword")}
+      </Field>
+      {failure ? (
+        <PageAlert tone="danger">{tMessage(failure)}</PageAlert>
+      ) : null}
+      <Button
+        type="submit"
+        className="w-full"
+        loading={pending}
+        loadingText={tCommon("loading")}
+      >
+        {t("resetPassword")}
       </Button>
-
-      <p className="text-center text-sm text-muted-foreground">
-        <a href="/sign-in" className="text-primary hover:underline">
-          {tCommon("back")} {t("signIn")}
-        </a>
-      </p>
     </form>
   );
 }

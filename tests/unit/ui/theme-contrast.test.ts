@@ -43,10 +43,11 @@ const REQUIRED_TOKENS = prefixed(
   "--",
   "ink ink-soft ink-muted surface surface-sunken surface-raised hairline control-border",
   "brand brand-2 brand-on brand-tint brand-tint-ink focus-ring gradient-signature",
-  "success success-text success-bg warning-bg warning-text warning-bar danger danger-text danger-on",
+  "success success-text success-bg warning-bg warning-text warning-bar danger danger-text danger-bg danger-on",
   "track bar side-bg side-active-bg side-hover-bg scrim",
   "tone-1 tone-2 tone-3 tone-4 tone-1-ink tone-2-ink tone-3-ink tone-4-ink",
   "btn-primary-hover btn-primary-active btn-primary-edge btn-press",
+  "btn-danger-hover btn-danger-active",
   "corner-xs corner-sm corner-field corner-card corner-dialog elevation-card elevation-pop",
   "typeface-ui typeface-display typeface-mono",
 );
@@ -71,6 +72,30 @@ const SCOPED_TOKENS = prefixed(
   "btn-primary-hover btn-primary-active",
 );
 
+/**
+ * What `npx shadcn add sidebar` appends to its stylesheet as raw `hsl()` colors
+ * when it does not find them, and the token each name stands for here. The
+ * sidebar reads `--sidebar-border` and `--sidebar-accent` itself, through
+ * `var()`, in the outline variant of its menu button.
+ */
+const SIDEBAR_ALIASES: [name: string, value: string][] = [
+  ["--sidebar", "var(--side-bg)"],
+  ["--sidebar-foreground", "var(--ink)"],
+  ["--sidebar-primary", "var(--brand)"],
+  ["--sidebar-primary-foreground", "var(--brand-on)"],
+  ["--sidebar-accent", "var(--side-active-bg)"],
+  ["--sidebar-accent-foreground", "var(--ink)"],
+  ["--sidebar-border", "var(--hairline)"],
+  ["--sidebar-ring", "var(--focus-ring)"],
+];
+
+/** Those of them that follow the brand: a [data-brand-scope] computes them again. */
+const SIDEBAR_BRAND_ALIASES = [
+  "--sidebar-primary",
+  "--sidebar-primary-foreground",
+  "--sidebar-ring",
+];
+
 const TYPEFACES = prefixed("--typeface-", "ui display mono");
 
 /** What the primitives build on: shadcn names first, then ours. */
@@ -85,7 +110,7 @@ const INLINE_VARIABLES = [
     "ink ink-soft ink-muted surface surface-sunken surface-raised hairline control",
     "brand brand-tint brand-tint-ink brand-on",
     "success success-text success-bg warning-bg warning-text warning-bar",
-    "danger danger-text danger-on track bar scrim",
+    "danger danger-text danger-bg danger-on track bar scrim",
     "tone-1 tone-2 tone-3 tone-4 tone-1-ink tone-2-ink tone-3-ink tone-4-ink",
   ),
   ...prefixed("--radius-", "xs sm md lg xl"),
@@ -104,13 +129,25 @@ const TEXT_PAIRS = pairs(
   // brand-colored action of a toast or a ghost button under the pointer.
   "ink/brand-tint ink-muted/brand-tint brand/brand-tint",
   "success-text/success-bg success-text/surface warning-text/warning-bg danger-text/surface",
+  // Danger text on the danger background of a danger zone.
+  "danger-text/danger-bg",
   "danger-on/danger ink-muted/side-bg",
+  // The label of the destructive button, which is `text-destructive-foreground`
+  // (--danger-on), on the hover and press colors that button reads from tokens.
+  "danger-on/btn-danger-hover danger-on/btn-danger-active",
   "tone-1-ink/tone-1 tone-2-ink/tone-2 tone-3-ink/tone-3 tone-4-ink/tone-4",
   // Text on a hovered row of a table or a list, and on the active item of a
   // menu: `bg-accent` is `side-active-bg`. A cell holds ink, muted ink, a link
   // (brand) or a status in color.
   "ink/side-active-bg ink-muted/side-active-bg brand/side-active-bg",
   "success-text/side-active-bg danger-text/side-active-bg",
+  // The shell: the label and the logo (ink) on the sidebar, the header and the
+  // tab bar, and under the pointer a row of the navigation (`bg-sidebar-hover`
+  // is `side-hover-bg`), whose dimmed icon is held to the text ratio too.
+  "ink/side-bg ink/side-hover-bg ink-muted/side-hover-bg",
+  // The workspace switcher of the sidebar: its name and its plan, on the raised
+  // surface that its row stands on.
+  "ink/surface-raised ink-muted/surface-raised",
 );
 
 /** Controls, field borders, focus ring and bars against what they sit on: 3:1. */
@@ -196,6 +233,26 @@ describe("theme tokens", () => {
     );
   });
 
+  it.each([
+    [
+      "--btn-danger-hover",
+      "color-mix(in oklab, var(--danger) 90%, var(--ink))",
+    ],
+    [
+      "--btn-danger-active",
+      "color-mix(in oklab, var(--danger) 82%, var(--ink))",
+    ],
+  ])(
+    "mixes %s from the danger color and the ink, in light and in dark",
+    (token, mix) => {
+      // --ink is dark in light mode and light in dark mode, so one formula moves
+      // away from the on-danger color in both. .dark repeats it so that a dark
+      // wrapper inside a light page computes it from its own --danger and --ink.
+      expect(light[token], `${token} in :root`).toBe(mix);
+      expect(darkOverrides[token], `${token} in .dark`).toBe(mix);
+    },
+  );
+
   it.each(TYPEFACES)(
     "keeps %s a valid font list while the font variable is undefined",
     (token) => {
@@ -248,6 +305,53 @@ describe("brand scope", () => {
     );
     expect(lastLight).toBeGreaterThanOrEqual(0);
     expect(firstDark).toBeGreaterThan(lastLight);
+  });
+});
+
+describe("the sidebar variables of shadcn", () => {
+  const stylesheet = JSON.parse(
+    readFileSync(resolve(stylesDir, "../../components.json"), "utf-8"),
+  ).tailwind.css;
+  const lightAliases = parseBlock(globalCss, ":root");
+  const darkAliases = parseBlock(globalCss, ".dark");
+  const scopeAliases = parseBlock(globalCss, "[data-brand-scope]");
+
+  // The CLI reads the stylesheet that components.json names, not the files it
+  // imports: a name it does not find there, it writes with a color of its own,
+  // which comes last and wins over the alias.
+  it("sit in the stylesheet that components.json gives the CLI", () => {
+    expect(stylesheet).toBe("src/styles/global.css");
+  });
+
+  it.each(SIDEBAR_ALIASES)(
+    "defines %s as %s, in light and in dark",
+    (name, value) => {
+      expect(lightAliases[name], `${name} in :root`).toBe(value);
+      expect(darkAliases[name], `${name} in .dark`).toBe(value);
+    },
+  );
+
+  it.each(SIDEBAR_BRAND_ALIASES)(
+    "computes %s again inside a [data-brand-scope]",
+    (name) => {
+      expect(scopeAliases[name], `${name} in [data-brand-scope]`).toBe(
+        Object.fromEntries(SIDEBAR_ALIASES)[name],
+      );
+    },
+  );
+
+  it("points each of them at a token that theme.css defines", () => {
+    for (const [name, value] of SIDEBAR_ALIASES) {
+      const token = /^var\((--[\w-]+)\)$/.exec(value)?.[1] ?? "";
+
+      expect(light[token], `${name} reads ${token}`).toBeDefined();
+    }
+  });
+
+  it("is declared once: theme.css has none of them", () => {
+    expect(
+      Object.keys(light).filter((token) => token.startsWith("--sidebar")),
+    ).toEqual([]);
   });
 });
 
@@ -359,6 +463,10 @@ describe("global.css", () => {
 
   it.each([
     ["--text-section--font-weight", "600"],
+    // The title of an entity (a project, a team): 24 px on 32 px, bold.
+    ["--text-entity", "1.5rem"],
+    ["--text-entity--line-height", "2rem"],
+    ["--text-entity--font-weight", "700"],
     ["--container-content", "70rem"],
     ["--ease-expo", "cubic-bezier(0.2, 0, 0, 1)"],
   ])("sets %s to %s", (name, value) => {

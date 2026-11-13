@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 import type { Column } from "./data-table";
+import { expect, userEvent, within } from "storybook/test";
 import { StatusDot } from "@/shared/components/ui/status-dot";
 import { DataTable } from "./data-table";
 
@@ -97,4 +98,87 @@ export const Narrow: Story = {
       </div>
     ),
   ],
+};
+
+/**
+ * A line in the card, above the table, for what the rows are not: the newest of more. Search and
+ * sorting only cover the rows the table is given, so a search that finds no one is not "no such
+ * person". The table is described by it.
+ */
+export const WithNote: Story = {
+  args: {
+    searchKey: "name",
+    note: "This list shows the 12 newest users out of 140. Search and sorting cover these only.",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const note = canvas.getByText(/This list shows the 12 newest users out of 140/);
+
+    await expect(note).toBeVisible();
+    await expect(canvas.getByRole("table")).toHaveAccessibleDescription(note.textContent ?? "");
+  },
+};
+
+// The weekday of these dates runs against their order: as text, Fri 6 November comes
+// before Wed 4, and Thu 5 sits between them the wrong way.
+const JOINED = [
+  "2026-11-05",
+  "2026-01-23",
+  "2026-11-04",
+  "2026-11-06",
+  "2026-08-21",
+  "2026-02-13",
+  "2026-03-06",
+  "2026-10-29",
+  "2026-06-19",
+  "2026-04-17",
+  "2026-09-11",
+  "2026-12-01",
+].map((day) => new Date(`${day}T09:00:00Z`));
+
+/** The cell of a date: a time element, in words. */
+const joinedColumn: Column<User> = {
+  key: "joined",
+  header: "Joined",
+  sortable: true,
+  cell: (row) => {
+    const joined = row.joined as Date;
+
+    return (
+      <time dateTime={joined.toISOString()}>
+        {joined.toLocaleDateString("en-US", { dateStyle: "medium", timeZone: "UTC" })}
+      </time>
+    );
+  },
+};
+
+/** A column of dates sorts by the time, both ways, and a third click gives the order of the rows back. */
+export const SortsDates: Story = {
+  args: {
+    columns: [sampleColumns[0]!, joinedColumn],
+    data: sampleData.map((user, index) => ({ ...user, joined: JOINED[index] })),
+    pageSize: 12,
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const days = () =>
+      canvas
+        .getAllByRole("row")
+        .slice(1)
+        .map((row) => Date.parse(within(row).getAllByRole("cell")[1]!.textContent ?? ""));
+    const inOrder = (values: number[], direction: 1 | -1) =>
+      values.every((value, index) => index === 0 || (value - values[index - 1]!) * direction >= 0);
+    const asGiven = days();
+
+    await userEvent.click(canvas.getByRole("button", { name: "Joined" }));
+    await expect(canvas.getByRole("columnheader", { name: "Joined" })).toHaveAttribute("aria-sort", "ascending");
+    await expect(inOrder(days(), 1)).toBe(true);
+
+    await userEvent.click(canvas.getByRole("button", { name: "Joined" }));
+    await expect(canvas.getByRole("columnheader", { name: "Joined" })).toHaveAttribute("aria-sort", "descending");
+    await expect(inOrder(days(), -1)).toBe(true);
+
+    await userEvent.click(canvas.getByRole("button", { name: "Joined" }));
+    await expect(days()).toEqual(asGiven);
+  },
 };

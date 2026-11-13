@@ -1,3 +1,6 @@
+import type { UploadRefusal } from "./refusals";
+import { BYTES_PER_MEGABYTE } from "./units";
+
 const ALLOWED_MIME_TYPES = [
   "image/jpeg",
   "image/png",
@@ -24,25 +27,36 @@ const INLINE_MIME_TYPES = new Set([
   "application/pdf",
 ]);
 
-const MAX_SIZE = Number(process.env.UPLOAD_MAX_SIZE) || 10_485_760; // 10MB
+// 10 MB, in the unit of the quota (`units.ts`): ten million bytes
+const MAX_SIZE = Number(process.env.UPLOAD_MAX_SIZE) || 10 * BYTES_PER_MEGABYTE;
 
-export interface FileValidationResult {
-  valid: boolean;
-  error?: string;
-}
+// A file that is refused says why as a code and the values its message takes
+// (`refusals.ts`): the words are in the locales, in the language of the page that
+// tells them, and not in the server that refuses.
+export type FileValidationResult =
+  | { valid: true }
+  | { valid: false; error: UploadRefusal };
 
 export function validateFile(file: File): FileValidationResult {
   if (file.size > MAX_SIZE) {
     return {
       valid: false,
-      error: `File too large. Maximum size is ${Math.round(MAX_SIZE / 1_048_576)}MB.`,
+      error: {
+        code: "FILE_TOO_LARGE",
+        // On one decimal: a limit that is not a round number of megabytes says so
+        values: { max: Math.round((MAX_SIZE / BYTES_PER_MEGABYTE) * 10) / 10 },
+      },
     };
   }
 
   if (!ALLOWED_MIME_TYPES.includes(file.type)) {
     return {
       valid: false,
-      error: `File type "${file.type}" is not allowed.`,
+      error: {
+        code: "FILE_TYPE_NOT_ALLOWED",
+        // The browser gives no type for what it does not know
+        values: { type: file.type || "unknown" },
+      },
     };
   }
 

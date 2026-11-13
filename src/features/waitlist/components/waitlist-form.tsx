@@ -2,6 +2,7 @@
 
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { unstable_rethrow } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
@@ -31,7 +32,8 @@ export function WaitlistForm({ referralCode, onSuccess }: WaitlistFormProps) {
       } else {
         setError(result.error);
       }
-    } catch {
+    } catch (error) {
+      unstable_rethrow(error);
       setError(t("error"));
     } finally {
       setLoading(false);
@@ -65,7 +67,7 @@ export function WaitlistForm({ referralCode, onSuccess }: WaitlistFormProps) {
           </Button>
         </div>
       </div>
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className="text-sm text-danger-text">{error}</p>}
     </form>
   );
 }

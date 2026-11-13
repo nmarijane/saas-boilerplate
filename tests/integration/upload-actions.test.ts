@@ -129,7 +129,7 @@ describe("upload actions", () => {
       const { validateFile } = await import("@/features/upload/validation");
       vi.mocked(validateFile).mockReturnValue({
         valid: false,
-        error: "File too large. Maximum size is 10MB.",
+        error: { code: "FILE_TOO_LARGE", values: { max: 10 } },
       });
 
       const { uploadFile } = await import("@/features/upload/service");
@@ -142,7 +142,8 @@ describe("upload actions", () => {
 
       const result = await uploadFile(formData);
 
-      expect(result).toEqual({ error: "File too large. Maximum size is 10MB." });
+      // The server says which refusal and with what: the words are the page's, in its language
+      expect(result).toEqual({ error: { code: "FILE_TOO_LARGE", values: { max: 10 } } });
       expect(mockPut).not.toHaveBeenCalled();
 
       const rows = await testDb.select().from(upload);
