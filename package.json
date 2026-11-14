@@ -89,7 +89,7 @@
     "zod": "^4.6.7"
   },
   "optionalDependencies": {
-    "fast-xml-parser": "^5.5.10",
+    "fast-xml-parser": "^5.12.0",
     "kysely": "^0.28.15"
   },
   "devDependencies": {
@@ -129,8 +129,12 @@
     "vitest": "^4.1.8"
   },
   "overrides": {
+    "fast-xml-parser": "$fast-xml-parser",
+    "glob": "14.0.2",
     "inngest": {
       "zod": "$zod"
-    }
+    },
+    "katex": "0.18.2",
+    "minimatch": "11.0.1"
   }
 }
