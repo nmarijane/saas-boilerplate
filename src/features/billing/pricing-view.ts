@@ -86,5 +86,6 @@ export async function trialPlanIdsFor(viewer: PricingViewer): Promise<string[]> 
 
 /** The currency the plans are priced in, and whether the prices are quoted without VAT: what the pages that show prices need. */
 export function pricingMoney() {
-  return { currency: env.BILLING_CURRENCY, taxExcluded: env.STRIPE_TAX_ENABLED };
+  // Read with its default: where the environment is not validated (a build, a test run), the schema's default is not applied
+  return { currency: (env.BILLING_CURRENCY ?? "usd").toLowerCase(), taxExcluded: env.STRIPE_TAX_ENABLED === true };
 }

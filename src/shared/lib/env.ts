@@ -31,9 +31,9 @@ export const env = createEnv({
     STRIPE_PRICE_ENTERPRISE_YEARLY: z.string().default(""),
     STRIPE_PRICE_CREDITS_1000: z.string().default(""),
     STRIPE_PRICE_CREDITS_5000: z.string().default(""),
-    // The currency the plans are priced in (a three-letter ISO code): the catalog creates its prices in it, and the pages show it
     // The customer portal that the app opens (`npm run stripe:catalog` prints it): the one with no cancellation in it
     STRIPE_PORTAL_CONFIGURATION_ID: z.string().default(""),
+    // The currency the plans are priced in (a three-letter ISO code): the catalog creates its prices in it, and the pages show it
     BILLING_CURRENCY: z
       .string()
       .regex(/^[a-z]{3}$/i, "BILLING_CURRENCY must be a three-letter currency code, such as usd or eur")
@@ -43,7 +43,7 @@ export const env = createEnv({
     STRIPE_TAX_ENABLED: z.stringbool().default(false),
     // A free trial without a card; at its end the subscription is cancelled and the workspace is back on the free plan
     BILLING_TRIAL_WITHOUT_CARD: z.stringbool().default(false),
-    // How many workspaces on the free plan a person may own: the free credits are granted per workspace
+    // How many workspaces on the free plan a person may own: the free credits are granted per owner, whatever the number
     MAX_FREE_WORKSPACES: z.coerce.number().int().nonnegative().default(1),
     SMTP_HOST: z.string().default("localhost"),
     SMTP_PORT: z.coerce.number().int().positive().default(587),

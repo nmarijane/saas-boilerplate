@@ -168,7 +168,7 @@ export async function assertWithinPlan(
  */
 export async function assertFreeWorkspaceRoom(userId: string): Promise<void> {
   const free = await ownedFreeWorkspaces(userId);
-  if (free.length >= env.MAX_FREE_WORKSPACES) {
+  if (free.length >= maxFreeWorkspaces()) {
     throw freeWorkspacesRefusal(free[0]?.plan, free.length);
   }
 }
@@ -196,10 +196,17 @@ async function ownedFreeWorkspaces(userId: string): Promise<OwnedFree> {
   });
 }
 
+// Read with its default: where the environment is not validated (a build, a test run), the schema's default is not applied
+function maxFreeWorkspaces(): number {
+  const max = Number(env.MAX_FREE_WORKSPACES ?? 1);
+
+  return Number.isInteger(max) && max >= 0 ? max : 1;
+}
+
 function freeWorkspacesRefusal(plan: PlanSummary | undefined, used: number) {
   return new PlanLimitError({
     key: "workspaces",
-    limit: env.MAX_FREE_WORKSPACES,
+    limit: maxFreeWorkspaces(),
     used,
     planId: plan?.id ?? "",
     planName: plan?.name ?? "",
@@ -235,7 +242,7 @@ export async function settleFreeWorkspaces(userId: string, createdOrgId: string)
   const over = await db.transaction(async (tx) => {
     await tx.select({ id: user.id }).from(user).where(eq(user.id, userId)).for("update");
     const free = (await ownedWorkspaceIds(tx, userId)).filter((id) => !paid.has(id));
-    if (free.length <= env.MAX_FREE_WORKSPACES || !free.includes(createdOrgId)) {
+    if (free.length <= maxFreeWorkspaces() || !free.includes(createdOrgId)) {
       return false;
     }
 
@@ -244,7 +251,7 @@ export async function settleFreeWorkspaces(userId: string, createdOrgId: string)
   });
 
   if (over) {
-    throw freeWorkspacesRefusal(plan, env.MAX_FREE_WORKSPACES);
+    throw freeWorkspacesRefusal(plan, maxFreeWorkspaces());
   }
 }
 

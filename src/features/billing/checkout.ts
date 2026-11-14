@@ -130,7 +130,7 @@ export async function isTrialAvailable(orgId: string, planId: string): Promise<b
 }
 
 function taxParams(): Pick<Stripe.Checkout.SessionCreateParams, "automatic_tax" | "billing_address_collection" | "tax_id_collection" | "customer_update"> {
-  if (!env.STRIPE_TAX_ENABLED) {
+  if (env.STRIPE_TAX_ENABLED !== true) {
     return {};
   }
 
@@ -191,7 +191,7 @@ export async function createPlanCheckout(
 
   const customer = await ensureStripeCustomer(buyer);
   const trial = await isTrialAvailable(buyer.orgId, plan.id);
-  const withoutCard = trial && env.BILLING_TRIAL_WITHOUT_CARD;
+  const withoutCard = trial && env.BILLING_TRIAL_WITHOUT_CARD === true;
 
   const session = await getStripe().checkout.sessions.create(
     {
