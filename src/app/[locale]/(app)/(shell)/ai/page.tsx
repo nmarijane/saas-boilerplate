@@ -1,17 +1,15 @@
 import type { Metadata } from "next";
-import { eq } from "drizzle-orm";
 import { BotIcon } from "lucide-react";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { Chat } from "@/features/ai/components/chat";
-import { AI_CREDITS_QUOTA_ID, isUnlimitedCredits } from "@/features/ai/config/credits";
+import { AI_CREDITS_QUOTA_ID } from "@/features/ai/config/credits";
 import { getAvailableModels } from "@/features/ai/config/models";
 import { getAvailableProviders, PROVIDER_ENV_KEYS } from "@/features/ai/config/providers";
 import { getConversations, getMessages } from "@/features/ai/queries";
+import { ensureMonthlyAllocation } from "@/features/ai/service";
 import { appPageMetadata, getShell } from "@/features/app-shell";
 import { requireWorkspace } from "@/features/auth/organization/workspace";
-import { subscription } from "@/models/subscription";
 import { EmptyState } from "@/shared/components/data/empty-state";
-import { db } from "@/shared/lib/DB";
 
 interface Props {
   params: Promise<{ locale: string }>;
@@ -63,16 +61,8 @@ export default async function AIPage({ params }: Props) {
 
   // The plan, and what the shell says of it: the way to a bigger plan is offered to
   // the roles that may take it (an admin), and the chat tells the others to ask one
-  const [orgSubs, { view }] = await Promise.all([
-    db
-      .select()
-      .from(subscription)
-      .where(eq(subscription.organizationId, orgId))
-      .limit(1),
-    getShell(),
-  ]);
-  const planId = orgSubs[0]?.planId ?? "free";
-  const unlimited = isUnlimitedCredits(planId);
+  const [credits, { view }] = await Promise.all([ensureMonthlyAllocation(orgId), getShell()]);
+  const unlimited = credits.unlimited;
   const upgradeHref = view.quotas.find((quota) => quota.id === AI_CREDITS_QUOTA_ID)?.upgradeHref ?? null;
 
   const [latest] = await getConversations(user.id, orgId);

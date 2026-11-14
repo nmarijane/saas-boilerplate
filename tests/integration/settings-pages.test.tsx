@@ -38,6 +38,10 @@ import { testDb } from "../setup";
 const session = vi.hoisted(() => ({ requireWorkspace: vi.fn() }));
 const intl = vi.hoisted(() => ({ locale: "en" as "en" | "fr" }));
 
+// What the plan says of the seats is the business of plan-limits.test.ts: here the plan has room
+vi.mock("@/features/plan-limits", () => ({
+  getLimitStatus: async () => ({ reached: false, limit: -1, used: 0, planName: null, includedIn: null, upgradeHref: null }),
+}));
 vi.mock("@/features/auth/organization/workspace", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/features/auth/organization/workspace")>()),
   requireWorkspace: session.requireWorkspace,

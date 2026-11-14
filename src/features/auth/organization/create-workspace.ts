@@ -1,9 +1,10 @@
+import type { LimitInfo } from "@/shared/lib/action-refusal";
 import { workspaceSlug } from "./slug";
 
 /** What `createOrganization` answers, as far as creating a workspace reads it. */
 type CreateWorkspaceResult =
   | { success: true; data: { id: string } }
-  | { success: false; error: string };
+  | { success: false; error: string; limit?: LimitInfo };
 
 interface CreateWorkspaceDeps {
   create: (input: { name: string; slug: string }) => Promise<CreateWorkspaceResult>;
@@ -14,6 +15,8 @@ interface CreateWorkspaceDeps {
   switchTo: (organizationId: string) => Promise<boolean>;
   /** Reads the shell again, so that a workspace that exists shows in the list. */
   refresh: () => void;
+  /** The person owns as many free workspaces as the product gives: told with where to go from there. */
+  onLimit?: (limit: LimitInfo) => void;
 }
 
 /**
@@ -34,6 +37,9 @@ export async function createWorkspace(
   const trimmed = name.trim();
   const result = await deps.create({ name: trimmed, slug: workspaceSlug(trimmed) });
   if (!result.success) {
+    if (result.error === "limit_reached" && result.limit) {
+      deps.onLimit?.(result.limit);
+    }
     return false;
   }
 

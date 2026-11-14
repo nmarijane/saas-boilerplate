@@ -29,9 +29,14 @@ test.describe("onboarding", () => {
     await page.getByLabel("Workspace name").fill("E2E Studio");
     await page.getByRole("button", { name: "Next", exact: true }).click();
 
+    // A workspace on the free plan has no room for anyone else: the step says so, with Later as the way on
     await expect(step(page, "Invite your team")).toBeVisible();
-    await page.getByRole("button", { name: "Skip for now", exact: true }).click();
+    await expect(page.getByText("Inviting teammates")).toBeVisible();
+    await page.getByRole("button", { name: "Later", exact: true }).click();
 
+    // Payment is per workspace: the choice of a plan follows the workspace, and the free plan is a way forward
+    await expect(page).toHaveURL(/\/en\/choose-plan\?from=onboarding$/);
+    await page.getByRole("button", { name: "Continue on Free" }).click();
     await expect(page).toHaveURL(/\/en\/dashboard$/);
   });
 
@@ -84,28 +89,5 @@ test.describe("onboarding", () => {
 
     await expect(page).toHaveURL(/\/fr\/onboarding$/);
     expect(bare).toEqual([]);
-  });
-
-  // The server refuses an invitation to someone who is a member already: the step says so and keeps the row
-  test("keeps the row the server refused on the invite step, says so, and leaves only when the person skips", async ({ page }) => {
-    const email = await signInAsANewcomer(page);
-    await expect(page).toHaveURL(/\/en\/onboarding$/);
-    await page.getByRole("button", { name: "Next", exact: true }).click();
-    await page.getByLabel("Workspace name").fill("E2E Invites");
-    await page.getByRole("button", { name: "Next", exact: true }).click();
-    await expect(step(page, "Invite your team")).toBeVisible();
-
-    // The owner of the new workspace invites themself: a member already, so the server says no
-    await page.getByLabel("Email address of person 1").fill(email);
-    await page.getByRole("button", { name: "Complete Setup", exact: true }).click();
-
-    await expect(page.locator('[data-slot="page-alert"][role="alert"]')).toContainText("We couldn't send every invitation.");
-    await expect(page.getByLabel("Email address of person 1")).toHaveValue(email);
-    await expect(step(page, "Invite your team")).toBeVisible();
-    // Nothing is said to have gone that did not
-    await expect(page.getByText("Success")).toHaveCount(0);
-
-    await page.getByRole("button", { name: "Skip for now", exact: true }).click();
-    await expect(page).toHaveURL(/\/en\/dashboard$/);
   });
 });

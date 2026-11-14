@@ -3,12 +3,14 @@ import { FolderIcon } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { appPageMetadata } from "@/features/app-shell";
 import { requireWorkspace } from "@/features/auth/organization/workspace";
+import { getLimitStatus } from "@/features/plan-limits";
 import { NewProjectButton } from "@/features/projects/components/new-project-button";
 import { ProjectGrid } from "@/features/projects/components/project-grid";
 import { ProjectsEmpty } from "@/features/projects/components/projects-empty";
 import { countProjects, listProjects, PROJECTS_PAGE_SIZE } from "@/features/projects/queries";
 import { PageHeader } from "@/shared/components/data/page-header";
 import { Pagination } from "@/shared/components/data/pagination";
+import { PlanLock } from "@/shared/components/data/plan-lock";
 import { clampPage, pageFrom, totalPagesOf } from "@/shared/utils/pagination";
 
 interface Props {
@@ -38,9 +40,10 @@ export default async function ProjectsPage({ params, searchParams }: Props) {
   const { locale } = await params;
   const { page: requested } = await searchParams;
   const { workspace } = await requireWorkspace();
-  const [t, total] = await Promise.all([
+  const [t, total, room] = await Promise.all([
     getTranslations({ locale, namespace: "projects" }),
     countProjects(workspace.id),
+    getLimitStatus(workspace.id, "projects"),
   ]);
   const totalPages = totalPagesOf(total, PROJECTS_PAGE_SIZE);
   const page = clampPage(pageFrom(requested), totalPages);
@@ -57,6 +60,8 @@ export default async function ProjectsPage({ params, searchParams }: Props) {
           hasProjects ? <NewProjectButton orgId={workspace.id} /> : undefined
         }
       />
+      {/* The plan has no room for another project: said before the button is pressed (the server refuses anyway) */}
+      {room.reached ? <PlanLock variant="line" feature={t("create.limitFeature")} planName={room.includedIn ?? undefined} href={room.upgradeHref} /> : null}
       {hasProjects ? (
         <>
           <ProjectGrid projects={projects} />

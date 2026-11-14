@@ -2,7 +2,16 @@ import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createApiKeyAction, revokeApiKeyAction } from "@/features/api-keys/actions";
 import { changeRole, removeMember } from "@/features/auth/organization/actions";
-import { createCheckoutSessionAction } from "@/features/billing/actions";
+import {
+  cancelSubscriptionAction,
+  changePlanAction,
+  createPortalSessionAction,
+  getCheckoutStatusAction,
+  previewPlanChangeAction,
+  resumeSubscriptionAction,
+  startCheckoutAction,
+  startPackCheckoutAction,
+} from "@/features/billing/actions";
 import { createProject, deleteProject, updateProject } from "@/features/projects/actions";
 import { deleteFile } from "@/features/upload/actions";
 import { inviteFromWaitlist } from "@/features/waitlist/actions";
@@ -190,29 +199,81 @@ describe("server action guards", () => {
     });
   });
 
-  describe("createCheckoutSessionAction", () => {
-    it("refuses a call without session", async () => {
+  // Buying and changing the plan are for the owner and the admins, cancelling for the owner alone: the role
+  // is read from the membership on the server, never from the page. A browser names a plan and a period (or a
+  // pack), and no price.
+  describe("the billing actions", () => {
+    const choice = (orgId: string) => ({ orgId, planId: "pro", interval: "monthly" as const });
+    const everyBuy = [
+      ["startCheckoutAction", (orgId: string) => startCheckoutAction(choice(orgId))],
+      ["startPackCheckoutAction", (orgId: string) => startPackCheckoutAction({ orgId, packId: "credits-1000" })],
+      ["previewPlanChangeAction", (orgId: string) => previewPlanChangeAction(choice(orgId))],
+      ["changePlanAction", (orgId: string) => changePlanAction(choice(orgId))],
+    ] as const;
+
+    it.each(everyBuy)("%s refuses a call without session", async (_, call) => {
       signIn(null);
 
-      expect(await redirectOf(createCheckoutSessionAction(ORG_A, "price_x"))).toBe("/en/sign-in");
+      expect(await redirectOf(call(ORG_A))).toBe("/en/sign-in");
       expect(checkoutCreate).not.toHaveBeenCalled();
     });
 
-    it("refuses another organization and plain members", async () => {
+    it.each(everyBuy)("%s refuses another organization and plain members", async (_, call) => {
       signIn(ALICE);
-      expect(await redirectOf(createCheckoutSessionAction(ORG_B, "price_x"))).toBe("/en/dashboard");
+      expect(await redirectOf(call(ORG_B))).toBe("/en/dashboard");
 
       signIn(CAROL);
-      expect(await redirectOf(createCheckoutSessionAction(ORG_A, "price_x"))).toBe("/en/dashboard");
+      expect(await redirectOf(call(ORG_A))).toBe("/en/dashboard");
 
       expect(checkoutCreate).not.toHaveBeenCalled();
     });
 
-    it("refuses a price that is not one of the plans", async () => {
+    it.each([
+      ["cancelSubscriptionAction", (orgId: string) => cancelSubscriptionAction({ orgId })],
+      ["resumeSubscriptionAction", (orgId: string) => resumeSubscriptionAction({ orgId })],
+    ] as const)("%s is the owner's alone: an admin is sent away too", async (_, call) => {
+      signIn(DAN);
+      expect(await redirectOf(call(ORG_A))).toBe("/en/dashboard");
+
+      signIn(CAROL);
+      expect(await redirectOf(call(ORG_A))).toBe("/en/dashboard");
+
+      signIn(BOB);
+      expect(await redirectOf(call(ORG_A))).toBe("/en/dashboard");
+    });
+
+    it("opens the portal for the owner and the admins only", async () => {
+      signIn(null);
+      expect(await redirectOf(createPortalSessionAction(ORG_A))).toBe("/en/sign-in");
+      signIn(CAROL);
+      expect(await redirectOf(createPortalSessionAction(ORG_A))).toBe("/en/dashboard");
+      signIn(ALICE);
+      expect(await redirectOf(createPortalSessionAction(ORG_B))).toBe("/en/dashboard");
+    });
+
+    it("refuses a plan that is not one of ours, in the words of a code, whoever asks", async () => {
       signIn(ALICE);
 
-      await expect(createCheckoutSessionAction(ORG_A, "price_attacker")).rejects.toThrow("Unknown price");
+      expect(await startCheckoutAction({ ...choice(ORG_A), planId: "free" })).toEqual({ success: false, error: expect.any(String) });
+      expect(await startCheckoutAction({ ...choice(ORG_A), planId: "price_attacker" })).toMatchObject({ success: false });
+      expect(await startCheckoutAction({ ...choice(ORG_A), interval: "weekly" as "monthly" })).toMatchObject({ success: false, error: "Validation failed" });
       expect(checkoutCreate).not.toHaveBeenCalled();
+    });
+
+    it("lets an admin start a payment, for the workspace of the session and on their own behalf", async () => {
+      signIn(DAN);
+      checkoutCreate.mockResolvedValue({ id: "cs_guard", ui_mode: "embedded_page", url: null });
+
+      const answer = await startCheckoutAction(choice(ORG_A));
+
+      // No Stripe key in the test environment: the shop is not set up, and says so as a code
+      expect(answer).toEqual({ success: false, error: "not_configured" });
+      expect(checkoutCreate).not.toHaveBeenCalled();
+    });
+
+    it("tells whether a checkout reached the app only to a member of the workspace it was opened for", async () => {
+      signIn(null);
+      expect(await redirectOf(getCheckoutStatusAction({ sessionId: "cs_1" }))).toBe("/en/sign-in");
     });
   });
 

@@ -41,9 +41,9 @@ describe("workspace plan", () => {
     expect(never).toMatchObject({ id: "free", name: "Free", upgradeHref: "/settings/billing" });
     expect(never.limits.projects).toBe(3);
 
-    // Canceled, or behind on payment: not live.
+    // Over, or never paid: not live. (A payment that is being retried, `past_due`, keeps the plan: see below.)
     await seedPlan("pro");
-    for (const status of ["canceled", "past_due"]) {
+    for (const status of ["canceled", "unpaid", "incomplete", "incomplete_expired", "paused"]) {
       await testDb.delete(subscription);
       await seedSubscription(ORG, { planId: "pro", status });
 
@@ -52,6 +52,13 @@ describe("workspace plan", () => {
       expect(summary.id, `a ${status} subscription`).toBe("free");
       expect(summary.limits.projects, `a ${status} subscription`).toBe(3);
     }
+  });
+
+  it("keeps the paid plan while the payment provider retries a payment that failed", async () => {
+    await seedPlan("pro");
+    await seedSubscription(ORG, { planId: "pro", status: "past_due" });
+
+    expect(await getWorkspacePlan(ORG)).toMatchObject({ id: "pro", name: "Pro" });
   });
 
   it("falls back to the free plan for a plan the configuration does not know", async () => {

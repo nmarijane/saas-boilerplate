@@ -3,9 +3,11 @@
 import type { ComponentProps, FormEvent } from "react";
 import type { InviteOutcome } from "../invite-member";
 import type { AssignableRole } from "../permissions";
+import type { LimitInfo } from "@/shared/lib/action-refusal";
 import { useLocale, useTranslations } from "next-intl";
 import { useId, useState } from "react";
 import { inviteMember } from "@/features/auth/organization/actions";
+import { LimitNotice } from "@/shared/components/data/limit-notice";
 import { Button } from "@/shared/components/ui/button";
 import { whileConfirming } from "@/shared/components/ui/confirm-dialog";
 import {
@@ -77,6 +79,8 @@ interface InviteFormViewProps {
   invalid: boolean;
   /** The server refused, or did not answer: what was typed is kept, and the dialog says so. */
   failed: boolean;
+  /** The plan has no seat left: the lock is shown instead of the failure. */
+  limit?: LimitInfo | null;
   onEmailChange: (email: string) => void;
   onRoleChange: (role: AssignableRole) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
@@ -97,6 +101,7 @@ export function InviteFormView({
   pending,
   invalid,
   failed,
+  limit,
   onEmailChange,
   onRoleChange,
   onSubmit,
@@ -137,7 +142,8 @@ export function InviteFormView({
             disabled={pending}
           />
         </Field>
-        {failed ? <PageAlert tone="danger">{t("inviteFailed")}</PageAlert> : null}
+        {limit ? <LimitNotice limit={limit} feature={t("inviteLimitFeature")} /> : null}
+        {failed && !limit ? <PageAlert tone="danger">{t("inviteFailed")}</PageAlert> : null}
       </DialogBody>
       <DialogFooter>
         <DialogClose asChild>
@@ -177,6 +183,7 @@ function InviteForm({
   const [role, setRole] = useState<AssignableRole>("member");
   const [invalid, setInvalid] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [limit, setLimit] = useState<LimitInfo | null>(null);
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -186,11 +193,13 @@ function InviteForm({
 
     onPendingChange(true);
     setFailed(false);
+    setLimit(null);
     let outcome: InviteOutcome = "failed";
     try {
       outcome = await inviteMemberFlow(
         {
           invite: inviteMember,
+          onLimit: setLimit,
           notify: (address) => toast.success(t("invited", { email: address })),
         },
         { orgId, email, role, locale },
@@ -203,7 +212,7 @@ function InviteForm({
       onClose();
     } else {
       setInvalid(outcome === "invalid");
-      setFailed(outcome === "failed");
+      setFailed(outcome === "failed" || outcome === "limit");
     }
   };
 
@@ -214,6 +223,7 @@ function InviteForm({
       pending={pending}
       invalid={invalid}
       failed={failed}
+      limit={limit}
       onEmailChange={(next) => {
         setEmail(next);
         setInvalid(false);

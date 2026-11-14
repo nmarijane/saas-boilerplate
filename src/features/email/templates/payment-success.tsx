@@ -3,6 +3,8 @@ import { BaseLayout } from "./base-layout";
 
 interface PaymentSuccessEmailProps {
   name: string;
+  /** The salutation, in the language of the mail: "Hi {name}," when left out. */
+  greeting?: string;
   planName: string;
   amount: string;
   previewText?: string;
@@ -37,6 +39,7 @@ const detail = {
 
 export function PaymentSuccessEmail({
   name,
+  greeting,
   planName,
   amount,
   previewText = "Payment confirmed",
@@ -49,7 +52,7 @@ export function PaymentSuccessEmail({
   return (
     <BaseLayout preview={previewText}>
       <Heading style={h1}>{heading}</Heading>
-      <Text style={text}>Hi {name},</Text>
+      <Text style={text}>{greeting ?? `Hi ${name},`}</Text>
       <Text style={text}>{bodyText}</Text>
       <Text style={text}>{detailsLabel}</Text>
       <Text style={detail}>

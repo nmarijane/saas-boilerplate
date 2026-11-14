@@ -57,6 +57,20 @@
       "when": 1793894605555,
       "tag": "0007_cooing_abomination",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794596950852,
+      "tag": "0008_dry_dust",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1794603248350,
+      "tag": "0009_low_dagger",
+      "breakpoints": true
     }
   ]
 }

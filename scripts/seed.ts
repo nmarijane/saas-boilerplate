@@ -3,6 +3,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate as migratePg } from "drizzle-orm/node-postgres/migrator";
 import { drizzle as drizzlePglite } from "drizzle-orm/pglite";
 import { migrate as migratePglite } from "drizzle-orm/pglite/migrator";
+import { planRowOf, PLANS } from "../src/features/billing/plans";
 import * as schema from "../src/models";
 import { resolvePgliteDataDir } from "../src/shared/lib/pglite-data-dir";
 import { seedPlan, seedTarget } from "./seed-target";
@@ -30,44 +31,9 @@ async function createDb() {
   return db;
 }
 
-const plans: Array<{
-  id: string;
-  name: string;
-  stripePriceId: string | null;
-  features: Record<string, boolean>;
-  limits: Record<string, number>;
-  price: number;
-}> = [
-  {
-    id: "free",
-    name: "Free",
-    stripePriceId: null,
-    features: { dashboard: true, feedback: true },
-    limits: { members: 3, uploads: 10 },
-    price: 0,
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    stripePriceId: null,
-    features: { dashboard: true, feedback: true, notifications: true },
-    limits: { members: 20, uploads: 100 },
-    price: 1900,
-  },
-  {
-    id: "enterprise",
-    name: "Enterprise",
-    stripePriceId: null,
-    features: {
-      dashboard: true,
-      feedback: true,
-      notifications: true,
-      priority_support: true,
-    },
-    limits: { members: -1, uploads: -1 },
-    price: 4900,
-  },
-];
+// The plans of the product are written once, in src/features/billing/plans.ts: the seed takes its prices,
+// limits and features from there, so that the database, the pricing page and the checkout agree
+const plans = PLANS.map(planRowOf);
 
 async function hashPassword(password: string): Promise<string> {
   const { hashPassword: hash } = await import("better-auth/crypto");
@@ -99,14 +65,14 @@ async function seed() {
 
   const db = await createDb();
 
-  // Seed plans
-  for (const p of plans) {
+  // Seed plans: a plan that exists is brought up to date with `PLANS` (a price or a limit that changed there)
+  for (const { id, ...values } of plans) {
     await db
       .insert(schema.plan)
-      .values(p)
-      .onConflictDoNothing({ target: schema.plan.id });
+      .values({ id, ...values })
+      .onConflictDoUpdate({ target: schema.plan.id, set: values });
   }
-  console.log("Plans seeded: Free, Pro, Enterprise");
+  console.log(`Plans seeded: ${PLANS.map((p) => p.name).join(", ")}`);
 
   // Dev accounts: they have a known password, so only outside production and on a
   // database that is this machine's own (SEED_DEMO=1 says a shared one is meant)

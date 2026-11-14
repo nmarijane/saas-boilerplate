@@ -3,6 +3,8 @@ import { BaseLayout } from "./base-layout";
 
 interface SubscriptionCancelledEmailProps {
   name: string;
+  /** The salutation, in the language of the mail: "Hi {name}," when left out. */
+  greeting?: string;
   planName: string;
   endDate: string;
   resubscribeUrl: string;
@@ -42,6 +44,7 @@ const button = {
 
 export function SubscriptionCancelledEmail({
   name,
+  greeting,
   planName,
   endDate,
   resubscribeUrl,
@@ -54,7 +57,7 @@ export function SubscriptionCancelledEmail({
   return (
     <BaseLayout preview={previewText}>
       <Heading style={h1}>{heading}</Heading>
-      <Text style={text}>Hi {name},</Text>
+      <Text style={text}>{greeting ?? `Hi ${name},`}</Text>
       <Text style={text}>
         {bodyText ??
           `Your ${planName} subscription has been cancelled.`}

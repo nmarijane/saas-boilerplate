@@ -29,9 +29,7 @@ const config: KnipConfig = {
   ignoreIssues: {
     // Internal operations of the assistant, called by billing webhooks and jobs (service.ts says so)
     "src/features/ai/service.ts": ["files"],
-    // The client side of billing and feature flags: the hook and the components a page uses to gate something
-    "src/features/billing/components/upgrade-button.tsx": ["files"],
-    "src/features/billing/hooks/use-subscription.ts": ["files"],
+    // The client side of feature flags: the hook and the components a page uses to gate something
     "src/features/feature-flags/components/feature-gate.tsx": ["files"],
     "src/features/feature-flags/hooks/use-feature-flag.ts": ["files"],
     // Read by `next dev` and `next build`: next.config.ts names it as the next-intl request config

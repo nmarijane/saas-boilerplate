@@ -2,7 +2,7 @@ import type { PlanSummary } from "@/shared/shell/contract";
 import { inArray } from "drizzle-orm";
 import { subscription } from "@/models";
 import { db } from "@/shared/lib/DB";
-import { planOfSubscription } from "./plans";
+import { planOfSubscription } from "./plan-summary";
 import "server-only";
 
 /**

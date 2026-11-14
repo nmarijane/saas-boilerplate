@@ -143,8 +143,8 @@ describe("the chat of the assistant", () => {
       const html = draw([], { upgradeHref: "/settings/billing" });
 
       expect(textOf(html)).toContain("No credits left");
-      expect(textOf(html)).toContain("Upgrade the plan to keep using the assistant.");
-      expect(startTags(html, "a").map((tag) => attribute(tag, "href"))).toEqual(["/settings/billing"]);
+      expect(textOf(html)).toContain("Top up credits, or change the plan, to keep using the assistant.");
+      expect(startTags(html, "a").map((tag) => attribute(tag, "href"))).toEqual(["/settings/billing?topup=1", "/settings/billing"]);
     });
 
     it("tells a member to ask an admin, with no way of their own", async () => {

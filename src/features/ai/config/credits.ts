@@ -1,16 +1,10 @@
 /** The id of the quota that counts a workspace's credits (the shell's, and the plan's `aiCredits` limit): the assistant looks it up to know where the person may get more. */
 export const AI_CREDITS_QUOTA_ID = "ai-credits";
 
-export const CREDIT_PLANS: Record<string, number> = {
-  free: 100,
-  pro: 5000,
-  enterprise: -1, // unlimited
-};
-
-export function getCreditAllocation(planId: string): number {
-  return CREDIT_PLANS[planId] ?? CREDIT_PLANS.free;
-}
-
-export function isUnlimitedCredits(planId: string): boolean {
-  return getCreditAllocation(planId) === -1;
-}
+/**
+ * What a workspace is granted each month when no plan says (a project that
+ * removed billing keeps its assistant metered). With billing, the plan decides:
+ * `limits.aiCredits` of the plan in `src/features/billing/plans.ts`, where -1 is
+ * unlimited.
+ */
+export const FALLBACK_MONTHLY_CREDITS = 100;

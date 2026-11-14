@@ -5,6 +5,7 @@ import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { requireAuth, requireRole } from "@/features/auth/guards";
 import { emitEvent } from "@/features/events/emitter";
+import { withPlanLimit } from "@/features/plan-limits";
 import { project } from "@/models/project";
 import { db } from "@/shared/lib/DB";
 import { safeAction } from "@/shared/lib/safe-action";
@@ -36,13 +37,16 @@ export async function createProject(input: z.infer<typeof createProjectSchema>) 
     const { session } = await requireRole(parsed.organizationId, "member");
     const id = generateId();
 
-    await db.insert(project).values({
-      id,
-      organizationId: parsed.organizationId,
-      name: parsed.name,
-      description: orNull(parsed.description),
-      status: "draft",
-      createdBy: session.user.id,
+    // The plan's limit is checked with the workspace held, in the transaction that writes the row
+    await withPlanLimit(parsed.organizationId, "projects", 1, async (tx) => {
+      await tx.insert(project).values({
+        id,
+        organizationId: parsed.organizationId,
+        name: parsed.name,
+        description: orNull(parsed.description),
+        status: "draft",
+        createdBy: session.user.id,
+      });
     });
 
     await emitEvent("project.created", {

@@ -14,6 +14,10 @@ export const user = pgTable("user", {
   isAdmin: boolean("is_admin").notNull().default(false),
   onboardingCompleted: boolean("onboarding_completed").notNull().default(false),
   twoFactorEnabled: boolean("two_factor_enabled").default(false),
+  /** When this person's free trial was used: a trial is given once per owner, whatever the number of workspaces. */
+  trialUsedAt: timestamp("trial_used_at"),
+  /** The subscription that spent the trial: a second delivery of its own event is not a second trial. */
+  trialSubscriptionId: text("trial_subscription_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

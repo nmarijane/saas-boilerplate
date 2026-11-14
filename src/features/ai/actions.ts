@@ -8,7 +8,7 @@ import { requireAuth, requireRole } from "@/features/auth/guards";
 import { aiConversation } from "@/models/ai";
 import { db } from "@/shared/lib/DB";
 import { safeAction } from "@/shared/lib/safe-action";
-import { getCreditBalance } from "./queries";
+import { ensureMonthlyAllocation } from "./service";
 
 // addCredits lives in ./service: it is an internal operation. A conversation is
 // started by the chat route, with its first message, in the active workspace.
@@ -65,5 +65,7 @@ export async function updateConversationTitle(
 
 export async function getCreditBalanceAction(orgId: string) {
   await requireRole(orgId, "member");
-  return getCreditBalance(orgId);
+  // Looking at the balance is a use of the month: the allocation of the plan is granted now if it was not, so that a
+  // workspace is never shown none before its first message
+  return (await ensureMonthlyAllocation(orgId)).total;
 }

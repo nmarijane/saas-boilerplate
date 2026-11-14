@@ -69,6 +69,27 @@ test("home", async ({ page }, testInfo) => {
   await capture(page, testInfo, "home");
 });
 
+test("prices", async ({ page }, testInfo) => {
+  test.skip(!onDesktop(testInfo), "a picture of the desktop layout");
+
+  await page.goto("/en/pricing");
+  await expect(page.getByRole("heading", { level: 1, name: "Simple, transparent pricing" })).toBeVisible();
+  await page.getByRole("button", { name: /Yearly/ }).click();
+  await expect(page.getByText("$290", { exact: true })).toBeVisible();
+
+  await capture(page, testInfo, "prices");
+});
+
+test("billing", async ({ page }, testInfo) => {
+  test.skip(!onDesktop(testInfo), "a picture of the desktop layout");
+
+  await page.goto("/en/settings/billing");
+  await expect(page.getByRole("heading", { level: 1, name: "Billing" })).toBeVisible();
+  await expect(page.getByText(/left of 5,000 this month/)).toBeVisible();
+
+  await capture(page, testInfo, "billing");
+});
+
 test("projects", async ({ page }, testInfo) => {
   test.skip(!onDesktop(testInfo), "a picture of the desktop layout");
 

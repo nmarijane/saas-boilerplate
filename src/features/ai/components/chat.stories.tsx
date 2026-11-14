@@ -121,9 +121,10 @@ export const NoCreditsForAnAdmin: Story = {
       const alert = await canvas.findByRole("alert");
 
       await expect(alert).toHaveTextContent("No credits left");
-      await expect(alert).toHaveTextContent("Upgrade the plan to keep using the assistant.");
+      await expect(alert).toHaveTextContent("Top up credits, or change the plan, to keep using the assistant.");
       await expect(alert).not.toHaveTextContent("Boom");
-      await expect(within(alert).getByRole("link", { name: "Upgrade" })).toHaveAttribute("href", "/en/settings/billing");
+      await expect(within(alert).getByRole("link", { name: "Top up" })).toHaveAttribute("href", "/en/settings/billing?topup=1");
+      await expect(within(alert).getByRole("link", { name: "Change plan" })).toHaveAttribute("href", "/en/settings/billing");
       await expect(canvas.getByText("Draft the launch email")).toBeVisible();
       await expect(requests).toHaveBeenCalledOnce();
       await expect(bodyOf(requests, 0)).toEqual({ messages: [{ role: "user", content: "Draft the launch email" }], model: "gpt-4o-mini" });
@@ -167,7 +168,7 @@ export const NoCreditsInFrench: Story = {
       const alert = await canvas.findByRole("alert");
 
       await expect(alert).toHaveTextContent("Plus de crédits");
-      await expect(within(alert).getByRole("link", { name: "Passer au plan supérieur" })).toHaveAttribute("href", "/fr/settings/billing");
+      await expect(within(alert).getByRole("link", { name: "Changer d'offre" })).toHaveAttribute("href", "/fr/settings/billing");
       await expect(alert).not.toHaveTextContent("Boom");
     } finally {
       restore();

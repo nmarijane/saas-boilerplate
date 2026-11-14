@@ -358,6 +358,14 @@
   }
 }
 
+/* A figure that changes (the price when the period does) rolls in from below. */
+@keyframes price-roll {
+  from {
+    opacity: 0;
+    translate: 0 40%;
+  }
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;
@@ -439,6 +447,15 @@
     &[data-state] {
       animation: none;
     }
+  }
+}
+
+/* A price that rolls into place when its value changes: give it `key={value}`. */
+@utility animate-price-roll {
+  animation: price-roll 320ms var(--ease-expo);
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
   }
 }
 

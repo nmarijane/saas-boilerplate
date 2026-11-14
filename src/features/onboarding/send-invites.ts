@@ -26,7 +26,7 @@ interface SendInvitesResult {
   /** The filled rows that did not go, in their order: they stay in the list so that the person can correct them. */
   kept: InviteRow[];
   /** Why some stayed: the server did not take them (the other problem, an address that is none, is reported when only that happened). Null when everything went. */
-  problem: "failed" | "invalid" | null;
+  problem: "failed" | "invalid" | "limit" | null;
 }
 
 /**
@@ -50,7 +50,7 @@ export async function sendInvites(
   );
 
   const kept = filled.filter((_, index) => outcomes[index] !== "invited");
-  const problem = outcomes.includes("failed") ? "failed" : outcomes.includes("invalid") ? "invalid" : null;
+  const problem = outcomes.includes("limit") ? "limit" : outcomes.includes("failed") ? "failed" : outcomes.includes("invalid") ? "invalid" : null;
 
   return { sent: outcomes.length - kept.length, kept, problem };
 }

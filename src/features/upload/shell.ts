@@ -4,7 +4,7 @@ import { getStorageUsedMb } from "./queries";
 import { deleteWorkspaceFiles } from "./service";
 
 // What the uploads add to the shell: what the workspace's files weigh, counted
-// against the storage limit of the plan (shown, not enforced), and the deletion
+// against the storage limit of the plan (shown, and enforced by the upload), and the deletion
 // of its stored files when the workspace is deleted. It is all the feature
 // gives, so it is all this file holds: removing the upload feature is deleting
 // its folder and its line in the registry.
@@ -19,6 +19,7 @@ export const uploadShell: FeatureShell = {
     },
     failureKey: "upload.deleteWorkspaceFailed",
   },
+  limits: [{ limitKey: "storage", used: getStorageUsedMb }],
   quotas: [
     {
       id: "storage",

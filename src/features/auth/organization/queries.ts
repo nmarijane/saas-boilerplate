@@ -1,4 +1,4 @@
-import { asc, count, eq } from "drizzle-orm";
+import { and, asc, count, eq, gt } from "drizzle-orm";
 import { cache } from "react";
 import { invitation, organization, organizationMember, user } from "@/models";
 import { db } from "@/shared/lib/DB";
@@ -50,6 +50,22 @@ export const countMembers = cache(async (orgId: string): Promise<number> => {
 
   return result?.count ?? 0;
 });
+
+/**
+ * The seats of a workspace, read fresh through `reader`: its members, and the
+ * invitations still waiting (a person invited holds a seat, so that a workspace
+ * cannot invite past its limit and let them all accept). What the plan's members
+ * limit is enforced with.
+ */
+export async function countSeats(orgId: string, reader: Pick<typeof db, "select"> = db): Promise<number> {
+  const [members] = await reader.select({ count: count() }).from(organizationMember).where(eq(organizationMember.organizationId, orgId));
+  const [pending] = await reader
+    .select({ count: count() })
+    .from(invitation)
+    .where(and(eq(invitation.organizationId, orgId), eq(invitation.status, "pending"), gt(invitation.expiresAt, new Date())));
+
+  return (members?.count ?? 0) + (pending?.count ?? 0);
+}
 
 export async function getUserOrganizations(userId: string) {
   const orgs = await db

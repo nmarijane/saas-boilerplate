@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import type { ComponentType, ReactNode } from "react";
 import type { Tone } from "@/shared/components/ui/initial-tile";
+import type { db } from "@/shared/lib/DB";
 
 // What a feature declares to the shell, and to the deletion of a workspace. Each
 // feature writes one `FeatureShell` in its own `shell.ts`, and
@@ -52,6 +53,10 @@ export interface PlanSummary {
   id: string;
   name: string;
   limits: Partial<Record<string, number>>;
+  /** The plan has no price: the one a workspace is on until it pays. Without it, the plan is not read as free. */
+  free?: boolean;
+  /** The plans above this one, lowest first: what a locked feature says it is "included in". */
+  higher?: { name: string; limits: Partial<Record<string, number>> }[];
   /** Null when there is no plan above this one. */
   upgradeHref: string | null;
   /** The lowest role that may upgrade: below it the shell offers no upgrade. Without it, every role is offered one. */
@@ -70,6 +75,21 @@ export interface QuotaContribution {
   order: number;
   /** How much of the workspace's limit is used. */
   usage: (scope: WorkspaceScope) => Promise<number>;
+}
+
+/** What a limit is counted with: the database, or the transaction that holds the workspace while it is counted. */
+export type UsageReader = Pick<typeof db, "select">;
+
+/**
+ * How much of a limit of the plan a workspace holds, as the server counts it
+ * before it lets something be created (`withPlanLimit`): the same figure the
+ * quota shows, but read fresh, in the transaction that creates the thing.
+ */
+export interface LimitContribution {
+  /** The key of the plan's `limits` this counts against. */
+  limitKey: string;
+  /** In the unit of the limit (a number of rows, megabytes). */
+  used: (orgId: string, reader: UsageReader) => Promise<number>;
 }
 
 /** A first step of the home ("create a project"), done or not. */
@@ -139,6 +159,8 @@ export interface FeatureShell {
    */
   plans?: (orgIds: readonly string[]) => Promise<Map<string, PlanSummary>>;
   quotas?: QuotaContribution[];
+  /** What the server counts to enforce a limit of the plan: the features that create things declare it. */
+  limits?: LimitContribution[];
   tasks?: TaskContribution[];
   /** The latest events of a workspace, newest first. The first provider of the registry is the one asked. */
   activity?: (scope: WorkspaceScope, limit: number) => Promise<ActivityEntry[]>;

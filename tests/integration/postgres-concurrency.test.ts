@@ -6,6 +6,7 @@ import { eq, sql } from "drizzle-orm";
 import { Client } from "pg";
 import { beforeEach, expect, it, vi } from "vitest";
 import { POST } from "@/app/api/ai/chat/route";
+import { periodOf } from "@/features/ai/queries";
 import { removeMember, transferOwnership } from "@/features/auth/organization/actions";
 import { deleteAccount } from "@/features/settings/actions";
 import { aiCreditLedger, organization, organizationMember, user } from "@/models";
@@ -43,21 +44,26 @@ vi.mock("next-intl/server", async (importOriginal) => ({
   ...(await importOriginal<typeof import("next-intl/server")>()),
   getLocale: async () => "en",
 }));
-// A database across a network answers in a few milliseconds: the read of the balance inside the debit's transaction
+// A database across a network answers in a few milliseconds: the read of the credits inside the debit's transaction
 // takes a moment, so that debits which are not ordered by a lock all read the balance before any has written
 vi.mock("@/features/ai/queries", async (importOriginal) => {
   const queries = await importOriginal<typeof import("@/features/ai/queries")>();
   return {
     ...queries,
-    getCreditBalance: async (...args: Parameters<typeof queries.getCreditBalance>) => {
-      const balance = await queries.getCreditBalance(...args);
-      if (args[1] !== undefined) {
+    readCredits: async (...args: Parameters<typeof queries.readCredits>) => {
+      const credits = await queries.readCredits(...args);
+      if (args[2] !== undefined) {
         await new Promise((resolve) => setTimeout(resolve, 50));
       }
-      return balance;
+      return credits;
     },
   };
 });
+// The workspace is on a plan that grants one credit a month: the few credits these cases give it are above that, so
+// that the grant of the month (lazy, at the first use) adds nothing to what each case seeded
+vi.mock("@/features/plan-limits", () => ({
+  getPlanSummary: async () => ({ id: "free", name: "Free", limits: { aiCredits: 1 }, upgradeHref: null }),
+}));
 // The route hands what it does after its answer to `after`: here it is kept, and the test waits on it
 vi.mock("next/server", async (importOriginal) => ({
   ...(await importOriginal<typeof import("next/server")>()),
@@ -190,7 +196,7 @@ describeOnPostgres("the AI credits", () => {
     ["six credits, for answers of four", 6],
   ])("never takes the balance below zero when four answers finish together on %s", async (_, credits) => {
     model.current = replying();
-    await testDb.insert(aiCreditLedger).values({ id: "allocation", organizationId: ORG, amount: credits, reason: "plan_allocation" });
+    await testDb.insert(aiCreditLedger).values({ id: "allocation", organizationId: ORG, amount: credits, reason: "plan_allocation", bucket: "allocation", period: periodOf() });
 
     // Their transactions begin together, and wait on the row of the workspace, which the third connection holds
     // until the four answers are in the debit: the lock under test is then the only thing that orders them

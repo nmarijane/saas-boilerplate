@@ -1,11 +1,11 @@
 import type { FeatureShell } from "@/shared/shell/contract";
 import { BotIcon, ZapIcon } from "lucide-react";
 import { AI_CREDITS_QUOTA_ID } from "./config/credits";
-import { getCreditsUsedThisMonth } from "./queries";
+import { allocationUsed } from "./service";
 
 // What the assistant adds to the shell: a page in the main navigation, and the
-// credits the workspace has used this month, counted against the limit of the
-// plan (shown, not enforced).
+// credits the workspace has used of this month's allocation, counted against
+// the limit of the plan (the chat route refuses at zero).
 export const aiShell: FeatureShell = {
   id: "ai",
   nav: [
@@ -26,7 +26,7 @@ export const aiShell: FeatureShell = {
       icon: ZapIcon,
       tone: 2,
       order: 40,
-      usage: ({ orgId }) => getCreditsUsedThisMonth(orgId),
+      usage: ({ orgId }) => allocationUsed(orgId),
     },
   ],
 };

@@ -1,8 +1,10 @@
 "use client";
 
 import type { FormEvent } from "react";
+import type { LimitInfo } from "@/shared/lib/action-refusal";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { LimitNotice } from "@/shared/components/data/limit-notice";
 import { Button } from "@/shared/components/ui/button";
 import { whileConfirming } from "@/shared/components/ui/confirm-dialog";
 import {
@@ -29,6 +31,8 @@ interface CreateProjectFormViewProps {
   pending: boolean;
   /** The server refused, or did not answer: what was typed is kept, and the dialog says so. */
   failed: boolean;
+  /** The plan has no room for another project: the lock is shown instead of the failure. */
+  limit?: LimitInfo | null;
   onNameChange: (name: string) => void;
   onDescriptionChange: (description: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
@@ -46,6 +50,7 @@ export function CreateProjectFormView({
   description,
   pending,
   failed,
+  limit,
   onNameChange,
   onDescriptionChange,
   onSubmit,
@@ -67,7 +72,8 @@ export function CreateProjectFormView({
           onNameChange={onNameChange}
           onDescriptionChange={onDescriptionChange}
         />
-        {failed ? (
+        {limit ? <LimitNotice limit={limit} feature={t("create.limitFeature")} /> : null}
+        {failed && !limit ? (
           <PageAlert tone="danger">{t("create.failed")}</PageAlert>
         ) : null}
       </DialogBody>
@@ -108,6 +114,7 @@ function CreateProjectForm({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [failed, setFailed] = useState(false);
+  const [limit, setLimit] = useState<LimitInfo | null>(null);
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -117,10 +124,12 @@ function CreateProjectForm({
 
     onPendingChange(true);
     setFailed(false);
+    setLimit(null);
     let created = false;
     try {
       created = await createProjectFlow(
         {
+          onLimit: setLimit,
           create: createProject,
           close: onClose,
           notify: () => toast.success(t("created")),
@@ -140,6 +149,7 @@ function CreateProjectForm({
       description={description}
       pending={pending}
       failed={failed}
+      limit={limit}
       onNameChange={(next) => {
         setName(next);
         setFailed(false);

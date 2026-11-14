@@ -1,227 +1,230 @@
 import type Stripe from "stripe";
-import { and, eq, isNull } from "drizzle-orm";
+import { eq } from "drizzle-orm";
+import { addPackCredits } from "@/features/ai/service";
 import { emitEvent } from "@/features/events/emitter";
-import { auditLog, organization, subscription } from "@/models";
+import { organization, subscription } from "@/models";
 import { db } from "@/shared/lib/DB";
-import { generateId } from "@/shared/utils/helpers";
+import { getCreditPack } from "./credit-packs";
 import { cancelAtProvider } from "./helpers";
+import { mailWorkspaceOwner } from "./mail";
+import { getPlanById, isLiveStatus } from "./plans";
 import { getStripe } from "./stripe";
+import {
+  applySubscription,
+  cancelOrphanSubscription,
+  claimTrial,
+  getWorkspaceOwner,
+  holdsOtherLiveSubscription,
+  releaseTrial,
+  syncSubscription,
+  TRIAL_SPENT_REASON,
+} from "./subscription";
+import "server-only";
 
-async function getOrgIdFromSubscription(
-  stripeSubscription: Stripe.Subscription
-): Promise<string | null> {
-  return (
-    (stripeSubscription.metadata?.orgId as string | undefined) ?? null
-  );
+// What each event of the payment provider does. They are called by the webhook
+// route, once per event (the route claims the event first), and they are written
+// to be safe all the same if one ran twice or in another order: a subscription
+// is read at the provider and written whole (`syncSubscription`), a pack is
+// credited once by a unique row, an e-mail follows a state that actually changed.
+
+/** The id of what an event points at, whether the provider sent it expanded or not. */
+function idOf(value: string | { id: string } | null | undefined): string | null {
+  if (!value) {
+    return null;
+  }
+
+  return typeof value === "string" ? value : value.id;
+}
+
+function subscriptionIdOfInvoice(invoice: Stripe.Invoice): string | null {
+  return idOf(invoice.parent?.subscription_details?.subscription);
+}
+
+/** The row of a workspace's subscription, or null. */
+async function rowOfSubscription(stripeSubscriptionId: string) {
+  return (await db.query.subscription.findFirst({ where: eq(subscription.stripeSubscriptionId, stripeSubscriptionId) })) ?? null;
 }
 
 /**
- * Cancels at once the subscription of a checkout paid for a workspace that was
- * deleted since it began (it lasts a day): it would renew every month for a
- * workspace that is gone, and nothing in the app could reach it any more. Only
- * when the app deleted that workspace itself, as the record of the deletion in
- * its audit log says: the session's `orgId` is the app's own metadata, and a
- * Stripe account may also sell other things, or serve another copy of the app
- * (a staging, a laptop forwarding the events), whose workspaces are not this
- * app's to know. Refunding the first payment is the operator's call. Stripe
- * delivers an event at least once: a second delivery finds the subscription
- * cancelled, and is answered as the first.
+ * A checkout that completed. For a subscription it is the first read of it: the
+ * subscription is written, and the free trial it started is spent for the owner
+ * of the workspace (a conditional write: of two checkouts that complete at once,
+ * one spends it, the other is not given a second). For a pack of credits it is
+ * the credit, once the payment is paid (a payment that settles later is
+ * credited by `checkout.session.async_payment_succeeded`).
  */
-async function cancelOrphanSubscription(orgId: string, stripeSubscriptionId: string) {
-  const [deletion] = await db
-    .select({ id: auditLog.id })
-    .from(auditLog)
-    .where(and(eq(auditLog.action, "organization.deleted"), eq(auditLog.resourceId, orgId), isNull(auditLog.orgId)))
-    .limit(1);
-  if (!deletion) return;
-
-  await cancelAtProvider(stripeSubscriptionId);
-}
-
-export async function handleCheckoutCompleted(
-  session: Stripe.Checkout.Session
-) {
+export async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const orgId = session.metadata?.orgId;
-  if (!orgId || !session.subscription) return;
-
-  // A workspace that was deleted since the checkout began has nowhere to hold a
-  // subscription: nothing is written, nor told, and the provider is answered as
-  // usual, rather than with an error it would send again for days
-  const workspace = await db.query.organization.findFirst({
-    where: eq(organization.id, orgId),
-  });
-  if (!workspace) {
-    await cancelOrphanSubscription(orgId, session.subscription as string);
+  if (!orgId) {
     return;
   }
 
-  const stripeSubscription = await getStripe().subscriptions.retrieve(
-    session.subscription as string
-  );
-
-  const priceId = stripeSubscription.items.data[0]?.price.id;
-
-  // Find the plan matching this price
-  const plan = await db.query.plan?.findFirst({
-    where: (p, { eq: eqOp }) => eqOp(p.stripePriceId, priceId ?? ""),
-  });
-
-  const planId = plan?.id ?? "pro";
-
-  // Check if a subscription record already exists
-  const existing = await db.query.subscription.findFirst({
-    where: eq(subscription.organizationId, orgId),
-  });
-
-  const newId = generateId();
-
-  if (existing) {
-    await db
-      .update(subscription)
-      .set({
-        stripeCustomerId: session.customer as string,
-        stripeSubscriptionId: stripeSubscription.id,
-        status: "active",
-        planId,
-        currentPeriodEnd: new Date(
-          stripeSubscription.items.data[0].current_period_end * 1000
-        ),
-        updatedAt: new Date(),
-      })
-      .where(eq(subscription.organizationId, orgId));
-  } else {
-    await db.insert(subscription).values({
-      id: newId,
-      organizationId: orgId,
-      stripeCustomerId: session.customer as string,
-      stripeSubscriptionId: stripeSubscription.id,
-      status: "active",
-      planId,
-      currentPeriodEnd: new Date(
-        stripeSubscription.items.data[0].current_period_end * 1000
-      ),
-    });
+  if (session.mode === "payment") {
+    await creditPack(session);
+    return;
   }
 
-  await emitEvent("subscription.created", {
-    orgId,
-    resourceType: "subscription",
-    resourceId: existing?.id ?? newId,
-    metadata: { planId },
-  });
-}
+  const stripeSubscriptionId = idOf(session.subscription);
+  if (session.mode !== "subscription" || !stripeSubscriptionId) {
+    return;
+  }
 
-export async function handleInvoicePaid(invoice: Stripe.Invoice) {
-  const stripeSubscriptionId = invoice.parent?.subscription_details?.subscription as string | null;
-  if (!stripeSubscriptionId) return;
+  // A workspace that was deleted since the checkout began has nowhere to hold a subscription: nothing is
+  // written, nor told, and the provider is answered as usual, rather than with an error it would send again
+  const workspace = await db.query.organization.findFirst({ where: eq(organization.id, orgId) });
+  if (!workspace) {
+    await cancelOrphanSubscription(orgId, stripeSubscriptionId);
+    return;
+  }
 
-  const sub = await db.query.subscription.findFirst({
-    where: eq(subscription.stripeSubscriptionId, stripeSubscriptionId),
-  });
+  const stripeSubscription = await getStripe().subscriptions.retrieve(stripeSubscriptionId);
 
-  if (sub) {
-    await db
-      .update(subscription)
-      .set({
-        status: "active",
-        updatedAt: new Date(),
-      })
-      .where(eq(subscription.stripeSubscriptionId, stripeSubscriptionId));
+  // A trial is spent once per owner, and claimed before anything is written: a workspace never shows a plan that is
+  // cancelled the next moment. One that holds a live subscription already is no case for it (the second is cancelled below)
+  const owner = stripeSubscription.status === "trialing" ? await getWorkspaceOwner(orgId) : null;
+  let claimed = false;
+  if (owner && !(await holdsOtherLiveSubscription(orgId, stripeSubscription.id))) {
+    if (!(await claimTrial(owner.id, stripeSubscription.id))) {
+      await refuseSpentTrial(orgId, stripeSubscription.id);
+      return;
+    }
+    claimed = true;
+  }
 
-    await emitEvent("payment.succeeded", {
-      orgId: sub.organizationId,
-      resourceType: "subscription",
-      resourceId: sub.id,
-    });
+  // A second subscription of a workspace that pays is cancelled there, with no trial of its own to spend
+  const outcome = await applySubscription(stripeSubscription);
+  if (outcome === "duplicate") {
+    if (owner && claimed) {
+      await releaseTrial(owner.id, stripeSubscription.id);
+    }
+    return;
+  }
+
+  // The one in place had ended at the provider, and this one took its place: the trial was not claimed above
+  if (owner && !claimed && !(await claimTrial(owner.id, stripeSubscription.id))) {
+    await refuseSpentTrial(orgId, stripeSubscription.id);
   }
 }
 
-export async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
-  const stripeSubscriptionId = invoice.parent?.subscription_details?.subscription as string | null;
-  if (!stripeSubscriptionId) return;
-
-  const sub = await db.query.subscription.findFirst({
-    where: eq(subscription.stripeSubscriptionId, stripeSubscriptionId),
-  });
-
-  if (sub) {
-    await db
-      .update(subscription)
-      .set({
-        status: "past_due",
-        updatedAt: new Date(),
-      })
-      .where(eq(subscription.stripeSubscriptionId, stripeSubscriptionId));
-
-    await emitEvent("payment.failed", {
-      orgId: sub.organizationId,
-      resourceType: "subscription",
-      resourceId: sub.id,
-    });
-  }
-}
-
-export async function handleSubscriptionUpdated(
-  stripeSubscription: Stripe.Subscription
-) {
-  const orgId = await getOrgIdFromSubscription(stripeSubscription);
-  if (!orgId) return;
-
-  const priceId = stripeSubscription.items.data[0]?.price.id;
-
-  const plan = await db.query.plan?.findFirst({
-    where: (p, { eq: eqOp }) => eqOp(p.stripePriceId, priceId ?? ""),
-  });
-
-  const planId = plan?.id ?? "pro";
-
-  const updated = await db
-    .update(subscription)
-    .set({
-      status: stripeSubscription.status === "active" ? "active" : "past_due",
-      planId,
-      currentPeriodEnd: new Date(
-        stripeSubscription.items.data[0].current_period_end * 1000
-      ),
-      updatedAt: new Date(),
-    })
-    .where(eq(subscription.organizationId, orgId))
-    .returning();
-
-  // No subscription of the workspace here (it was deleted, and its rows with it): nothing to tell
-  if (updated.length === 0) return;
-
+/**
+ * The owner had their free trial already, on another workspace, and this checkout was sold to them as a trial. Nothing is
+ * charged: the subscription is cancelled at the provider before its trial ends, the workspace stays on the free plan, and
+ * the event is told. The page that waits for the payment says why, and leads to the plans.
+ */
+async function refuseSpentTrial(orgId: string, stripeSubscriptionId: string) {
+  await cancelAtProvider(stripeSubscriptionId, TRIAL_SPENT_REASON);
+  // What an event that came first wrote (a subscription is written as soon as the provider tells of it) follows the cancellation
+  await syncSubscription(stripeSubscriptionId);
   await emitEvent("subscription.updated", {
     orgId,
     resourceType: "subscription",
     resourceId: orgId,
-    metadata: { planId },
+    metadata: { trialAlreadyUsed: stripeSubscriptionId },
   });
 }
 
-export async function handleSubscriptionDeleted(
-  stripeSubscription: Stripe.Subscription
-) {
-  const orgId = await getOrgIdFromSubscription(stripeSubscription);
-  if (!orgId) return;
+/** A payment that settled after the checkout (a bank debit): the pack is credited now. */
+export async function handleCheckoutAsyncPaymentSucceeded(session: Stripe.Checkout.Session) {
+  if (session.mode === "payment") {
+    await creditPack(session);
+  }
+}
 
-  const updated = await db
-    .update(subscription)
-    .set({
-      status: "canceled",
-      planId: "free",
-      updatedAt: new Date(),
-    })
-    .where(eq(subscription.organizationId, orgId))
-    .returning();
+async function creditPack(session: Stripe.Checkout.Session) {
+  const orgId = session.metadata?.orgId;
+  const pack = getCreditPack(session.metadata?.packId ?? "");
+  // Only the app's own packs, and only once they are paid: the credits come from the catalog, never from the metadata
+  if (!orgId || session.metadata?.kind !== "credit_pack" || !pack || session.payment_status !== "paid") {
+    return;
+  }
 
-  // A workspace that was deleted had its subscription cancelled first: it is
-  // gone, with its rows, and there is no one left to tell
-  if (updated.length === 0) return;
+  const workspace = await db.query.organization.findFirst({ where: eq(organization.id, orgId) });
+  if (!workspace) {
+    // Paid for a workspace that is gone: nothing to credit, and the refund is the operator's call
+    console.error(`Billing: the pack of checkout ${session.id} was paid for a workspace that no longer exists`);
+    return;
+  }
 
-  await emitEvent("subscription.cancelled", {
-    orgId,
-    resourceType: "subscription",
-    resourceId: orgId,
-  });
+  await addPackCredits(orgId, pack.credits, session.id);
+}
+
+/** A subscription that was created, changed or ended: it is read at the provider and written. */
+export async function handleSubscriptionChanged(stripeSubscription: Stripe.Subscription) {
+  const before = await rowOfSubscription(stripeSubscription.id);
+  const outcome = await syncSubscription(stripeSubscription.id);
+  if (outcome !== "applied" || !before || !isLiveStatus(before.status)) {
+    return;
+  }
+
+  const after = await rowOfSubscription(stripeSubscription.id);
+  const plan = getPlanById(before.planId);
+  // A subscription that ended after it was live: the owner is told, with the date the plan was paid until
+  if (after?.status === "canceled" && plan) {
+    await mailWorkspaceOwner(
+      before.organizationId,
+      { kind: "subscriptionCancelled", planName: plan.name, endsAt: before.currentPeriodEnd },
+      before.locale,
+    );
+  }
+}
+
+/** Three days before a trial ends: the owner is told, so that no one is charged by surprise. */
+export async function handleTrialWillEnd(stripeSubscription: Stripe.Subscription) {
+  const row = await rowOfSubscription(stripeSubscription.id);
+  const plan = row ? getPlanById(row.planId) : undefined;
+  if (!row || !plan || !stripeSubscription.trial_end) {
+    return;
+  }
+
+  await mailWorkspaceOwner(
+    row.organizationId,
+    { kind: "trialEnding", planName: plan.name, endsAt: new Date(stripeSubscription.trial_end * 1000) },
+    row.locale,
+  );
+}
+
+export async function handleInvoicePaid(invoice: Stripe.Invoice) {
+  const stripeSubscriptionId = subscriptionIdOfInvoice(invoice);
+  if (!stripeSubscriptionId) {
+    return;
+  }
+
+  await syncSubscription(stripeSubscriptionId);
+  const row = await rowOfSubscription(stripeSubscriptionId);
+  if (!row) {
+    return;
+  }
+
+  await emitEvent("payment.succeeded", { orgId: row.organizationId, resourceType: "subscription", resourceId: row.id });
+
+  // The invoice of a trial is for nothing: there is no payment to confirm
+  const plan = getPlanById(row.planId);
+  if (invoice.amount_paid > 0 && plan) {
+    await mailWorkspaceOwner(
+      row.organizationId,
+      { kind: "paymentSuccess", planName: plan.name, amount: { minor: invoice.amount_paid, currency: invoice.currency } },
+      row.locale,
+    );
+  }
+}
+
+export async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
+  const stripeSubscriptionId = subscriptionIdOfInvoice(invoice);
+  if (!stripeSubscriptionId) {
+    return;
+  }
+
+  await syncSubscription(stripeSubscriptionId);
+  const row = await rowOfSubscription(stripeSubscriptionId);
+  if (!row) {
+    return;
+  }
+
+  await emitEvent("payment.failed", { orgId: row.organizationId, resourceType: "subscription", resourceId: row.id });
+
+  // A first payment that is refused leaves the subscription incomplete, on the free plan: there is no plan to name
+  const plan = getPlanById(row.planId);
+  if (plan && isLiveStatus(row.status)) {
+    await mailWorkspaceOwner(row.organizationId, { kind: "paymentFailed", planName: plan.name }, row.locale);
+  }
 }

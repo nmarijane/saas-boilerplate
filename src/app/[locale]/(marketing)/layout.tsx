@@ -1,82 +1,24 @@
-import { useTranslations } from "next-intl";
-
+import { getRecommendedPlan } from "@/features/billing/plans";
 import { Footer } from "@/shared/components/layout/footer";
-import { ThemeToggle } from "@/shared/components/layout/theme-toggle";
-import { Button } from "@/shared/components/ui/button";
-import { Link } from "@/shared/lib/i18n-navigation";
+import { PublicHeader } from "@/shared/components/layout/public-header";
 
-function MarketingHeader() {
-  const t = useTranslations();
-
-  return (
-    <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex h-14 items-center justify-between px-4">
-        <div className="flex items-center gap-8">
-          <Link href="/" className="text-lg font-bold tracking-tight">
-            SaaS
-          </Link>
-          <nav className="hidden items-center gap-6 text-sm md:flex">
-            <Link
-              href="/#features"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {t("marketing.features.title")}
-            </Link>
-            <Link
-              href="/pricing"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {t("marketing.pricing.title")}
-            </Link>
-            <Link
-              href="/about"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {t("marketing.about.title")}
-            </Link>
-            <Link
-              href="/changelog"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {t("marketing.changelog.title")}
-            </Link>
-            <Link
-              href="/blog"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {t("marketing.blog.navTitle")}
-            </Link>
-          </nav>
-        </div>
-        <div className="flex items-center gap-2 sm:gap-3">
-          <ThemeToggle />
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/sign-in">{t("auth.signIn")}</Link>
-          </Button>
-          {/* A phone is 390 px wide: four controls do not fit in a row whatever the font, and the page would scroll sideways. The sign-up stays. */}
-          <Button variant="outline" size="sm" className="hidden sm:inline-flex" asChild>
-            <Link href="/waitlist">{t("waitlist.joinButton")}</Link>
-          </Button>
-          <Button size="sm" asChild>
-            <Link href="/sign-up">{t("auth.signUp")}</Link>
-          </Button>
-        </div>
-      </div>
-    </header>
-  );
-}
-
+// The public pages: the header, the page, the footer. "Free trial" in the header
+// starts the trial of the recommended plan (sign-up with the plan kept); a product
+// whose recommended plan has no trial says "Sign up" there.
 export default function MarketingLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const recommended = getRecommendedPlan();
+  const trialHref = recommended?.trialDays ? `/sign-up?plan=${encodeURIComponent(recommended.id)}&interval=monthly` : null;
+
   // The body text of the app is 14 px (global.css). The public pages are read,
   // not operated: they read at 16 px, set once here. `font-normal` undoes the
   // semi-bold weight that `text-section` brings.
   return (
     <div className="flex min-h-screen flex-col text-section font-normal">
-      <MarketingHeader />
+      <PublicHeader trialHref={trialHref} />
       <main className="flex-1">{children}</main>
       <Footer />
     </div>

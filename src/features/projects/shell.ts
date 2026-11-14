@@ -3,12 +3,12 @@ import { FolderIcon, FolderPlusIcon } from "lucide-react";
 import { createElement } from "react";
 import { NewProjectButton } from "./components/new-project-button";
 import { RecentProjects } from "./components/recent-projects";
-import { countProjects } from "./queries";
+import { countProjects, countProjectsFresh } from "./queries";
 
 // What the projects add to the shell: a page in the main navigation, a quota
-// counted against the limit of the plan (shown, not enforced: nothing here
-// stops a workspace from creating one more), a first step of the home, the
-// block of the latest projects, and the button that creates one.
+// counted against the limit of the plan (and enforced by `createProject`, which
+// counts fresh through `limits`), a first step of the home, the block of the
+// latest projects, and the button that creates one.
 export const projectsShell: FeatureShell = {
   id: "projects",
   nav: [
@@ -32,6 +32,7 @@ export const projectsShell: FeatureShell = {
       usage: ({ orgId }) => countProjects(orgId),
     },
   ],
+  limits: [{ limitKey: "projects", used: countProjectsFresh }],
   tasks: [
     {
       id: "first-project",

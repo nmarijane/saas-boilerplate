@@ -1,6 +1,8 @@
+import type { LimitInfo } from "./action-refusal";
 import { getLogger } from "@logtape/logtape";
 import { notFound, unstable_rethrow } from "next/navigation";
 import { ZodError } from "zod";
+import { ActionRefusal, PlanLimitError } from "./action-refusal";
 
 const logger = getLogger(["safe-action"]);
 
@@ -25,7 +27,7 @@ function isNotFound(error: unknown, depth = 0): boolean {
 
 export type ActionResult<T> =
   | { success: true; data: T }
-  | { success: false; error: string; validationErrors?: Record<string, string[]> };
+  | { success: false; error: string; validationErrors?: Record<string, string[]>; limit?: LimitInfo };
 
 export async function safeAction<T>(
   fn: () => Promise<T>,
@@ -54,6 +56,14 @@ export async function safeAction<T>(
         validationErrors[path].push(issue.message);
       }
       return { success: false, error: "Validation failed", validationErrors };
+    }
+
+    // A refusal the action means to give is an answer, not a failure: it is told, not logged
+    if (error instanceof PlanLimitError) {
+      return { success: false, error: error.code, limit: error.limit };
+    }
+    if (error instanceof ActionRefusal) {
+      return { success: false, error: error.code };
     }
 
     logger.error`Server action failed: ${error}`;

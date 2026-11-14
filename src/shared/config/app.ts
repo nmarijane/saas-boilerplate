@@ -26,7 +26,16 @@ export const APP_PATH_PREFIXES = [
   "/settings",
   "/onboarding",
   "/admin",
+  "/choose-plan",
+  "/checkout",
 ] as const;
+
+/**
+ * Where the onboarding ends: the choice of a plan for the workspace that was just
+ * made (payment is per workspace). A project without billing sets this to
+ * `/dashboard` (docs/SETUP.md, Phase 3).
+ */
+export const AFTER_ONBOARDING_PATH = "/choose-plan?from=onboarding";
 
 /**
  * What the secrets the app issues begin with, set once here: the API keys that a

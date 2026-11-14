@@ -23,6 +23,28 @@ export const env = createEnv({
     BETTER_AUTH_URL: z.string().url().default(DEV_APP_URL),
     STRIPE_SECRET_KEY: z.string().default(""),
     STRIPE_WEBHOOK_SECRET: z.string().default(""),
+    // The prices of the Stripe catalog (`npm run stripe:catalog` creates them and prints the ids). A price left empty
+    // cannot be bought: its button says so instead of opening a checkout
+    STRIPE_PRICE_PRO_MONTHLY: z.string().default(""),
+    STRIPE_PRICE_PRO_YEARLY: z.string().default(""),
+    STRIPE_PRICE_ENTERPRISE_MONTHLY: z.string().default(""),
+    STRIPE_PRICE_ENTERPRISE_YEARLY: z.string().default(""),
+    STRIPE_PRICE_CREDITS_1000: z.string().default(""),
+    STRIPE_PRICE_CREDITS_5000: z.string().default(""),
+    // The customer portal that the app opens (`npm run stripe:catalog` prints it): the one with no cancellation in it
+    STRIPE_PORTAL_CONFIGURATION_ID: z.string().default(""),
+    // The currency the plans are priced in (a three-letter ISO code): the catalog creates its prices in it, and the pages show it
+    BILLING_CURRENCY: z
+      .string()
+      .regex(/^[a-z]{3}$/i, "BILLING_CURRENCY must be a three-letter currency code, such as usd or eur")
+      .transform((code) => code.toLowerCase())
+      .default("usd"),
+    // Stripe Tax: VAT computed at checkout, the billing address and the VAT number collected, prices shown "excl. VAT"
+    STRIPE_TAX_ENABLED: z.stringbool().default(false),
+    // A free trial without a card; at its end the subscription is cancelled and the workspace is back on the free plan
+    BILLING_TRIAL_WITHOUT_CARD: z.stringbool().default(false),
+    // How many workspaces on the free plan a person may own: the free credits are granted per owner, whatever the number
+    MAX_FREE_WORKSPACES: z.coerce.number().int().nonnegative().default(1),
     SMTP_HOST: z.string().default("localhost"),
     SMTP_PORT: z.coerce.number().int().positive().default(587),
     SMTP_USER: z.string().default(""),
@@ -59,7 +81,6 @@ export const env = createEnv({
     GROQ_API_KEY: z.string().optional(),
     OLLAMA_BASE_URL: z.string().url().optional(),
     AI_DEFAULT_MODEL: z.string().default("gpt-4o-mini"),
-    AI_CREDITS_PER_ORG_MONTHLY: z.coerce.number().int().positive().default(1000),
   },
   client: {
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().default(""),
@@ -72,6 +93,17 @@ export const env = createEnv({
     BETTER_AUTH_URL: process.env.BETTER_AUTH_URL,
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
+    STRIPE_PRICE_PRO_MONTHLY: process.env.STRIPE_PRICE_PRO_MONTHLY,
+    STRIPE_PRICE_PRO_YEARLY: process.env.STRIPE_PRICE_PRO_YEARLY,
+    STRIPE_PRICE_ENTERPRISE_MONTHLY: process.env.STRIPE_PRICE_ENTERPRISE_MONTHLY,
+    STRIPE_PRICE_ENTERPRISE_YEARLY: process.env.STRIPE_PRICE_ENTERPRISE_YEARLY,
+    STRIPE_PRICE_CREDITS_1000: process.env.STRIPE_PRICE_CREDITS_1000,
+    STRIPE_PRICE_CREDITS_5000: process.env.STRIPE_PRICE_CREDITS_5000,
+    STRIPE_PORTAL_CONFIGURATION_ID: process.env.STRIPE_PORTAL_CONFIGURATION_ID,
+    BILLING_CURRENCY: process.env.BILLING_CURRENCY,
+    STRIPE_TAX_ENABLED: process.env.STRIPE_TAX_ENABLED,
+    BILLING_TRIAL_WITHOUT_CARD: process.env.BILLING_TRIAL_WITHOUT_CARD,
+    MAX_FREE_WORKSPACES: process.env.MAX_FREE_WORKSPACES,
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:
       process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
     SMTP_HOST: process.env.SMTP_HOST,
@@ -105,7 +137,6 @@ export const env = createEnv({
     GROQ_API_KEY: process.env.GROQ_API_KEY,
     OLLAMA_BASE_URL: process.env.OLLAMA_BASE_URL,
     AI_DEFAULT_MODEL: process.env.AI_DEFAULT_MODEL,
-    AI_CREDITS_PER_ORG_MONTHLY: process.env.AI_CREDITS_PER_ORG_MONTHLY,
   },
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
   // A variable set to nothing (`DATABASE_URL=`) counts as unset: the screenshot

@@ -3,6 +3,8 @@ import { BaseLayout } from "./base-layout";
 
 interface WelcomeEmailProps {
   name: string;
+  /** The salutation, in the language of the mail: "Hi {name}," when left out. */
+  greeting?: string;
   dashboardUrl: string;
   previewText?: string;
   heading?: string;
@@ -39,6 +41,7 @@ const button = {
 
 export function WelcomeEmail({
   name,
+  greeting,
   dashboardUrl,
   previewText = "Welcome to our platform!",
   heading = "Welcome aboard!",
@@ -48,7 +51,7 @@ export function WelcomeEmail({
   return (
     <BaseLayout preview={previewText}>
       <Heading style={h1}>{heading}</Heading>
-      <Text style={text}>Hi {name},</Text>
+      <Text style={text}>{greeting ?? `Hi ${name},`}</Text>
       <Text style={text}>{bodyText}</Text>
       <Button style={button} href={dashboardUrl}>
         {buttonText}

@@ -1,4 +1,5 @@
-import { and, desc, eq, gte, lt, sql } from "drizzle-orm";
+import type { UsageReader } from "@/shared/shell/contract";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { aiConversation, aiCreditLedger, aiMessage } from "@/models/ai";
 import { db } from "@/shared/lib/DB";
 import "server-only";
@@ -51,45 +52,40 @@ export async function getLatestMessages(conversationId: string, limit: number) {
 }
 
 /**
- * The credits a workspace has left. A debit reads it through the transaction
- * that holds the row of the workspace (`reader`), so that no other debit of the
- * workspace reads it before the first is written (the chat route).
+ * The credits a workspace has left to spend now: what is left of this month's
+ * allocation and of the packs it bought. It writes nothing (the allocation is
+ * granted by `ensureMonthlyAllocation`, at the first use in the month), and is
+ * read through the transaction that holds the workspace when a debit decides.
  */
-export async function getCreditBalance(orgId: string, reader: Pick<typeof db, "select"> = db): Promise<number> {
-  const result = await reader
-    // The SUM of an integer is a bigint: PostgreSQL sends it as a string, so it is read as a number here
-    .select({ total: sql<number>`COALESCE(SUM(${aiCreditLedger.amount}), 0)`.mapWith(Number) })
-    .from(aiCreditLedger)
-    .where(eq(aiCreditLedger.organizationId, orgId));
-  return result[0]?.total ?? 0;
+export async function getCreditBalance(orgId: string, reader: UsageReader = db): Promise<number> {
+  const { allocation, packs } = await readCredits(orgId, periodOf(), reader);
+
+  return Math.max(0, allocation) + Math.max(0, packs);
+}
+
+/** The calendar month (UTC) a date falls in, as the ledger writes it: "2026-11". */
+export function periodOf(date = new Date()): string {
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
 /**
- * The credits a workspace has used since the first day of the month, in UTC
- * (the month `now` is in): what its ledger took out, as a positive number. What
- * was added to it (an allocation, an adjustment) is not use. The span has no
- * end: a row that a clock a little ahead stamped past midnight, on the last day
- * of the month, still counts.
+ * What a workspace has left: the allocation of the period and the packs. It
+ * writes nothing: a debit reads it through the transaction that holds the row of
+ * the workspace (`reader`), so that no other debit of the workspace reads it
+ * before the first is written (the chat route).
  */
-export async function getCreditsUsedThisMonth(
-  orgId: string,
-  now = new Date(),
-): Promise<number> {
-  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-  const [row] = await db
+export async function readCredits(orgId: string, period = periodOf(), reader: UsageReader = db): Promise<{ allocation: number; packs: number; granted: number }> {
+  const [row] = await reader
     .select({
-      used: sql<number>`COALESCE(SUM(-${aiCreditLedger.amount}), 0)`.mapWith(Number),
+      // The SUM of an integer is a bigint: PostgreSQL sends it as a string, so it is read as a number here
+      allocation: sql<number>`COALESCE(SUM(${aiCreditLedger.amount}) FILTER (WHERE ${aiCreditLedger.bucket} = 'allocation' AND ${aiCreditLedger.period} = ${period}), 0)`.mapWith(Number),
+      granted: sql<number>`COALESCE(SUM(${aiCreditLedger.amount}) FILTER (WHERE ${aiCreditLedger.bucket} = 'allocation' AND ${aiCreditLedger.period} = ${period} AND ${aiCreditLedger.amount} > 0), 0)`.mapWith(Number),
+      packs: sql<number>`COALESCE(SUM(${aiCreditLedger.amount}) FILTER (WHERE ${aiCreditLedger.bucket} = 'pack'), 0)`.mapWith(Number),
     })
     .from(aiCreditLedger)
-    .where(
-      and(
-        eq(aiCreditLedger.organizationId, orgId),
-        lt(aiCreditLedger.amount, 0),
-        gte(aiCreditLedger.createdAt, monthStart),
-      ),
-    );
+    .where(eq(aiCreditLedger.organizationId, orgId));
 
-  return row?.used ?? 0;
+  return { allocation: row?.allocation ?? 0, packs: row?.packs ?? 0, granted: row?.granted ?? 0 };
 }
 
 export async function getUsageStats(orgId: string, days = 30) {

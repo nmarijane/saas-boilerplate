@@ -85,3 +85,55 @@ describe("the auth guard of the proxy", () => {
     expect(redirectedTo(await visit(path))).toBeNull();
   });
 });
+
+// The plan a visitor picked on the pricing page survives sign-up in a short-lived
+// cookie, and is resumed once they land in the app (src/features/billing/plan-choice.ts)
+describe("the plan chosen before signing up", () => {
+  const cookieOf = (response: Response) => response.headers.getSetCookie().find((line) => line.startsWith("plan_choice="));
+
+  it.each(["/en/sign-up", "/fr/sign-in", "/en/choose-plan"])("is remembered when %s is opened with a plan of the product", async (path) => {
+    const cookie = cookieOf(await visit(`${path}?plan=pro&interval=yearly`, path.endsWith("choose-plan") ? SESSION : {}));
+
+    expect(cookie).toContain("plan_choice=pro%3Ayearly");
+    expect(cookie?.toLowerCase()).toContain("httponly");
+    expect(cookie).toContain("Max-Age=3600");
+  });
+
+  it("is remembered even when the visitor is sent to sign in", async () => {
+    const response = await visit("/en/choose-plan?plan=pro&interval=monthly");
+
+    expect(redirectedTo(response)?.pathname).toBe("/en/sign-in");
+    expect(cookieOf(response)).toContain("plan_choice=pro%3Amonthly");
+  });
+
+  it.each(["plan=free", "plan=nope&interval=monthly", "plan=pro&interval=weekly", "plan[]=pro", ""])("is never made of what is not a plan of the product: %s", async (query) => {
+    expect(cookieOf(await visit(`/en/sign-up?${query}`))).toBeUndefined();
+  });
+
+  it("is not remembered by a link that Next fetches ahead of the click: only a visitor who goes there chooses a plan", async () => {
+    expect(cookieOf(await visit("/en/sign-up?plan=pro&interval=monthly", { "next-router-prefetch": "1", rsc: "1" }))).toBeUndefined();
+    expect(cookieOf(await visit("/en/sign-up?plan=pro&interval=monthly", { "next-router-segment-prefetch": "/_tree" }))).toBeUndefined();
+    expect(cookieOf(await visit("/en/sign-up?plan=pro&interval=monthly", { purpose: "prefetch" }))).toBeUndefined();
+    // The navigation itself (client-side, a fetch of the page) does remember it
+    expect(cookieOf(await visit("/en/sign-up?plan=pro&interval=monthly", { rsc: "1" }))).toContain("plan_choice=pro%3Amonthly");
+  });
+
+  it("is not set by any other page", async () => {
+    expect(cookieOf(await visit("/en/pricing?plan=pro&interval=monthly"))).toBeUndefined();
+  });
+
+  it("sends the home to the choice of a plan, once: the choice goes in the address and the cookie is spent", async () => {
+    const response = await visit("/en/dashboard", { ...SESSION, cookie: `${SESSION.cookie}; plan_choice=pro%3Ayearly` });
+    const target = redirectedTo(response);
+
+    expect(target?.pathname).toBe("/en/choose-plan");
+    expect(target?.searchParams.get("plan")).toBe("pro");
+    expect(target?.searchParams.get("interval")).toBe("yearly");
+    expect(response.headers.getSetCookie().find((line) => line.startsWith("plan_choice="))).toMatch(/plan_choice=;|Max-Age=0|Expires=Thu, 01 Jan 1970/);
+  });
+
+  it("does not send the home anywhere for a choice that is not one, or without a session", async () => {
+    expect(redirectedTo(await visit("/en/dashboard", { cookie: `${SESSION.cookie}; plan_choice=free%3Amonthly` }))).toBeNull();
+    expect(redirectedTo(await visit("/en/dashboard", { cookie: "plan_choice=pro%3Amonthly" }))?.pathname).toBe("/en/sign-in");
+  });
+});

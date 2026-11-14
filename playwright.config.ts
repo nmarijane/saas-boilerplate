@@ -65,6 +65,11 @@ export default defineConfig({
       GOOGLE_GENERATIVE_AI_API_KEY: "",
       GROQ_API_KEY: "",
       OLLAMA_BASE_URL: "",
+      // No payment provider: a key in the environment of the machine would send the tests to Stripe. With none, a
+      // payment says that payments are not set up, and a checkout that nobody opened does not exist
+      STRIPE_SECRET_KEY: "",
+      STRIPE_WEBHOOK_SECRET: "",
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "",
     },
   },
 });

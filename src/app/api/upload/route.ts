@@ -22,10 +22,11 @@ async function refusalResponse(refusal: string | UploadRefusal) {
     {
       error: t(messageKeyOf(refusal.code), refusal.values),
       code: refusal.code,
-      status: 400,
+      status: refusal.code === "PLAN_LIMIT" ? 402 : 400,
       values: refusal.values,
     },
-    { status: 400 },
+    // A full plan is a 402: the file is fine, the workspace has no room for it
+    { status: refusal.code === "PLAN_LIMIT" ? 402 : 400 },
   );
 }
 

@@ -7,6 +7,7 @@ import { sendEmail } from "@/features/email/send";
 import { sendAfterResponse } from "@/features/email/send-after-response";
 import { ResetPassword } from "@/features/email/templates/reset-password";
 import { VerifyEmail } from "@/features/email/templates/verify-email";
+import { buildWelcomeMail } from "@/features/email/welcome";
 import { organizationMember } from "@/models/organization";
 import { MAX_OWNED_WORKSPACES } from "@/shared/config/app";
 import { CLIENT_IP_HEADER } from "@/shared/lib/client-ip";
@@ -18,6 +19,14 @@ import { verificationLink } from "./verification";
 const VERIFICATION_LINK_SECONDS = 60 * 60 * 24;
 // The invitation e-mail says that it lasts 7 days (templates/invitation.tsx)
 const INVITATION_SECONDS = 60 * 60 * 24 * 7;
+
+/** The welcome mail, after the answer: a mail that fails is logged, and the person is not told. */
+function sendWelcome(person: { name: string; email: string }): Promise<void> {
+  return sendAfterResponse(async () => {
+    const { subject, template } = await buildWelcomeMail(person.name);
+    await sendEmail({ to: person.email, subject, template });
+  });
+}
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -47,6 +56,8 @@ export const auth = betterAuth({
   },
   emailVerification: {
     sendOnSignUp: true,
+    // The address is confirmed: the welcome goes out now, not at sign-up, so that an address nobody confirmed gets one mail only
+    afterEmailVerification: (user) => sendWelcome(user),
     // A person who signs in with the right password before they verified the address is
     // sent a new link, and told so: the link of sign-up expires, and without it that link
     // would be the only way in. The sign-in form sends it (`signInFlow`), not the server:
@@ -115,6 +126,12 @@ export const auth = betterAuth({
         before: async (person) => ({
           data: { ...person, image: typeof person.image === "string" && isAvatarUrl(person.image) ? person.image : null },
         }),
+        // A provider confirms the address itself (Google): such an account is welcomed as it is created
+        after: async (person) => {
+          if (person.emailVerified) {
+            await sendWelcome(person);
+          }
+        },
       },
       update: {
         before: async (changes) => {

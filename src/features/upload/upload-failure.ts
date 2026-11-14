@@ -18,7 +18,7 @@ export class UploadFailed extends Error {
 /**
  * What the person is told when an upload failed, in the words of the page
  * (`translate` is the translator of the message files). A file that
- * `POST /api/upload` refuses comes as a 400 with the code that says why and the
+ * `POST /api/upload` refuses comes as a 400 (a 402 when the storage of the plan is full) with the code that says why and the
  * values of its message (`refusals.ts`), and is told as that message. Any other
  * answer, and no answer at all, is the generic failure of the message files.
  */
@@ -26,7 +26,7 @@ export function failureMessage(
   error: unknown,
   translate: (key: string, values?: Record<string, string | number>) => string,
 ): string {
-  if (error instanceof UploadFailed && error.status === 400) {
+  if (error instanceof UploadFailed && (error.status === 400 || error.status === 402)) {
     const refusal = refusalOf(error.body);
     if (refusal) {
       return translate(messageKeyOf(refusal.code), refusal.values);
